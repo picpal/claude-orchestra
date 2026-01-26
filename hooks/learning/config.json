@@ -1,0 +1,81 @@
+{
+  "enabled": true,
+  "minSessionLength": 10,
+  "extractionThreshold": "medium",
+  "autoApprove": false,
+  "learnedPatternsPath": ".orchestra/hooks/learning/learned-patterns/",
+
+  "patternCategories": [
+    {
+      "id": "error_resolution",
+      "name": "Error Resolution",
+      "description": "에러 해결 패턴 (컴파일 에러, 런타임 에러 등)",
+      "priority": "high"
+    },
+    {
+      "id": "user_corrections",
+      "name": "User Corrections",
+      "description": "사용자가 수정 요청한 패턴",
+      "priority": "high"
+    },
+    {
+      "id": "workarounds",
+      "name": "Workarounds",
+      "description": "특정 문제의 우회 해결책",
+      "priority": "medium"
+    },
+    {
+      "id": "debugging_techniques",
+      "name": "Debugging Techniques",
+      "description": "디버깅 기법 및 접근 방식",
+      "priority": "medium"
+    },
+    {
+      "id": "project_specific",
+      "name": "Project Specific",
+      "description": "프로젝트 특화 패턴 및 컨벤션",
+      "priority": "high"
+    },
+    {
+      "id": "best_practices",
+      "name": "Best Practices",
+      "description": "코드 품질 및 모범 사례",
+      "priority": "low"
+    }
+  ],
+
+  "exclusions": [
+    "simple_typos",
+    "one_time_fixes",
+    "external_api_issues",
+    "temporary_workarounds",
+    "user_preference_only"
+  ],
+
+  "extractionRules": {
+    "minOccurrences": 2,
+    "confidenceThreshold": 0.7,
+    "maxPatternsPerSession": 5
+  },
+
+  "triggers": {
+    "errorResolved": {
+      "enabled": true,
+      "pattern": "에러|error|fail|exception"
+    },
+    "userCorrection": {
+      "enabled": true,
+      "pattern": "아니|다시|수정|고쳐"
+    },
+    "workaround": {
+      "enabled": true,
+      "pattern": "대신|우회|임시|workaround"
+    }
+  },
+
+  "output": {
+    "format": "markdown",
+    "includeCodeExamples": true,
+    "includeTriggerKeywords": true
+  }
+}

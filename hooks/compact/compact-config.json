@@ -1,0 +1,84 @@
+{
+  "enabled": true,
+
+  "thresholds": {
+    "toolCalls": 50,
+    "reminderInterval": 25,
+    "contextTokens": 150000
+  },
+
+  "autoSuggestOnPhaseChange": true,
+
+  "phaseTransitions": [
+    {
+      "from": "RESEARCH",
+      "to": "PLAN",
+      "suggest": true,
+      "message": "탐색 완료. 계획 단계로 전환 전 컨텍스트 압축을 권장합니다."
+    },
+    {
+      "from": "PLAN",
+      "to": "EXECUTE",
+      "suggest": true,
+      "message": "계획 완료. 실행 단계로 전환 전 컨텍스트 압축을 권장합니다."
+    },
+    {
+      "from": "EXECUTE",
+      "to": "REVIEW",
+      "suggest": false,
+      "message": ""
+    }
+  ],
+
+  "compactionStrategies": {
+    "research": {
+      "preserve": [
+        "key_findings",
+        "file_locations",
+        "architecture_decisions"
+      ],
+      "discard": [
+        "file_contents_already_read",
+        "exploration_dead_ends",
+        "verbose_search_results"
+      ]
+    },
+    "planning": {
+      "preserve": [
+        "final_plan",
+        "todo_list",
+        "user_requirements"
+      ],
+      "discard": [
+        "plan_iterations",
+        "rejected_approaches",
+        "interview_details"
+      ]
+    },
+    "execution": {
+      "preserve": [
+        "completed_todos",
+        "current_todo",
+        "test_results",
+        "error_context"
+      ],
+      "discard": [
+        "intermediate_states",
+        "successful_operations",
+        "verbose_outputs"
+      ]
+    }
+  },
+
+  "summaryTemplates": {
+    "research": "## Research Summary\n\n### Key Findings\n{findings}\n\n### Files Identified\n{files}\n\n### Decisions Made\n{decisions}",
+    "planning": "## Plan Summary\n\n### Plan\n{plan_path}\n\n### TODOs\n{todo_count} items\n\n### Requirements\n{requirements}",
+    "execution": "## Execution Summary\n\n### Completed\n{completed_todos}\n\n### Current\n{current_todo}\n\n### Blockers\n{blockers}"
+  },
+
+  "notifications": {
+    "threshold50": "🗜️ 컴팩션 권장: 50회 도구 호출 도달. /compact 실행을 고려하세요.",
+    "threshold75": "🗜️ 컴팩션 필요: 75회 도구 호출. 컨텍스트 효율성을 위해 /compact를 실행하세요.",
+    "threshold100": "⚠️ 컴팩션 강력 권장: 100회 도구 호출 초과. 즉시 /compact를 실행하세요."
+  }
+}

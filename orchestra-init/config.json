@@ -1,0 +1,78 @@
+{
+  "project": {
+    "name": "",
+    "language": "typescript",
+    "framework": "",
+    "packageManager": "npm"
+  },
+  "tdd": {
+    "enabled": true,
+    "minCoverage": 80,
+    "criticalPathCoverage": 100,
+    "testPatterns": [
+      "**/*.test.ts",
+      "**/*.spec.ts",
+      "**/__tests__/**/*.ts"
+    ],
+    "testCommand": "npm test",
+    "coverageCommand": "npm test -- --coverage"
+  },
+  "verification": {
+    "defaultMode": "standard",
+    "autoRunOnTodoComplete": true,
+    "blockOnFailure": true,
+    "phases": {
+      "build": {
+        "enabled": true,
+        "command": "npm run build"
+      },
+      "typeCheck": {
+        "enabled": true,
+        "command": "npx tsc --noEmit"
+      },
+      "lint": {
+        "enabled": true,
+        "command": "npx eslint . --max-warnings=0"
+      },
+      "test": {
+        "enabled": true,
+        "command": "npm test -- --coverage"
+      },
+      "security": {
+        "enabled": true,
+        "patterns": [
+          "API_KEY\\s*[=:]\\s*['\"][^'\"]+['\"]",
+          "sk-[A-Za-z0-9]{20,}",
+          "password\\s*[=:]\\s*['\"][^'\"]+['\"]",
+          "console\\.log\\(",
+          "debugger;"
+        ]
+      },
+      "diff": {
+        "enabled": true,
+        "warnOnUnexpected": true
+      }
+    }
+  },
+  "git": {
+    "autoCommit": true,
+    "commitOnPrReady": true,
+    "commitMessageFormat": "[{type}] {description}\n\n- Files: {files}\n- TDD Phase: {phase}\n\nTODO: {todoId}\nPlan: {planName}"
+  },
+  "paths": {
+    "plans": ".orchestra/plans",
+    "notepads": ".orchestra/notepads",
+    "logs": ".orchestra/logs",
+    "hooks": ".orchestra/hooks"
+  },
+  "learning": {
+    "enabled": false,
+    "minSessionLength": 10,
+    "autoApprove": false
+  },
+  "compact": {
+    "enabled": false,
+    "toolCallThreshold": 50,
+    "reminderInterval": 25
+  }
+}

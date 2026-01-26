@@ -1,0 +1,60 @@
+{
+  "mode": "IDLE",
+  "currentContext": "dev",
+  "currentPlan": null,
+  "todos": [],
+  "tddMetrics": {
+    "testCount": 0,
+    "redGreenCycles": 0,
+    "testDeletionAttempts": 0
+  },
+  "commitHistory": [],
+  "verificationMetrics": {
+    "lastRun": null,
+    "mode": null,
+    "results": {
+      "build": { "status": null, "duration": 0 },
+      "types": { "status": null, "errors": 0, "warnings": 0 },
+      "lint": { "status": null, "errors": 0, "warnings": 0 },
+      "tests": {
+        "status": null,
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0,
+        "coverage": {
+          "lines": 0,
+          "branches": 0,
+          "functions": 0,
+          "statements": 0
+        }
+      },
+      "security": {
+        "status": null,
+        "issues": []
+      },
+      "diff": {
+        "status": null,
+        "filesChanged": 0,
+        "unexpectedChanges": []
+      }
+    },
+    "prReady": false,
+    "blockers": []
+  },
+  "learningMetrics": {
+    "totalSessions": 0,
+    "patternsExtracted": 0,
+    "lastLearningRun": null,
+    "activePatterns": [],
+    "recentPatterns": []
+  },
+  "compactMetrics": {
+    "totalCompactions": 0,
+    "lastCompaction": null,
+    "currentToolCount": 0,
+    "suggestedAt": null,
+    "phaseHistory": []
+  },
+  "codeReviewHistory": [],
+  "checkpoints": []
+}

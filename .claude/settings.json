@@ -1,0 +1,90 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npx *)",
+      "Bash(pnpm *)",
+      "Bash(yarn *)",
+      "Bash(bun *)",
+      "Bash(git *)",
+      "Bash(cat *)",
+      "Bash(ls *)",
+      "Bash(mkdir *)",
+      "Bash(tsc *)",
+      "Bash(eslint *)",
+      "Bash(prettier *)",
+      "Bash(jest *)",
+      "Bash(vitest *)",
+      "Bash(playwright *)"
+    ],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(sudo *)",
+      "Bash(chmod 777 *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": ".claude/hooks/tdd-guard.sh \"$TOOL_INPUT\""
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "command": ".claude/hooks/test-logger.sh \"$TOOL_INPUT\" \"$TOOL_OUTPUT\""
+      }
+    ]
+  },
+  "agents": {
+    "maestro": {
+      "model": "opus",
+      "allowedTools": ["Task", "Read", "AskUserQuestion"]
+    },
+    "planner": {
+      "model": "opus",
+      "allowedTools": ["Task", "Bash", "Read", "Edit"]
+    },
+    "interviewer": {
+      "model": "opus",
+      "allowedTools": ["AskUserQuestion", "Task", "Write", "Read"]
+    },
+    "plan-checker": {
+      "model": "sonnet",
+      "allowedTools": ["Read", "Grep", "Glob"]
+    },
+    "plan-reviewer": {
+      "model": "sonnet",
+      "allowedTools": ["Read", "Grep", "Glob"]
+    },
+    "architecture": {
+      "model": "opus",
+      "allowedTools": ["Read", "Grep", "Glob", "Task"]
+    },
+    "searcher": {
+      "model": "sonnet",
+      "allowedTools": ["WebSearch", "WebFetch", "Bash"]
+    },
+    "explorer": {
+      "model": "haiku",
+      "allowedTools": ["Glob", "Grep", "Read", "Bash"]
+    },
+    "image-analyst": {
+      "model": "sonnet",
+      "allowedTools": ["Read"]
+    },
+    "high-player": {
+      "model": "opus",
+      "allowedTools": ["Read", "Edit", "Write", "Bash", "Glob", "Grep"]
+    },
+    "low-player": {
+      "model": "sonnet",
+      "allowedTools": ["Read", "Edit", "Write", "Bash", "Grep"]
+    }
+  },
+  "defaults": {
+    "model": "sonnet",
+    "context": "dev"
+  }
+}

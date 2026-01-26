@@ -1,0 +1,61 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/context7-mcp"],
+      "env": {
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+      },
+      "description": "실시간 라이브러리 문서 조회 및 코드 컨텍스트 제공"
+    }
+  },
+
+  "usage": {
+    "maxActiveServers": 10,
+    "contextWindowWarning": "MCP 서버 과다 활성화 시 컨텍스트 윈도우가 200k에서 약 70k로 감소할 수 있습니다."
+  },
+
+  "integration": {
+    "searcher": {
+      "enabled": true,
+      "useFor": [
+        "library_documentation",
+        "api_references",
+        "version_changes",
+        "best_practices"
+      ]
+    },
+    "architecture": {
+      "enabled": true,
+      "useFor": [
+        "design_patterns",
+        "framework_guides"
+      ]
+    }
+  },
+
+  "examples": {
+    "documentation": [
+      "React 19 새로운 훅 문서 조회",
+      "Next.js 15 App Router 변경사항",
+      "TypeScript 5.x 새 기능",
+      "Zod 스키마 검증 사용법"
+    ],
+    "api": [
+      "OpenAI API 최신 버전 사용법",
+      "Stripe API 결제 플로우",
+      "AWS S3 SDK v3 마이그레이션"
+    ],
+    "patterns": [
+      "React Server Components 패턴",
+      "tRPC 타입 안전 API",
+      "Zustand 상태 관리 패턴"
+    ]
+  },
+
+  "fallback": {
+    "enabled": true,
+    "useWebSearch": true,
+    "message": "Context7 MCP가 비활성화된 경우 WebSearch를 사용합니다."
+  }
+}

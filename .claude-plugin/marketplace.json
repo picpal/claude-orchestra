@@ -1,0 +1,47 @@
+{
+  "name": "claude-orchestra",
+  "owner": {
+    "name": "picpal",
+    "url": "https://github.com/picpal"
+  },
+  "metadata": {
+    "description": "Multi-agent TDD orchestration system for high-quality code generation"
+  },
+  "plugins": [
+    {
+      "name": "claude-orchestra",
+      "source": "./",
+      "description": "12 AI agents collaborate in a hierarchical structure to enforce TDD workflow with 6-stage verification loop",
+      "author": {
+        "name": "picpal"
+      },
+      "homepage": "https://github.com/picpal/claude-orchestra",
+      "repository": "https://github.com/picpal/claude-orchestra",
+      "license": "MIT",
+      "keywords": [
+        "tdd",
+        "agents",
+        "verification",
+        "code-review",
+        "testing",
+        "workflow"
+      ],
+      "category": "workflow",
+      "tags": [
+        "tdd",
+        "multi-agent",
+        "orchestration",
+        "verification",
+        "automation"
+      ],
+      "features": [
+        "12 specialized AI agents (Maestro, Planner, Interviewer, etc.)",
+        "TDD enforcement with test-first workflow",
+        "6-stage verification loop (Build, Types, Lint, Tests, Security, Diff)",
+        "Continuous learning from sessions",
+        "25+ dimension code review",
+        "Strategic context compaction"
+      ]
+    }
+  ]
+}

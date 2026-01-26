@@ -1,0 +1,27 @@
+{
+  "name": "claude-orchestra",
+  "description": "12-agent TDD orchestration system with 6-stage verification loop, continuous learning, and automated code review",
+  "author": {
+    "name": "picpal",
+    "url": "https://github.com/picpal"
+  },
+  "homepage": "https://github.com/picpal/claude-orchestra",
+  "repository": "https://github.com/picpal/claude-orchestra",
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "tdd",
+    "multi-agent",
+    "orchestration",
+    "verification",
+    "code-review",
+    "testing",
+    "automation",
+    "workflow"
+  ],
+  "agents": "./agents",
+  "commands": "./commands",
+  "hooks": "./hooks",
+  "rules": "./rules",
+  "contexts": "./contexts"
+}

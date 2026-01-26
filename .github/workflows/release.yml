@@ -1,0 +1,89 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate version
+        run: |
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          PACKAGE_VERSION=$(jq -r '.version' .claude-plugin/plugin.json)
+          if [ "$TAG_VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "Error: Tag version ($TAG_VERSION) does not match plugin.json version ($PACKAGE_VERSION)"
+            exit 1
+          fi
+          echo "Version: $TAG_VERSION"
+
+      - name: Create release archive
+        run: |
+          mkdir -p release
+
+          # Copy templates
+          cp -r templates release/
+
+          # Copy installation scripts
+          cp install.sh release/
+          cp uninstall.sh release/
+
+          # Copy documentation
+          cp README.md release/
+          cp CHANGELOG.md release/
+
+          # Copy plugin metadata
+          cp -r .claude-plugin release/
+
+          # Create archive
+          cd release
+          tar -czvf ../claude-orchestra-${GITHUB_REF#refs/tags/}.tar.gz .
+          cd ..
+
+          # Create zip for Windows users
+          cd release
+          zip -r ../claude-orchestra-${GITHUB_REF#refs/tags/}.zip .
+          cd ..
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+
+          # Extract changelog for this version
+          NOTES=$(awk "/## \[$VERSION\]/,/## \[/" CHANGELOG.md | head -n -1)
+
+          if [ -z "$NOTES" ]; then
+            NOTES="Release $VERSION"
+          fi
+
+          # Save to file for multiline support
+          echo "$NOTES" > release_notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            claude-orchestra-*.tar.gz
+            claude-orchestra-*.zip
+          body_path: release_notes.md
+          draft: false
+          prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update latest tag
+        run: |
+          git tag -f latest
+          git push -f origin latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
