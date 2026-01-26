@@ -94,6 +94,18 @@ Claude Code 터미널에서:
 /plugin install claude-orchestra@claude-orchestra
 ```
 
+**설치 Scope 선택:**
+
+`/plugin install` 실행 시 설치 범위를 선택합니다:
+
+| Scope | 설명 | 저장 위치 | 적용 범위 |
+|-------|------|----------|----------|
+| **User scope** | 사용자 전체에 설치 | `~/.claude/` | 이 PC의 모든 프로젝트 |
+| **Project scope** | 프로젝트에 설치 (Git 커밋 가능) | `프로젝트/.claude/` | 팀원과 공유됨 |
+| **Local scope** | 프로젝트 로컬 설치 (Git 제외) | `프로젝트/.claude/` | 이 PC, 이 프로젝트만 |
+
+> **추천:** 혼자 사용 → User scope / 팀 프로젝트 → Project scope
+
 또는 `~/.claude/settings.json`에 직접 추가:
 
 ```json
