@@ -140,16 +140,11 @@ cp .claude/settings.json /path/to/your/project/.claude/
 # .orchestra 상태 파일 복사
 mkdir -p /path/to/your/project/.orchestra/{plans,notepads,logs}
 cp orchestra-init/*.json /path/to/your/project/.orchestra/
-
-# CLAUDE.md 복사
-cp CLAUDE.md /path/to/your/project/
 ```
 
 ---
 
 ## 설치되는 컴포넌트
-
-총 **76개 파일**이 설치됩니다:
 
 | 카테고리 | 개수 | 경로 | 설명 |
 |----------|------|------|------|
@@ -160,7 +155,6 @@ cp CLAUDE.md /path/to/your/project/
 | **Hooks** | 15 | `.claude/hooks/` | 자동화 훅 스크립트 |
 | **Settings** | 1 | `.claude/settings.json` | 에이전트 설정 |
 | **Orchestra** | 2+ | `.orchestra/` | 상태 관리 파일 |
-| **Docs** | 1 | `CLAUDE.md` | 프로젝트 가이드 |
 
 ---
 
@@ -254,8 +248,6 @@ your-project/
 │   ├── plans/                  # 계획 문서 저장
 │   ├── notepads/               # 작업 노트
 │   └── logs/                   # 세션 로그
-│
-└── CLAUDE.md                   # 프로젝트 가이드 (Claude가 읽음)
 ```
 
 ### 레포지토리 구조 (Marketplace 호환)
@@ -277,7 +269,6 @@ claude-orchestra/
 │   └── state.json
 ├── install.sh                  # Clone 사용자용 설치 스크립트
 ├── uninstall.sh                # 제거 스크립트
-├── CLAUDE.md
 └── README.md
 ```
 
