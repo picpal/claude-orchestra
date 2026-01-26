@@ -26,14 +26,14 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Edit|Write",
-        "command": ".claude/hooks/tdd-guard.sh \"$TOOL_INPUT\""
+        "matcher": {"tools": ["Edit", "Write"]},
+        "hooks": [{"type": "command", "command": ".claude/hooks/tdd-guard.sh \"$TOOL_INPUT\""}]
       }
     ],
     "PostToolUse": [
       {
-        "matcher": "Bash",
-        "command": ".claude/hooks/test-logger.sh \"$TOOL_INPUT\" \"$TOOL_OUTPUT\""
+        "matcher": {"tools": ["Bash"]},
+        "hooks": [{"type": "command", "command": ".claude/hooks/test-logger.sh \"$TOOL_INPUT\" \"$TOOL_OUTPUT\""}]
       }
     ]
   },
