@@ -116,10 +116,6 @@ if [ -d "$SCRIPT_DIR/orchestra-init/templates" ]; then
   cp -r "$SCRIPT_DIR/orchestra-init/templates/"* "$TARGET_DIR/.orchestra/templates/" 2>/dev/null || true
 fi
 
-# Copy CLAUDE.md
-echo "📖 Installing CLAUDE.md..."
-cp "$SCRIPT_DIR/CLAUDE.md" "$TARGET_DIR/CLAUDE.md"
-
 echo ""
 echo -e "${GREEN}╔═══════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${GREEN}║              Installation Complete!                            ║${NC}"
@@ -147,5 +143,4 @@ echo "  /status        - Check current status"
 echo "  /tdd-cycle     - TDD cycle guide"
 echo "  /verify        - Run verification loop"
 echo ""
-echo "Documentation: CLAUDE.md"
 echo ""
