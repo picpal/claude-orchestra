@@ -12,6 +12,44 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
+# Get script directory (where claude-orchestra repo is cloned)
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Show help
+show_help() {
+  echo ""
+  echo "Usage: ./install.sh [OPTIONS] [TARGET_PATH]"
+  echo ""
+  echo "Options:"
+  echo "  -h, --help     Show this help message"
+  echo "  -t, --target   Specify target directory"
+  echo ""
+  echo "Examples:"
+  echo "  ./install.sh                      # Interactive mode"
+  echo "  ./install.sh /path/to/project     # Direct path"
+  echo "  ./install.sh -t /path/to/project  # With flag"
+  echo ""
+  exit 0
+}
+
+# Parse arguments
+TARGET_DIR=""
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -h|--help)
+      show_help
+      ;;
+    -t|--target)
+      TARGET_DIR="$2"
+      shift 2
+      ;;
+    *)
+      TARGET_DIR="$1"
+      shift
+      ;;
+  esac
+done
+
 echo ""
 echo -e "${BLUE}╔═══════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${BLUE}║           Claude Orchestra - Manual Installer                  ║${NC}"
@@ -22,9 +60,6 @@ echo -e "${BLUE}║   /plugin install claude-orchestra@claude-orchestra         
 echo -e "${BLUE}╚═══════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
-# Get script directory (where claude-orchestra repo is cloned)
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-
 # Verify we're in the right directory
 if [ ! -d "$SCRIPT_DIR/agents" ] || [ ! -d "$SCRIPT_DIR/commands" ]; then
   echo -e "${RED}Error: agents/ or commands/ directory not found${NC}"
@@ -32,14 +67,38 @@ if [ ! -d "$SCRIPT_DIR/agents" ] || [ ! -d "$SCRIPT_DIR/commands" ]; then
   exit 1
 fi
 
-# Target directory (user's project)
-TARGET_DIR="${1:-.}"
+# If no target specified, ask interactively
+if [ -z "$TARGET_DIR" ]; then
+  echo -e "${CYAN}Enter the target project path:${NC}"
+  echo -e "${YELLOW}(where Claude Orchestra will be installed)${NC}"
+  echo ""
+  read -p "> " TARGET_DIR
+  echo ""
+
+  if [ -z "$TARGET_DIR" ]; then
+    echo -e "${RED}Error: No target path provided${NC}"
+    exit 1
+  fi
+fi
+
+# Expand ~ to home directory
+TARGET_DIR="${TARGET_DIR/#\~/$HOME}"
+
+# Create directory if it doesn't exist
+if [ ! -d "$TARGET_DIR" ]; then
+  echo -e "${YELLOW}Directory does not exist: $TARGET_DIR${NC}"
+  read -p "Create it? (y/N) " -n 1 -r
+  echo
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    mkdir -p "$TARGET_DIR"
+  else
+    echo "Installation cancelled"
+    exit 0
+  fi
+fi
 
 # Convert to absolute path
-TARGET_DIR="$(cd "$TARGET_DIR" 2>/dev/null && pwd)" || {
-  echo -e "${RED}Error: Target directory does not exist: $1${NC}"
-  exit 1
-}
+TARGET_DIR="$(cd "$TARGET_DIR" && pwd)"
 
 echo -e "${CYAN}Source:${NC} $SCRIPT_DIR"
 echo -e "${CYAN}Target:${NC} $TARGET_DIR"
@@ -121,7 +180,7 @@ echo -e "${GREEN}╔════════════════════
 echo -e "${GREEN}║              Installation Complete!                            ║${NC}"
 echo -e "${GREEN}╚═══════════════════════════════════════════════════════════════╝${NC}"
 echo ""
-echo "Installed to: $TARGET_DIR"
+echo -e "Installed to: ${CYAN}$TARGET_DIR${NC}"
 echo ""
 echo -e "${CYAN}.claude/${NC}"
 echo "  ├── agents/      (12 agents)"
@@ -138,9 +197,9 @@ echo "  ├── plans/"
 echo "  └── logs/"
 echo ""
 echo -e "${YELLOW}Quick Start:${NC}"
+echo "  cd $TARGET_DIR"
+echo "  claude"
+echo ""
 echo "  /start-work    - Start a work session"
 echo "  /status        - Check current status"
-echo "  /tdd-cycle     - TDD cycle guide"
-echo "  /verify        - Run verification loop"
-echo ""
 echo ""
