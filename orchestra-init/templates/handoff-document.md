@@ -132,7 +132,7 @@
 ## 9. ARTIFACTS
 
 ### Generated Files
-- `.orchestra/notepads/{session-id}/notes.md`
+- `.orchestra/journal/{session-id}/notes.md`
 - `.orchestra/plans/{plan-name}.md`
 
 ### Logs

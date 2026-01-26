@@ -104,7 +104,7 @@ mkdir "%TARGET_DIR%\.claude\hooks\compact" 2>nul
 
 :: Create .orchestra directory structure
 mkdir "%TARGET_DIR%\.orchestra\plans" 2>nul
-mkdir "%TARGET_DIR%\.orchestra\notepads" 2>nul
+mkdir "%TARGET_DIR%\.orchestra\journal" 2>nul
 mkdir "%TARGET_DIR%\.orchestra\logs" 2>nul
 mkdir "%TARGET_DIR%\.orchestra\mcp-configs" 2>nul
 mkdir "%TARGET_DIR%\.orchestra\templates" 2>nul

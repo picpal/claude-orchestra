@@ -61,7 +61,7 @@
   },
   "paths": {
     "plans": ".orchestra/plans",
-    "notepads": ".orchestra/notepads",
+    "journal": ".orchestra/journal",
     "logs": ".orchestra/logs",
     "hooks": ".orchestra/hooks"
   },

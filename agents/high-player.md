@@ -224,7 +224,7 @@ function maskEmail(email: string): string {
 ## Notepad Usage
 
 ```markdown
-## 작업 노트 (.orchestra/notepads/{session-id}/notes.md)
+## 작업 일지 (.orchestra/journal/{session-id}/notes.md)
 
 ### Progress
 - [x] Step 1: {완료}

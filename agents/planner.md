@@ -92,7 +92,7 @@ Plan (.orchestra/plans/{name}.md)
 - 불필요한 리팩토링 금지
 
 ## 6. CONTEXT
-- 노트패드: `.orchestra/notepads/{session-id}/`
+- 작업 일지: `.orchestra/journal/{session-id}/`
 - 관련 파일:
   - `{related-file-1}`
   - `{related-file-2}`

@@ -162,7 +162,7 @@ cp -r agents commands rules contexts hooks /path/to/your/project/.claude/
 cp .claude/settings.json /path/to/your/project/.claude/
 
 # .orchestra 상태 파일 복사
-mkdir -p /path/to/your/project/.orchestra/{plans,notepads,logs}
+mkdir -p /path/to/your/project/.orchestra/{plans,journal,logs}
 cp orchestra-init/*.json /path/to/your/project/.orchestra/
 ```
 
@@ -270,9 +270,24 @@ your-project/
 │   ├── config.json             # 프로젝트 설정
 │   ├── state.json              # 런타임 상태
 │   ├── plans/                  # 계획 문서 저장
-│   ├── notepads/               # 작업 노트
-│   └── logs/                   # 세션 로그
+│   ├── journal/                # 작업 일지 (아래 참조)
+│   └── logs/                   # 시스템 로그 (아래 참조)
 ```
+
+#### logs/ vs journal/ 차이점
+
+| 디렉토리 | 용도 | 생성 주체 | 형식 |
+|----------|------|-----------|------|
+| `logs/` | 시스템 자동 로그 | Hook/스크립트 | `.log`, `.json` |
+| `journal/` | 작업 일지 | 에이전트 | `.md` (마크다운) |
+
+**logs/** - 자동화 스크립트가 생성하는 기계용 로그
+- `test-runs.log` - 테스트 실행 기록
+- `verification-*.json` - 검증 결과 (build, types, lint, tests, security)
+- `tdd-guard.log` - TDD 가드 로그
+
+**journal/** - 에이전트가 작성하는 사람용 작업 일지
+- `{session-id}/notes.md` - 진행상황, 결정사항, 이슈, 질문 기록
 
 ---
 

@@ -130,7 +130,7 @@ mkdir -p "$TARGET_DIR/.claude/hooks/compact"
 
 # Create .orchestra directory structure
 mkdir -p "$TARGET_DIR/.orchestra/plans"
-mkdir -p "$TARGET_DIR/.orchestra/notepads"
+mkdir -p "$TARGET_DIR/.orchestra/journal"
 mkdir -p "$TARGET_DIR/.orchestra/logs"
 mkdir -p "$TARGET_DIR/.orchestra/mcp-configs"
 mkdir -p "$TARGET_DIR/.orchestra/templates"

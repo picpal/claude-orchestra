@@ -10,7 +10,7 @@
 
 ```bash
 # 디렉토리 생성
-mkdir -p .orchestra/plans .orchestra/logs .orchestra/notepads .orchestra/mcp-configs .orchestra/templates
+mkdir -p .orchestra/plans .orchestra/logs .orchestra/journal .orchestra/mcp-configs .orchestra/templates
 ```
 
 **config.json 생성:**
