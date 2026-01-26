@@ -25,14 +25,6 @@
         "code-review",
         "testing",
         "workflow"
-      ],
-      "category": "workflow",
-      "tags": [
-        "tdd",
-        "multi-agent",
-        "orchestration",
-        "verification",
-        "automation"
       ]
     }
   ]

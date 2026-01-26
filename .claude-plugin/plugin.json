@@ -18,10 +18,5 @@
     "testing",
     "automation",
     "workflow"
-  ],
-  "agents": "./agents",
-  "commands": "./commands",
-  "hooks": "./hooks",
-  "rules": "./rules",
-  "contexts": "./contexts"
+  ]
 }
