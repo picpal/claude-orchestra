@@ -114,16 +114,28 @@ Claude Code 터미널에서:
 
 ### 방법 2: Clone + Install Script
 
+**Linux / macOS:**
 ```bash
-# 1. 레포지토리 클론
 git clone https://github.com/picpal/claude-orchestra.git
 cd claude-orchestra
 
-# 2. 프로젝트에 설치
-./install.sh /path/to/your/project
+# 대화형 모드
+./install.sh
 
-# 또는 현재 디렉토리에 설치
-./install.sh .
+# 또는 직접 경로 지정
+./install.sh /path/to/your/project
+```
+
+**Windows:**
+```cmd
+git clone https://github.com/picpal/claude-orchestra.git
+cd claude-orchestra
+
+# 대화형 모드
+install.bat
+
+# 또는 직접 경로 지정
+install.bat C:\path\to\your\project
 ```
 
 ### 방법 3: 수동 설치
@@ -267,7 +279,8 @@ claude-orchestra/
 ├── orchestra-init/             # 초기화 파일 (install.sh용)
 │   ├── config.json
 │   └── state.json
-├── install.sh                  # Clone 사용자용 설치 스크립트
+├── install.sh                  # Linux/macOS 설치 스크립트
+├── install.bat                 # Windows 설치 스크립트
 ├── uninstall.sh                # 제거 스크립트
 └── README.md
 ```
