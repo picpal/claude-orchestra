@@ -33,14 +33,6 @@
         "orchestration",
         "verification",
         "automation"
-      ],
-      "features": [
-        "12 specialized AI agents (Maestro, Planner, Interviewer, etc.)",
-        "TDD enforcement with test-first workflow",
-        "6-stage verification loop (Build, Types, Lint, Tests, Security, Diff)",
-        "Continuous learning from sessions",
-        "25+ dimension code review",
-        "Strategic context compaction"
       ]
     }
   ]
