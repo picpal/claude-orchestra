@@ -262,38 +262,8 @@ your-project/
 │   └── logs/                   # 세션 로그
 ```
 
-### 레포지토리 구조 (Marketplace 호환)
-
-```
-claude-orchestra/
-├── .claude-plugin/             # 플러그인 마켓플레이스 메타데이터
-│   ├── plugin.json             # 플러그인 정보
-│   └── marketplace.json        # 마켓플레이스 등록 정보
-├── .claude/
-│   └── settings.json           # 기본 설정
-├── agents/                     # 에이전트 (루트에 배치 = 마켓플레이스 호환)
-├── commands/                   # 명령어
-├── rules/                      # 규칙
-├── contexts/                   # 컨텍스트
-├── hooks/                      # 훅
-├── orchestra-init/             # 초기화 파일 (install.sh용)
-│   ├── config.json
-│   └── state.json
-├── install.sh                  # Linux/macOS 설치 스크립트
-├── install.bat                 # Windows 설치 스크립트
-├── uninstall.sh                # 제거 스크립트
-└── README.md
-```
-
 ---
 
-## 요구사항
-
-- **Claude Code** v1.0.0+
-- **Node.js** 18+ (검증 스크립트 실행용)
-- **Git** (커밋 자동화용)
-
----
 
 ## 제거
 
@@ -301,13 +271,6 @@ claude-orchestra/
 
 ```bash
 /plugin uninstall claude-orchestra@claude-orchestra
-```
-
-### Manual 설치 제거
-
-```bash
-# claude-orchestra 디렉토리에서
-./uninstall.sh /path/to/your/project
 ```
 
 ---
