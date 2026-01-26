@@ -4,7 +4,57 @@
 
 ## 실행 절차
 
+### 0. Orchestra 초기화 (최초 실행 시)
+
+`.orchestra/` 디렉토리가 없으면 자동 생성합니다.
+
+```bash
+# 디렉토리 생성
+mkdir -p .orchestra/plans .orchestra/logs .orchestra/notepads .orchestra/mcp-configs .orchestra/templates
+```
+
+**config.json 생성:**
+```json
+{
+  "projectName": "",
+  "language": "auto-detect",
+  "testFramework": "auto-detect",
+  "coverageThreshold": 80,
+  "autoCommit": false,
+  "verificationMode": "standard"
+}
+```
+
+**state.json 생성:**
+```json
+{
+  "mode": "IDLE",
+  "currentContext": "dev",
+  "currentPlan": null,
+  "todos": [],
+  "tddMetrics": {
+    "testCount": 0,
+    "redGreenCycles": 0,
+    "testDeletionAttempts": 0
+  },
+  "commitHistory": [],
+  "verificationMetrics": {
+    "lastRun": null,
+    "mode": null,
+    "results": {},
+    "prReady": false,
+    "blockers": []
+  },
+  "learningMetrics": {
+    "totalSessions": 0,
+    "patternsExtracted": 0,
+    "lastLearningRun": null
+  }
+}
+```
+
 ### 1. 상태 확인
+
 현재 Orchestra 상태를 확인합니다.
 
 ```bash
@@ -51,6 +101,7 @@ cat .orchestra/state.json
 사용 가능한 명령어:
 - /status: 현재 상태 확인
 - /tdd-cycle: TDD 사이클 안내
+- /verify: 검증 루프 실행
 
 무엇을 도와드릴까요?
 ```
