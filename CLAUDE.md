@@ -54,7 +54,7 @@
 
 | 명령어 | 설명 |
 |--------|------|
-| `/init` | Orchestra 초기화 (rules 복사 + 상태 디렉토리 생성) |
+| `/tuning` | Orchestra 초기화 (rules 복사 + 상태 디렉토리 생성) |
 | `/start-work` | 작업 세션 시작 |
 | `/status` | 현재 상태 확인 |
 | `/tdd-cycle` | TDD 사이클 안내 |
@@ -89,14 +89,14 @@ claude-orchestra/              # 플러그인 루트
 │   ├── verification/          # 검증 스크립트
 │   ├── learning/              # 패턴 학습
 │   └── compact/               # 컨텍스트 압축
-├── rules/                     # 코드 규칙 (/init 시 프로젝트에 복사)
+├── rules/                     # 코드 규칙 (/tuning 시 프로젝트에 복사)
 ├── contexts/                  # (호환용) 컨텍스트 파일
 ├── .claude/
 │   └── settings.json          # 에이전트/권한 설정
 └── CLAUDE.md
 ```
 
-### /init 후 프로젝트에 생성되는 구조
+### /tuning 후 프로젝트에 생성되는 구조
 
 ```
 your-project/

@@ -1,19 +1,19 @@
-# /init - Orchestra 상태 추적 활성화
+# /tuning - Orchestra 상태 추적 활성화
 
 `.orchestra/` 상태 디렉토리를 생성하여 상태 추적을 활성화합니다.
 
 ## 왜 필요한가?
 
-Orchestra는 **init 없이도 기본 동작**합니다. `UserPromptSubmit` hook이 매 요청마다 프로토콜을 자동 주입하므로, 플러그인 설치만으로 TDD 워크플로우와 Intent 분류가 작동합니다.
+Orchestra는 **tuning 없이도 기본 동작**합니다. `UserPromptSubmit` hook이 매 요청마다 프로토콜을 자동 주입하므로, 플러그인 설치만으로 TDD 워크플로우와 Intent 분류가 작동합니다.
 
-`/init`을 실행하면 추가로:
+`/tuning`을 실행하면 추가로:
 - **상태 추적**: mode, context, TODO 진행률 표시
 - **계획 관리**: `.orchestra/plans/`에 계획 문서 저장
 - **로그 기록**: 작업 이력 보관
 
-## init 없이 vs init 후
+## tuning 없이 vs tuning 후
 
-| 기능 | init 없이 | init 후 |
+| 기능 | tuning 없이 | tuning 후 |
 |------|-----------|---------|
 | 프로토콜 주입 | O | O |
 | Intent 분류 | O | O |
