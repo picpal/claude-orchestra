@@ -4,7 +4,16 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ORCHESTRA_DIR=".orchestra"
+
+# 슬래시 커맨드 감지 및 활동 로그 기록
+if [ -n "${PROMPT:-}" ]; then
+  CMD_NAME=$(echo "$PROMPT" | grep -oE '^/[a-zA-Z0-9_-]+' || true)
+  if [ -n "$CMD_NAME" ]; then
+    "$SCRIPT_DIR/activity-logger.sh" COMMAND "$CMD_NAME" 2>/dev/null || true
+  fi
+fi
 STATE_FILE="$ORCHESTRA_DIR/state.json"
 
 # 기본값
