@@ -5,9 +5,6 @@
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-"$SCRIPT_DIR/activity-logger.sh" HOOK tdd-guard 2>/dev/null || true
-
 TOOL_INPUT="$1"
 STATE_FILE=".orchestra/state.json"
 LOG_FILE=".orchestra/logs/tdd-guard.log"
