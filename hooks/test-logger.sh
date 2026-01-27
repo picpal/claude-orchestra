@@ -3,6 +3,9 @@
 # 테스트 실행 결과를 기록하고 TDD 메트릭을 업데이트합니다.
 # PostToolUse Hook (Bash 매처)
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+"$SCRIPT_DIR/activity-logger.sh" HOOK test-logger 2>/dev/null || true
+
 TOOL_INPUT="$1"
 TOOL_OUTPUT="$2"
 STATE_FILE=".orchestra/state.json"

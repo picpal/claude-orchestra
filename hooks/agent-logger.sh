@@ -42,3 +42,6 @@ fi
 if [ "$MODE" = "pre" ]; then
     "$SCRIPT_DIR/activity-logger.sh" AGENT "$AGENT_NAME" "$DESCRIPTION" 2>/dev/null || true
 fi
+
+# Hook 자체 활동도 기록
+"$SCRIPT_DIR/activity-logger.sh" HOOK agent-logger "$MODE" 2>/dev/null || true
