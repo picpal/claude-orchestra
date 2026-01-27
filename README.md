@@ -36,7 +36,9 @@ Claude Orchestra는 12개의 전문 에이전트가 계층 구조로 협력하�
 # Claude Code에서 실행
 /plugin marketplace add picpal/claude-orchestra
 /plugin install claude-orchestra@claude-orchestra
-/init          # 프로젝트에 컴포넌트 복사 (필수!)
+
+# 프로젝트에 컴포넌트 복사 (필수!)
+/init          
 ```
 
 ### 📦 Clone + Install
