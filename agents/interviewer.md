@@ -132,7 +132,9 @@ Plan 완성
 
 ## TODO List
 
-### Feature: {feature-name}
+### Feature: {feature-name} (group: {group-id})
+<!-- 병렬 실행 가능: parallel: true (기본값) -->
+<!-- 의존성 지정: dependsOn: [group-ids] -->
 
 - [ ] [TEST] {테스트 설명}
   - Files: `{test-file-path}`
@@ -165,14 +167,37 @@ Plan 완성
 ```markdown
 ## TODO List
 
-### Feature: User Authentication
-
+### Feature: Auth (group: auth)
 - [ ] [TEST] 로그인 실패 테스트 (잘못된 비밀번호)
 - [ ] [TEST] 로그인 성공 테스트
 - [ ] [IMPL] 로그인 API 엔드포인트 구현
-- [ ] [TEST] 세션 만료 테스트
-- [ ] [IMPL] 세션 관리 구현
-- [ ] [REFACTOR] 인증 로직 모듈화
+
+### Feature: Signup (group: signup, parallel: true)
+- [ ] [TEST] 회원가입 테스트
+- [ ] [IMPL] 회원가입 구현
+
+### Feature: Dashboard (group: dashboard, dependsOn: [auth])
+- [ ] [TEST] 대시보드 테스트
+- [ ] [IMPL] 대시보드 구현
+```
+
+## Parallel Execution Rules
+
+### 그룹 속성
+- `group`: 그룹 식별자 (필수)
+- `parallel: true`: 다른 그룹과 병렬 실행 가능 (기본값)
+- `dependsOn: [group-ids]`: 선행 그룹 지정
+
+### 실행 순서 결정
+```
+그룹 내: TDD 순서 자동 보장 (TEST → IMPL → REFACTOR)
+그룹 간: 의존성 없으면 병렬 실행
+```
+
+### 예시
+```
+auth, signup → 병렬 실행
+dashboard → auth 완료 후 실행
 ```
 
 ## Plan-Checker Consultation

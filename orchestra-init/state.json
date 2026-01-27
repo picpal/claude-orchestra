@@ -3,6 +3,29 @@
   "currentContext": "dev",
   "currentPlan": null,
   "todos": [],
+  "todoSchema": {
+    "_comment": "Each todo item can have these fields",
+    "example": {
+      "id": "auth-test-1",
+      "type": "TEST",
+      "group": "auth",
+      "status": "pending",
+      "parallelInfo": {
+        "batchId": null,
+        "level": 0,
+        "canParallel": true,
+        "dependencies": []
+      }
+    }
+  },
+  "parallelMetrics": {
+    "totalBatches": 0,
+    "avgBatchSize": 0,
+    "parallelEfficiency": 0,
+    "lastBatchAt": null,
+    "groupsExecuted": [],
+    "levelHistory": []
+  },
   "tddMetrics": {
     "testCount": 0,
     "redGreenCycles": 0,

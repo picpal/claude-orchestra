@@ -120,7 +120,7 @@
 
 ## 병렬 호출
 
-### 허용되는 병렬 호출
+### Research Layer (허용되는 병렬 호출)
 ```
 Maestro
 ├── Explorer (내부 검색)
@@ -128,9 +128,36 @@ Maestro
 └── Architecture (패턴 분석)
 ```
 
+### Execution Layer (병렬 실행 규칙)
+
+Planner가 독립 그룹의 Executor를 병렬로 호출할 수 있습니다.
+
+#### 허용되는 병렬 호출
+```
+Planner
+├── High-Player (auth 그룹 TODO)
+├── High-Player (signup 그룹 TODO)    ← 같은 레벨, 독립 그룹
+└── Low-Player (logging 그룹 TODO)    ← 복잡도 낮은 독립 그룹
+
+# 같은 Phase의 독립 그룹은 병렬 실행
+[auth:TEST] + [signup:TEST] → 병렬 가능
+[auth:IMPL] + [signup:IMPL] → 병렬 가능
+```
+
+#### 금지되는 병렬 호출
+```
+# 같은 그룹 내 TEST/IMPL 동시 실행 금지
+[auth:TEST] + [auth:IMPL] → 순차 필수 (TDD)
+
+# 의존 그룹 동시 실행 금지
+[auth:*] + [dashboard:*] → dashboard는 auth 완료 후
+                         (dashboard dependsOn: [auth])
+```
+
 ### 순차 실행 필수
 ```
-[TEST] TODO → 완료 확인 → [IMPL] TODO
+그룹 내: [TEST] → [IMPL] → [REFACTOR]
+의존 그룹: 선행 그룹 완료 → 후속 그룹 시작
 Verification Loop → 각 Phase 순차 실행
 ```
 

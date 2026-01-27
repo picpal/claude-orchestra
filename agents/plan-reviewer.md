@@ -105,6 +105,26 @@ sonnet
 - [ ] 경계가 분명한가?
 ```
 
+### 5. Parallelization Readiness
+```markdown
+## 병렬화 준비 검증
+
+### 그룹 구조 검증
+- [ ] Feature가 명시적 그룹으로 분류되었는가?
+- [ ] 그룹 간 의존성(dependsOn)이 명시되었는가?
+- [ ] 각 그룹의 범위가 명확한가?
+
+### 순환 의존성 검증
+- [ ] A → B → A 같은 순환이 없는가?
+- [ ] 의존성 체인이 너무 깊지 않은가? (권장: 3단계 이하)
+- [ ] 자기 자신에 대한 의존성이 없는가?
+
+### 파일 충돌 검증
+- [ ] 병렬 그룹들이 같은 파일을 수정하지 않는가?
+- [ ] 공유 리소스 접근이 분리되었는가?
+- [ ] 인터페이스 변경이 다른 그룹에 영향을 주지 않는가?
+```
+
 ## Review Output Format
 
 ```markdown
@@ -193,6 +213,42 @@ sonnet
   - Input: valid email, correct password
   - Expected: 200 OK, JWT token in response
   - Verify: token is valid and contains user ID
+```
+
+### Parallelization Anti-patterns
+```markdown
+❌ Bad: 숨겨진 의존성
+### Feature: Cache (group: cache, parallel: true)
+### Feature: API (group: api, parallel: true)
+  - [IMPL] API 응답 캐싱  ← cache 그룹에 의존!
+
+✅ Good: 명시적 의존성
+### Feature: Cache (group: cache)
+### Feature: API (group: api, dependsOn: [cache])
+
+---
+
+❌ Bad: 파일 충돌
+### Feature: Auth (group: auth, parallel: true)
+  - [IMPL] utils.ts 수정
+### Feature: Admin (group: admin, parallel: true)
+  - [IMPL] utils.ts 수정  ← 충돌!
+
+✅ Good: 파일 분리 또는 순차 실행
+### Feature: Auth (group: auth)
+  - [IMPL] auth-utils.ts 수정
+### Feature: Admin (group: admin, dependsOn: [auth])
+  - [IMPL] utils.ts 수정
+
+---
+
+❌ Bad: 순환 의존성
+### Feature: A (group: a, dependsOn: [b])
+### Feature: B (group: b, dependsOn: [a])  ← 순환!
+
+✅ Good: 단방향 의존성
+### Feature: A (group: a)
+### Feature: B (group: b, dependsOn: [a])
 ```
 
 ## Learned Patterns Integration

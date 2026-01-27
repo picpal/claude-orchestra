@@ -43,32 +43,68 @@ TODO 완료 전담. Executor에게 작업을 위임하고, 검증 후 Git Commit
 
 ## TODO Processing Flow
 
+### Phase 1: 의존성 그래프 분석
 ```
 Plan (.orchestra/plans/{name}.md)
     │
     ▼
-[TODO 순회]
+[그룹 추출]
+    │
+    ├─ group: auth, dependsOn: []
+    ├─ group: signup, dependsOn: []
+    └─ group: dashboard, dependsOn: [auth]
+    │
+    ▼
+[실행 레벨 결정]
+    │
+    ├─ Level 0: auth, signup (병렬 가능)
+    └─ Level 1: dashboard (auth 완료 후)
+```
+
+### Phase 2: 레벨별 병렬 실행
+```
+Level 0 (병렬):
+    ┌─ Task(executor, auth-todos) ────┐
+    │                                  ├─► 모두 완료 대기
+    └─ Task(executor, signup-todos) ──┘
+    │
+    ▼
+Level 0 완료 확인
+    │
+    ▼
+Level 1:
+    └─ Task(executor, dashboard-todos)
+```
+
+### Phase 3: 그룹 내 TDD 순서 (자동 보장)
+```
+각 그룹 내에서:
     │
     ├─ [TEST] → 테스트 작성 위임
     │     │
     │     ▼
     │   Executor 완료
-    │     │
-    │     ▼
-    │   Verification Loop
-    │     │
-    │     ▼
-    │   PR Ready? → Git Commit
     │
     ├─ [IMPL] → 구현 위임 (TEST 완료 후에만)
     │     │
     │     ▼
-    │   (동일 플로우)
+    │   Executor 완료
     │
     └─ [REFACTOR] → 리팩토링 위임
           │
           ▼
-        (동일 플로우)
+        Executor 완료
+```
+
+### Phase 4: 배치 검증 & 커밋
+```
+모든 Task 완료
+    │
+    ▼
+Verification Loop (batch mode)
+    │
+    ▼
+PR Ready? → Git Commit (배치)
 ```
 
 ## Complexity Assessment
@@ -163,6 +199,56 @@ Plan: {plan-name}
 1. `[IMPL]` TODO는 반드시 `[TEST]` 완료 후 시작
 2. 테스트 실패 없이 구현 시작 금지
 3. 커버리지 80% 미만 시 추가 테스트 요청
+
+## Parallel Execution
+
+### 병렬 Task 호출 패턴
+독립 그룹을 **동시에 여러 Task로 위임**:
+
+```markdown
+# 하나의 응답에서 여러 Task tool 호출 (병렬)
+<Task: high-player, prompt: auth-group-todos>
+<Task: high-player, prompt: signup-group-todos>
+```
+
+### 의존성 그래프 파싱
+```
+1. Plan 파일에서 Feature 그룹 추출
+2. dependsOn 속성으로 의존성 맵 생성
+3. 위상 정렬로 실행 레벨 결정:
+   - Level 0: 의존성 없는 그룹들
+   - Level N: Level N-1에 의존하는 그룹들
+```
+
+### 결과 취합
+- 모든 Task 완료 후 다음 레벨 진행
+- 실패 시: 해당 그룹만 재시도, 독립 그룹은 계속 진행
+- 부분 성공 허용: 독립 그룹 간 영향 없음
+
+### 배치 커밋 형식
+```
+[PARALLEL] Auth + Signup 구현
+
+Groups:
+- auth: TEST(2) + IMPL(2)
+- signup: TEST(1) + IMPL(1)
+
+Files: 6 changed
+Coverage: 85.2%
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+### state.json 업데이트
+```json
+{
+  "todos[].parallelInfo": {
+    "batchId": "batch-001",
+    "level": 0,
+    "canParallel": true
+  }
+}
+```
 
 ## Tools Available
 - Task (Executor 위임)
