@@ -1,0 +1,30 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/user-prompt-submit.sh"}]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/tdd-guard.sh \"$TOOL_INPUT\""}]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/agent-logger.sh pre \"$TOOL_INPUT\""}]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/test-logger.sh \"$TOOL_INPUT\" \"$TOOL_OUTPUT\""}]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/agent-logger.sh post \"$TOOL_INPUT\" \"$TOOL_OUTPUT\""}]
+      }
+    ]
+  }
+}

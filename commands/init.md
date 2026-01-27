@@ -26,7 +26,16 @@ Orchestra는 **init 없이도 기본 동작**합니다. `UserPromptSubmit` hook�
 
 ## 실행 절차
 
-### 1. .orchestra 디렉토리 생성
+### 1. rules 복사
+
+프로젝트의 `.claude/rules/` 디렉토리에 Orchestra 규칙을 복사합니다:
+
+```bash
+mkdir -p .claude/rules
+cp -r ${CLAUDE_PLUGIN_ROOT}/rules/*.md .claude/rules/
+```
+
+### 2. .orchestra 디렉토리 생성
 
 ```bash
 mkdir -p .orchestra/plans
@@ -36,7 +45,7 @@ mkdir -p .orchestra/mcp-configs
 mkdir -p .orchestra/templates
 ```
 
-### 2. config.json 생성
+### 3. config.json 생성
 
 ```json
 {
@@ -49,7 +58,7 @@ mkdir -p .orchestra/templates
 }
 ```
 
-### 3. state.json 생성
+### 4. state.json 생성
 
 ```json
 {
@@ -78,7 +87,7 @@ mkdir -p .orchestra/templates
 }
 ```
 
-### 4. 완료 메시지
+### 5. 완료 메시지
 
 ```
 Orchestra 상태 추적 활성화 완료!

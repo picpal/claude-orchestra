@@ -30,18 +30,18 @@ Claude Orchestra는 12개의 전문 에이전트가 계층 구조로 협력하�
 
 ## Quick Start
 
-### 🚀 Plugin Marketplace (권장)
+### Plugin Marketplace (권장)
 
 ```bash
 # Claude Code에서 실행
 /plugin marketplace add picpal/claude-orchestra
 /plugin install claude-orchestra@claude-orchestra
 
-# 프로젝트에 컴포넌트 복사 (필수!)
-/init          
+# 프로젝트 초기화 (rules 복사 + 상태 디렉토리 생성)
+/init
 ```
 
-### 📦 Clone + Install
+### Clone + Install
 
 ```bash
 git clone https://github.com/picpal/claude-orchestra.git
@@ -104,20 +104,6 @@ Claude Code 터미널에서:
 /start-work
 ```
 
-> **중요:** `/init`을 실행해야 서브에이전트와 모든 기능이 작동합니다.
-> 플러그인만 설치하면 `/agents`에서 "no agents found"가 표시됩니다.
-
-**왜 `/init`이 필요한가?**
-
-Claude Code는 에이전트를 다음 순서로 찾습니다:
-1. 프로젝트 레벨 (`.claude/agents/`) ← **여기에 있어야 서브에이전트 작동**
-2. 사용자 레벨 (`~/.claude/agents/`)
-3. 플러그인 레벨 ← 가장 낮은 우선순위
-
-플러그인 설치만으로는 플러그인 캐시에 저장되어 서브에이전트 호출이 불가능합니다.
-`/init`은 플러그인 캐시에서 프로젝트로 컴포넌트를 복사합니다.
-
-또는 `~/.claude/settings.json`에 직접 추가 후 `/init` 실행:
 
 ```json
 {
@@ -167,14 +153,12 @@ install.bat C:\path\to\your\project
 git clone https://github.com/picpal/claude-orchestra.git
 cd claude-orchestra
 
-# .claude 컴포넌트 복사
-mkdir -p /path/to/your/project/.claude
-cp -r agents commands rules contexts hooks /path/to/your/project/.claude/
-cp .claude/settings.json /path/to/your/project/.claude/
+# 플러그인으로 설치 (권장)
+# claude --plugin-dir /path/to/claude-orchestra
 
-# .orchestra 상태 파일 복사
-mkdir -p /path/to/your/project/.orchestra/{plans,journal,logs}
-cp orchestra-init/*.json /path/to/your/project/.orchestra/
+# 또는 수동 복사
+mkdir -p /path/to/your/project/.claude/rules
+cp -r rules/*.md /path/to/your/project/.claude/rules/
 ```
 
 ---
@@ -183,46 +167,43 @@ cp orchestra-init/*.json /path/to/your/project/.orchestra/
 
 | 카테고리 | 개수 | 경로 | 설명 |
 |----------|------|------|------|
-| **Agents** | 12 | `.claude/agents/` | AI 에이전트 정의 |
-| **Commands** | 12 | `.claude/commands/` | 슬래시 명령어 |
-| **Rules** | 6 | `.claude/rules/` | 코드 규칙 |
-| **Contexts** | 3 | `.claude/contexts/` | 작업 컨텍스트 |
-| **Hooks** | 15 | `.claude/hooks/` | 자동화 훅 스크립트 |
-| **Settings** | 1 | `.claude/settings.json` | 에이전트 설정 |
-| **Orchestra** | 2+ | `.orchestra/` | 상태 관리 파일 |
+| **Agents** | 12 | `agents/` | AI 에이전트 정의 |
+| **Commands** | 12 | `commands/` | 슬래시 명령어 |
+| **Skills** | 3 | `skills/` | 컨텍스트 스킬 (dev, research, review) |
+| **Hooks** | 15 | `hooks/` | 자동화 훅 스크립트 + `hooks.json` |
+| **Rules** | 6 | `rules/` | 코드 규칙 (`/init` 시 프로젝트에 복사) |
+| **Settings** | 1 | `.claude/settings.json` | 에이전트/권한 설정 |
+| **Orchestra** | 2+ | `.orchestra/` | 상태 관리 파일 (`/init` 시 생성) |
 
 ---
 
 ## 사용법
 
-### 기본 명령어
+### 명령어 요약
 
-| 명령어 | 설명 |
-|--------|------|
-| `/init` | Orchestra 초기화 (플러그인 설치 후 필수) |
-| `/start-work` | 작업 세션 시작, 상태 초기화 |
-| `/status` | 현재 상태, 진행 중인 작업 확인 |
-| `/tdd-cycle` | TDD 사이클 가이드 표시 |
-| `/verify` | 검증 루프 실행 |
-| `/code-review` | 코드 리뷰 실행 |
-| `/learn` | 세션에서 패턴 학습 |
-| `/checkpoint` | 현재 상태 체크포인트 저장 |
+| 명령어 | 설명 | 사용 시점 |
+|--------|------|-----------|
+| `/init` | Orchestra 초기화 (rules 복사 + 상태 디렉토리 생성) | 최초 1회 |
+| `/start-work` | 작업 세션 시작, Intent 분류 | 세션 시작 |
+| `/context` | dev / research / review 모드 전환 | 작업 성격 변경 |
+| `/tdd-cycle` | TDD RED→GREEN→REFACTOR 가이드 | 개발 중 |
+| `/status` | 현재 상태, TODO 진행률, TDD 메트릭 | 수시 확인 |
+| `/checkpoint` | 상태 스냅샷 저장 | 리팩토링/실험 전 |
+| `/verify` | 6단계 검증 루프 (quick/standard/full/pre-pr) | 커밋/PR 전 |
+| `/code-review` | 25+ 차원 코드 리뷰 | 검증 후 |
+| `/e2e` | E2E 테스트 실행 (Playwright/Cypress) | 통합 테스트 |
+| `/refactor-clean` | 안전한 리팩토링 (테스트 유지) | 코드 정리 |
+| `/update-docs` | 코드-문서 동기화 | 코드 변경 후 |
+| `/learn` | 세션 패턴 추출/저장 | 세션 종료 |
 
-### 검증 모드
+> 각 명령어의 상세 활용법과 실전 시나리오는 **[명령어 활용 가이드](docs/command-guide.md)**를 참고하세요.
 
-```bash
-/verify quick     # 빌드 + 타입 (빠른 확인)
-/verify standard  # 빌드 + 타입 + 린트 + 테스트
-/verify full      # 전체 6단계
-/verify pre-pr    # PR 제출 전 (보안 강화)
-```
-
-### 컨텍스트 모드
+### 컨텍스트 스킬
 
 ```bash
-/context dev      # 개발 모드 - 코드 작성 집중
-/context research # 연구 모드 - 탐색/분석 집중
-/context review   # 리뷰 모드 - 품질 검증 집중
+/claude-orchestra:context-dev       # 개발 모드 - 코드 작성 집중
+/claude-orchestra:context-research  # 연구 모드 - 탐색/분석 집중
+/claude-orchestra:context-review    # 리뷰 모드 - 품질 검증 집중
 ```
 
 ---
@@ -248,37 +229,52 @@ cp orchestra-init/*.json /path/to/your/project/.orchestra/
 
 ## 프로젝트 구조
 
-### 설치 후 프로젝트 구조
+### 플러그인 구조
+
+```
+claude-orchestra/               # 플러그인 루트
+├── agents/                     # 12개 에이전트
+│   ├── maestro.md
+│   ├── planner.md
+│   ├── interviewer.md
+│   └── ...
+├── commands/                   # 12개 슬래시 명령어
+│   ├── init.md
+│   ├── start-work.md
+│   ├── verify.md
+│   └── ...
+├── skills/                     # 3개 컨텍스트 스킬
+│   ├── context-dev/SKILL.md
+│   ├── context-research/SKILL.md
+│   └── context-review/SKILL.md
+├── hooks/                      # 자동화 훅
+│   ├── hooks.json              # 플러그인 hooks 설정
+│   ├── tdd-guard.sh
+│   ├── test-logger.sh
+│   ├── agent-logger.sh
+│   ├── user-prompt-submit.sh
+│   ├── verification/           # 6단계 검증 스크립트
+│   ├── learning/               # 패턴 학습 시스템
+│   └── compact/                # 컨텍스트 압축
+├── rules/                      # 6개 코드 규칙 (/init 시 프로젝트에 복사)
+│   ├── security.md
+│   ├── testing.md
+│   └── ...
+├── contexts/                   # (호환용) 컨텍스트 파일
+├── .claude/
+│   └── settings.json           # 에이전트/권한 설정
+└── CLAUDE.md                   # 프로젝트 안내
+```
+
+### /init 후 프로젝트 구조
 
 ```
 your-project/
-├── .claude/                    # Claude Code 인식 디렉토리
-│   ├── agents/                 # 12개 에이전트
-│   │   ├── maestro.md
-│   │   ├── planner.md
-│   │   ├── interviewer.md
-│   │   └── ...
-│   ├── commands/               # 12개 슬래시 명령어
-│   │   ├── init.md
-│   │   ├── start-work.md
-│   │   ├── verify.md
-│   │   └── ...
-│   ├── rules/                  # 6개 코드 규칙
-│   │   ├── security.md
-│   │   ├── testing.md
-│   │   └── ...
-│   ├── contexts/               # 3개 컨텍스트
-│   │   ├── dev.md
-│   │   ├── research.md
-│   │   └── review.md
-│   ├── hooks/                  # 15개 자동화 훅
-│   │   ├── tdd-guard.sh
-│   │   ├── test-logger.sh
-│   │   ├── verification/       # 6단계 검증 스크립트
-│   │   ├── learning/           # 패턴 학습 시스템
-│   │   └── compact/            # 컨텍스트 압축
-│   └── settings.json           # 에이전트/권한 설정
-│
+├── .claude/
+│   └── rules/                  # Orchestra 규칙 (플러그인에서 복사됨)
+│       ├── security.md
+│       ├── testing.md
+│       └── ...
 ├── .orchestra/                 # 상태/데이터 디렉토리
 │   ├── config.json             # 프로젝트 설정
 │   ├── state.json              # 런타임 상태
