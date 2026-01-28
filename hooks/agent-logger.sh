@@ -20,6 +20,32 @@ mkdir -p "$(dirname "$DEBUG_LOG")" 2>/dev/null || true
   echo "---"
 } >> "$DEBUG_LOG" 2>/dev/null || true
 
+# === Agent cache (start↔stop 간 상태 공유) ===
+AGENT_CACHE_DIR=".orchestra/logs/.agent-cache"
+mkdir -p "$AGENT_CACHE_DIR" 2>/dev/null || true
+
+# 에이전트 정보 저장 (subagent-start 시 호출)
+cache_agent_info() {
+  local agent_id="$1" agent_type="$2" description="$3"
+  if [ -n "$agent_id" ] && [ -n "$agent_type" ]; then
+    printf '%s\n%s' "$agent_type" "$description" > "$AGENT_CACHE_DIR/$agent_id"
+  fi
+}
+
+# 에이전트 정보 조회 + 삭제 (subagent-stop 시 호출)
+lookup_agent_info() {
+  local agent_id="$1"
+  local cache_file="$AGENT_CACHE_DIR/$agent_id"
+  if [ -f "$cache_file" ]; then
+    CACHED_AGENT_TYPE=$(sed -n '1p' "$cache_file")
+    CACHED_DESCRIPTION=$(sed -n '2p' "$cache_file")
+    rm -f "$cache_file" 2>/dev/null || true
+  else
+    CACHED_AGENT_TYPE=""
+    CACHED_DESCRIPTION=""
+  fi
+}
+
 # === PHASE resolution functions ===
 
 resolve_phase() {
@@ -143,6 +169,9 @@ case "$MODE" in
       AGENT_TYPE="unknown"
     fi
 
+    # 캐시에 저장 (subagent-stop에서 조회용)
+    cache_agent_info "$AGENT_ID" "$AGENT_TYPE" "$DESCRIPTION"
+
     PHASE=$(resolve_phase "$AGENT_TYPE" "$DESCRIPTION")
     "$SCRIPT_DIR/activity-logger.sh" AGENT "$AGENT_TYPE" "[start] id=${AGENT_ID:-?} $DESCRIPTION" "$PHASE" 2>/dev/null || true
     ;;
@@ -152,11 +181,18 @@ case "$MODE" in
     AGENT_TYPE=$(hook_get_field "agent_type")
     AGENT_ID=$(hook_get_field "agent_id")
 
+    # JSON에 agent_type이 없으면 캐시에서 조회
+    if [ -z "$AGENT_TYPE" ] && [ -n "$AGENT_ID" ]; then
+      lookup_agent_info "$AGENT_ID"
+      AGENT_TYPE="${CACHED_AGENT_TYPE:-unknown}"
+      DESCRIPTION="${CACHED_DESCRIPTION:-}"
+    fi
+
     if [ -z "$AGENT_TYPE" ]; then
       AGENT_TYPE="unknown"
     fi
 
-    PHASE=$(resolve_phase "$AGENT_TYPE" "")
+    PHASE=$(resolve_phase "$AGENT_TYPE" "${DESCRIPTION:-}")
     "$SCRIPT_DIR/activity-logger.sh" AGENT "$AGENT_TYPE" "[stop] id=${AGENT_ID:-?}" "$PHASE" 2>/dev/null || true
     ;;
 esac

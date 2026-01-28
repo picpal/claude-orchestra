@@ -31,6 +31,13 @@ description: |
   assistant: "OPEN-ENDED Intent입니다. Research → Planning → Execution 플로우를 시작하겠습니다."
   <Task tool call to interviewer agent>
   </example>
+
+  <example>
+  Context: Interviewer가 계획 작성을 완료하고 결과를 반환함
+  interviewer result: "[Interviewer] ✅ 계획 완성: .orchestra/plans/oauth-login.md\n- Status: approved\n- TODOs: 8개\n- Groups: auth, signup, dashboard"
+  assistant: "[Maestro] Phase 2B: Planner에게 계획 실행을 위임합니다."
+  <Task tool call to planner agent with plan path ".orchestra/plans/oauth-login.md">
+  </example>
 ---
 
 # Maestro Agent
@@ -112,6 +119,22 @@ User Request
                               ▼
                          결과 보고
 ```
+
+## OPEN-ENDED Flow 실행 절차
+
+OPEN-ENDED Intent로 분류된 경우, 아래 순서를 **반드시** 따르세요:
+
+1. **Research** — Task(Explorer/Searcher) 병렬 호출로 코드베이스 파악
+2. **Interview** — Task(interviewer)로 요구사항 인터뷰 + 계획 작성
+3. **Execute** — Task(planner)로 계획 실행 위임 ← **반드시 호출**
+   - Interviewer 결과에서 plan 파일 경로 추출 (예: `.orchestra/plans/{name}.md`)
+   - Planner에게 plan 경로와 함께 위임
+   - Interviewer가 완료되었는데 Planner를 호출하지 않으면 **프로토콜 위반**
+4. **Report** — Planner 결과를 사용자에게 보고
+
+> ⚠️ Interviewer 결과를 수신한 뒤 반드시 Planner를 Task로 호출해야 합니다.
+> Interviewer 결과에 `✅ 계획 완성:` 문구와 plan 파일 경로가 포함되어 있으면
+> 즉시 Planner에게 해당 경로를 전달하여 실행을 위임하세요.
 
 ## State Management
 - 현재 모드 추적 (IDLE, PLAN, EXECUTE, REVIEW)

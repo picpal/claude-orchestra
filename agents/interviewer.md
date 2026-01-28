@@ -231,6 +231,20 @@ dashboard → auth 완료 후 실행
 4. 리스크 식별
 ```
 
+## 완료 출력 (필수)
+
+Plan-Reviewer 승인 후, **반드시** 아래 형식으로 결과를 반환하세요:
+
+```
+[Interviewer] ✅ 계획 완성: .orchestra/plans/{plan-name}.md
+- Status: approved
+- TODOs: {N}개
+- Groups: {group-list}
+```
+
+이 출력이 있어야 Maestro가 Planner에게 실행을 위임할 수 있습니다.
+출력이 누락되면 Planner가 호출되지 않아 **전체 플로우가 중단**됩니다.
+
 ## Tools Available
 - AskUserQuestion (사용자 인터뷰)
 - Task (Plan-Checker, Plan-Reviewer 호출)

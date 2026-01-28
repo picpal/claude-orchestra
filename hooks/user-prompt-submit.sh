@@ -115,7 +115,7 @@ else
 | TRIVIAL | 코드와 **완전히 무관**한 질문만 해당 | Maestro 직접 응답 |
 | EXPLORATORY | 코드/파일/함수/구조 언급 | Explorer에 위임 |
 | AMBIGUOUS | 수정 요청이나 구체적 범위 불명확 | 명확화 질문 후 재분류 |
-| OPEN-ENDED | 기능 개발/복잡한 수정 | Interviewer → Planner |
+| OPEN-ENDED | 기능 개발/복잡한 수정 | Task(interviewer) → 결과 수신 → Task(planner) |
 
 ### TRIVIAL 허용 범위 (이것만 TRIVIAL)
 - 인사: "안녕", "고마워"
