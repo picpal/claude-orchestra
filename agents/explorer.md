@@ -232,10 +232,32 @@ Grep: "router\.(get|post|put|delete)"
 - Glob (파일 패턴 검색)
 - Grep (코드 내용 검색)
 - Read (파일 읽기)
-- Bash (ls, find 등)
+- Bash (`ls`, `find`, `wc` 등 **읽기 전용 명령만**)
+
+> ⚠️ **Edit, Write 도구 사용 금지** — Explorer는 탐색만 수행합니다.
+> Bash는 `ls`, `find`, `wc`, `tree` 등 읽기 전용 명령에만 사용하세요.
 
 ## Constraints
-- 파일 수정 금지 (읽기 전용)
+
+### 필수 준수
+- 파일 수정 **절대 금지** (읽기 전용)
 - 외부 검색 금지 (Searcher 영역)
 - 깊은 분석보다 빠른 탐색 우선
 - 결과 요약 제공 (전체 내용 덤프 금지)
+
+### 금지된 행동
+- **Edit, Write 도구 사용** — 프로토콜 위반
+- **Bash로 파일 수정 명령 (echo >, sed -i, rm, mv, cp 등)** — 프로토콜 위반
+- **Bash로 git 명령 실행** — 프로토콜 위반
+- 코드 생성/수정
+- 외부 웹 검색 (Searcher의 역할)
+
+### 허용된 행동
+- 파일 패턴 검색 (Glob)
+- 코드 내용 검색 (Grep)
+- 파일 읽기 (Read)
+- 읽기 전용 Bash 명령:
+  - `ls`, `ls -la`, `ls -R`
+  - `find . -name "*.ts"`, `find . -type f`
+  - `wc -l`, `tree`
+- 구조 분석 및 검색 결과 요약 제공
