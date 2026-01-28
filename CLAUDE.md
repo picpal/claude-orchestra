@@ -124,8 +124,8 @@ your-project/
 
 | Intent | 예시 | 처리 |
 |--------|------|------|
-| TRIVIAL | "이 함수 설명해줘" | 직접 응답 |
-| EXPLORATORY | "인증 로직 어디있어?" | Explorer 호출 |
+| TRIVIAL | "안녕", "Orchestra가 뭐야?" | Maestro 직접 응답 (비코드만) |
+| EXPLORATORY | "이 함수 설명해줘", "인증 로직 어디있어?" | Explorer 위임 (코드 관련) |
 | AMBIGUOUS | "로그인 고쳐줘" | 명확화 질문 |
 | OPEN-ENDED | "OAuth 추가해줘" | 전체 플로우 |
 
