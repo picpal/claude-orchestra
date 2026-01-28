@@ -1,61 +1,27 @@
 #!/usr/bin/env bash
 # Agent execution logger for Claude Orchestra
-# Usage: agent-logger.sh <pre|post> "$TOOL_INPUT" ["$TOOL_OUTPUT"]
+# Called by hooks for: PreToolUse/Task, PostToolUse/Task, SubagentStart, SubagentStop
+# Usage: agent-logger.sh <pre|post|subagent-start|subagent-stop>
+# Data is received via stdin JSON from Claude Code.
 
 MODE="$1"
-# TOOL_INPUT/TOOL_OUTPUT: 환경변수 우선, 없으면 인자 fallback
-# Claude Code는 환경변수로 설정하지만, JSON 특수문자 때문에
-# 쉘 인자로 전달하면 깨질 수 있음
-INPUT="${TOOL_INPUT:-$2}"
-TOOL_OUTPUT="${TOOL_OUTPUT:-${3:-}}"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/stdin-reader.sh"
 
-# 디버그: 실제 입력값 확인
+# Debug log
 DEBUG_LOG=".orchestra/logs/agent-debug.log"
 mkdir -p "$(dirname "$DEBUG_LOG")" 2>/dev/null || true
 {
   echo "=== $(date '+%Y-%m-%d %H:%M:%S') MODE=$MODE ==="
-  echo "ARG2 (first 500): ${2:0:500}"
-  echo "ENV TOOL_INPUT (first 500): ${TOOL_INPUT:0:500}"
-  echo "INPUT (first 500): ${INPUT:0:500}"
+  echo "HOOK_EVENT: $HOOK_EVENT"
+  echo "HOOK_TOOL_NAME: $HOOK_TOOL_NAME"
+  echo "HOOK_TOOL_INPUT (first 500): ${HOOK_TOOL_INPUT:0:500}"
   echo "---"
 } >> "$DEBUG_LOG" 2>/dev/null || true
 
-# Extract agent info from INPUT JSON
-# python3 JSON 파싱 실패 시 grep fallback으로 추출
-AGENT_NAME=$(echo "$INPUT" | python3 -c "
-import sys, json
-try:
-    d = json.load(sys.stdin)
-    print(d.get('subagent_type', d.get('description', '')))
-except: print('')
-" 2>/dev/null || echo "")
+# === PHASE resolution functions ===
 
-# JSON 파싱 실패 시 grep fallback
-if [ -z "$AGENT_NAME" ]; then
-    AGENT_NAME=$(echo "$INPUT" | grep -oE '"subagent_type"\s*:\s*"[^"]+"' | sed 's/.*"subagent_type"\s*:\s*"//' | sed 's/"$//' || echo "")
-fi
-if [ -z "$AGENT_NAME" ]; then
-    AGENT_NAME=$(echo "$INPUT" | grep -oE '"description"\s*:\s*"[^"]+"' | sed 's/.*"description"\s*:\s*"//' | sed 's/"$//' || echo "unknown")
-fi
-
-DESCRIPTION=$(echo "$INPUT" | python3 -c "
-import sys, json
-try:
-    d = json.load(sys.stdin)
-    print(d.get('description', '')[:80])
-except: print('')
-" 2>/dev/null || echo "")
-
-# description도 grep fallback
-if [ -z "$DESCRIPTION" ]; then
-    DESCRIPTION=$(echo "$INPUT" | grep -oE '"description"\s*:\s*"[^"]+"' | sed 's/.*"description"\s*:\s*"//' | sed 's/"$//' | cut -c1-80 || echo "")
-fi
-
-# === PHASE 결정 함수 ===
-
-# agent 이름 → PHASE 매핑
 resolve_phase() {
     local agent="$1"
     local desc="$2"
@@ -77,12 +43,20 @@ resolve_phase() {
             echo "REVIEW" ;;
         planner)
             resolve_planner_phase "$desc" ;;
+        # Claude Code built-in subagent types
+        explore)
+            echo "RESEARCH" ;;
+        plan)
+            echo "PLAN" ;;
+        bash)
+            echo "EXECUTE" ;;
+        general-purpose)
+            resolve_from_description "$desc" ;;
         *)
             resolve_from_description "$desc" ;;
     esac
 }
 
-# planner는 description 키워드로 세부 PHASE 구분
 resolve_planner_phase() {
     local desc="$1"
     local desc_lower
@@ -99,7 +73,6 @@ resolve_planner_phase() {
     fi
 }
 
-# 미지 agent에 대한 fallback: description 키워드 기반
 resolve_from_description() {
     local desc="$1"
     local desc_lower
@@ -126,10 +99,67 @@ resolve_from_description() {
     fi
 }
 
-if [ "$MODE" = "pre" ]; then
+# === Mode handlers ===
+
+case "$MODE" in
+  pre)
+    # PreToolUse/Task: extract subagent_type and description from tool_input
+    AGENT_NAME=$(hook_get_field "tool_input.subagent_type")
+    DESCRIPTION=$(hook_get_field "tool_input.description")
+
+    # Truncate description to 80 chars
+    DESCRIPTION="${DESCRIPTION:0:80}"
+
+    if [ -z "$AGENT_NAME" ]; then
+      AGENT_NAME="unknown"
+    fi
+
     PHASE=$(resolve_phase "$AGENT_NAME" "$DESCRIPTION")
     "$SCRIPT_DIR/activity-logger.sh" AGENT "$AGENT_NAME" "$DESCRIPTION" "$PHASE" 2>/dev/null || true
-fi
+    ;;
 
-# Hook 자체 활동도 기록
+  post)
+    # PostToolUse/Task: log completion
+    AGENT_NAME=$(hook_get_field "tool_input.subagent_type")
+    DESCRIPTION=$(hook_get_field "tool_input.description")
+    DESCRIPTION="${DESCRIPTION:0:80}"
+
+    if [ -z "$AGENT_NAME" ]; then
+      AGENT_NAME="unknown"
+    fi
+
+    PHASE=$(resolve_phase "$AGENT_NAME" "$DESCRIPTION")
+    "$SCRIPT_DIR/activity-logger.sh" AGENT "$AGENT_NAME" "[done] $DESCRIPTION" "$PHASE" 2>/dev/null || true
+    ;;
+
+  subagent-start)
+    # SubagentStart: agent lifecycle tracking
+    AGENT_TYPE=$(hook_get_field "agent_type")
+    AGENT_ID=$(hook_get_field "agent_id")
+    DESCRIPTION=$(hook_get_field "description")
+    DESCRIPTION="${DESCRIPTION:0:80}"
+
+    if [ -z "$AGENT_TYPE" ]; then
+      AGENT_TYPE="unknown"
+    fi
+
+    PHASE=$(resolve_phase "$AGENT_TYPE" "$DESCRIPTION")
+    "$SCRIPT_DIR/activity-logger.sh" AGENT "$AGENT_TYPE" "[start] id=${AGENT_ID:-?} $DESCRIPTION" "$PHASE" 2>/dev/null || true
+    ;;
+
+  subagent-stop)
+    # SubagentStop: agent lifecycle tracking
+    AGENT_TYPE=$(hook_get_field "agent_type")
+    AGENT_ID=$(hook_get_field "agent_id")
+
+    if [ -z "$AGENT_TYPE" ]; then
+      AGENT_TYPE="unknown"
+    fi
+
+    PHASE=$(resolve_phase "$AGENT_TYPE" "")
+    "$SCRIPT_DIR/activity-logger.sh" AGENT "$AGENT_TYPE" "[stop] id=${AGENT_ID:-?}" "$PHASE" 2>/dev/null || true
+    ;;
+esac
+
+# Log hook activity
 "$SCRIPT_DIR/activity-logger.sh" HOOK agent-logger "$MODE" 2>/dev/null || true

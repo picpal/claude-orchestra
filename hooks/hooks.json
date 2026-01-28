@@ -9,33 +9,45 @@
     "PreToolUse": [
       {
         "matcher": "Edit|Write",
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/tdd-guard.sh \"$TOOL_INPUT\""}]
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/tdd-guard.sh"}]
       },
       {
         "matcher": "Task",
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/agent-logger.sh pre \"$TOOL_INPUT\""}]
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/agent-logger.sh pre"}]
       },
       {
         "matcher": "Skill",
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/activity-logger.sh SKILL \"$TOOL_INPUT\""}]
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/skill-logger.sh"}]
       },
       {
         "matcher": "mcp__",
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/mcp-logger.sh pre \"$TOOL_INPUT\""}]
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/mcp-logger.sh pre"}]
       }
     ],
     "PostToolUse": [
       {
         "matcher": "Bash",
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/test-logger.sh \"$TOOL_INPUT\" \"$TOOL_OUTPUT\""}]
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/test-logger.sh"}]
       },
       {
         "matcher": "Task",
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/agent-logger.sh post \"$TOOL_INPUT\" \"$TOOL_OUTPUT\""}]
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/agent-logger.sh post"}]
       },
       {
         "matcher": "mcp__",
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/mcp-logger.sh post \"$TOOL_INPUT\" \"$TOOL_OUTPUT\""}]
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/mcp-logger.sh post"}]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "matcher": "",
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/agent-logger.sh subagent-start"}]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/agent-logger.sh subagent-stop"}]
       }
     ]
   }

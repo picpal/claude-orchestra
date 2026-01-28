@@ -7,9 +7,16 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ORCHESTRA_DIR=".orchestra"
 
+# Read stdin JSON from Claude Code
+source "$SCRIPT_DIR/stdin-reader.sh"
+
+# Extract user prompt from stdin JSON
+# UserPromptSubmit provides: { "session_id", "hook_event_name", "user_prompt" }
+USER_PROMPT=$(hook_get_field "user_prompt")
+
 # 슬래시 커맨드 감지 및 활동 로그 기록
-if [ -n "${PROMPT:-}" ]; then
-  CMD_NAME=$(echo "$PROMPT" | grep -oE '^/[a-zA-Z0-9_-]+' || true)
+if [ -n "$USER_PROMPT" ]; then
+  CMD_NAME=$(echo "$USER_PROMPT" | grep -oE '^/[a-zA-Z0-9_-]+' || true)
   if [ -n "$CMD_NAME" ]; then
     # 슬래시 명령어별 PHASE 매핑
     case "$CMD_NAME" in
@@ -64,6 +71,13 @@ if [ "$MODE" = "EXECUTE" ]; then
 - 코드 탐색: Task(subagent_type="Explore", description="...", prompt="...")
 - 직접 Edit/Write 하지 말고 Task 에이전트가 수행하게 하세요.
 - TDD 필수: TEST→IMPL→REFACTOR
+
+### 작업 완료 리포트 (필수)
+- 모든 TODO가 완료되고 Verification + Git Commit까지 끝났다면:
+  1. \`.orchestra/journal/{plan-name}-{YYYYMMDD}.md\` 파일을 작성하세요
+  2. 리포트에 포함할 항목: Summary, Completed TODOs, Files Changed, Verification Results, Decisions, Issues, Next Steps
+  3. 리포트 작성 후 state.json의 mode를 "IDLE"로 전환하세요
+  4. \`[Orchestra] ✅ Journal 리포트 작성 완료: .orchestra/journal/{파일명}\` 출력
 
 ### Context 모니터링 (필수)
 - context 사용률을 인식하고, 70% 이상일 때 **5% 단위로** 경고를 출력하세요:

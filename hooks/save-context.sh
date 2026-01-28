@@ -119,10 +119,11 @@ warn_incomplete_work() {
 # 학습 평가 트리거
 trigger_learning_evaluation() {
   local learning_script=".orchestra/hooks/learning/evaluate-session.sh"
+  local activity_log=".orchestra/logs/activity.log"
 
-  if [ -x "$learning_script" ]; then
+  if [ -x "$learning_script" ] && [ -f "$activity_log" ]; then
     log "Triggering learning evaluation..."
-    "$learning_script" evaluate 2>/dev/null || true
+    "$learning_script" evaluate "$activity_log" 2>/dev/null || true
   fi
 }
 

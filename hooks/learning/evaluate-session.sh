@@ -81,95 +81,43 @@ $code_example
 $keywords
 
 ## Usage Count
-0
+1
 
 ## Last Used
-Never
+$(date -u +%Y-%m-%dT%H:%M:%SZ)
 EOF
 
   echo "$pattern_id"
   log "Created pattern: $pattern_id - $title"
 }
 
-# 에러 해결 패턴 추출
-extract_error_patterns() {
-  local session_log="$1"
-  local patterns_found=0
-
-  # TypeScript 일반 에러 패턴
-  if echo "$session_log" | grep -q "TS[0-9]\{4\}"; then
-    # TS2532: Object is possibly undefined
-    if echo "$session_log" | grep -q "TS2532\|possibly.*undefined"; then
-      create_pattern_file \
-        "error_resolution" \
-        "TypeScript Null Check" \
-        "'Object is possibly undefined' 에러 발생" \
-        "Optional chaining (?.) 또는 nullish coalescing (??) 연산자 사용" \
-        "// Before
-const name = user.profile.name;
-
-// After
-const name = user?.profile?.name ?? 'Unknown';" \
-        "TS2532, Object is possibly, undefined, null check"
-      patterns_found=$((patterns_found + 1))
-    fi
-
-    # TS2339: Property does not exist
-    if echo "$session_log" | grep -q "TS2339\|Property.*does not exist"; then
-      create_pattern_file \
-        "error_resolution" \
-        "TypeScript Property Check" \
-        "'Property X does not exist on type Y' 에러 발생" \
-        "타입 정의 확인 및 타입 가드 사용" \
-        "// Type guard 사용
-if ('property' in object) {
-  // object.property 사용 가능
-}
-
-// 또는 타입 단언
-const value = (object as ExtendedType).property;" \
-        "TS2339, Property does not exist, type guard"
-      patterns_found=$((patterns_found + 1))
-    fi
+# 패턴 Usage Count 증가 및 Last Used 갱신
+update_pattern_usage() {
+  local pattern_file="$1"
+  if [ ! -f "$pattern_file" ]; then
+    return
   fi
+  python3 -c "
+import re, sys
+from datetime import datetime, timezone
 
-  # React 에러 패턴
-  if echo "$session_log" | grep -q "React\|hook\|useEffect\|useState"; then
-    # Hook 의존성 경고
-    if echo "$session_log" | grep -q "exhaustive-deps\|missing dependency"; then
-      create_pattern_file \
-        "error_resolution" \
-        "React Hook Dependencies" \
-        "useEffect/useCallback 의존성 배열 누락 경고" \
-        "의존성 배열에 사용되는 모든 변수 추가, 또는 eslint-disable 주석으로 무시" \
-        "useEffect(() => {
-  fetchData(userId);
-}, [userId]); // userId 의존성 추가
+path = sys.argv[1]
+with open(path, 'r', encoding='utf-8') as f:
+    content = f.read()
 
-// 또는 함수를 useCallback으로 감싸기
-const fetchData = useCallback(() => {
-  // ...
-}, [dependency]);" \
-        "exhaustive-deps, missing dependency, useEffect, useCallback"
-      patterns_found=$((patterns_found + 1))
-    fi
-  fi
+# Update Usage Count
+m = re.search(r'(## Usage Count\n)(\d+)', content)
+if m:
+    old = int(m.group(2))
+    content = content[:m.start(2)] + str(old + 1) + content[m.end(2):]
 
-  echo "$patterns_found"
-}
+# Update Last Used
+now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+content = re.sub(r'(## Last Used\n).*', r'\g<1>' + now, content)
 
-# 사용자 수정 패턴 추출
-extract_correction_patterns() {
-  local session_log="$1"
-  local patterns_found=0
-
-  # 수정 요청 감지 (간단한 휴리스틱)
-  if echo "$session_log" | grep -qE "(아니|다시|수정해|고쳐|잘못)"; then
-    log "User correction detected - manual review needed"
-    # 실제 구현에서는 LLM을 통해 패턴 추출
-  fi
-
-  echo "$patterns_found"
+with open(path, 'w', encoding='utf-8') as f:
+    f.write(content)
+" "$pattern_file"
 }
 
 # 상태 업데이트
@@ -193,7 +141,7 @@ update_state() {
 # 패턴 목록 출력
 list_patterns() {
   echo ""
-  echo "📚 Learned Patterns"
+  echo "Learned Patterns"
   echo "==================="
 
   local count=0
@@ -201,9 +149,10 @@ list_patterns() {
     if [ -f "$pattern_file" ]; then
       local title=$(grep "^# Pattern:" "$pattern_file" | sed 's/# Pattern: //')
       local category=$(grep "^## Category" -A 1 "$pattern_file" | tail -1)
+      local usage=$(grep "^## Usage Count" -A 1 "$pattern_file" | tail -1)
       local id=$(basename "$pattern_file" .md)
 
-      printf "  [%s] %s (%s)\n" "$category" "$title" "$id"
+      printf "  [%s] %s (usage: %s) (%s)\n" "$category" "$title" "$usage" "$id"
       count=$((count + 1))
     fi
   done
@@ -226,32 +175,33 @@ main() {
     evaluate)
       if [ "$ENABLED" != "true" ]; then
         log "Learning is disabled"
-        echo "⏭️ Learning is disabled in config"
+        echo "Learning is disabled in config"
         exit 0
       fi
 
       log "Starting session evaluation..."
-      echo "🎓 Evaluating session for learning patterns..."
 
-      # 세션 로그가 있으면 분석 (실제 구현에서는 세션 로그 경로 필요)
-      local session_log="${2:-}"
-      local total_patterns=0
-
-      if [ -n "$session_log" ] && [ -f "$session_log" ]; then
-        # 에러 패턴 추출
-        error_patterns=$(extract_error_patterns "$(cat "$session_log")")
-        total_patterns=$((total_patterns + error_patterns))
-
-        # 수정 패턴 추출
-        correction_patterns=$(extract_correction_patterns "$(cat "$session_log")")
-        total_patterns=$((total_patterns + correction_patterns))
+      local activity_log="${2:-.orchestra/logs/activity.log}"
+      if [ ! -f "$activity_log" ]; then
+        log "No activity log found: $activity_log"
+        echo "No activity log found."
+        exit 0
       fi
 
-      # 상태 업데이트
-      update_state "$total_patterns"
+      # Python 분석기 호출
+      local count
+      count=$(python3 "$SCRIPT_DIR/analyze-session.py" \
+        --activity "$activity_log" \
+        --tests ".orchestra/logs/test-runs.log" \
+        --tdd-guard ".orchestra/logs/tdd-guard.log" \
+        --config "$CONFIG_FILE" \
+        --patterns-dir "$PATTERNS_DIR" \
+        --max-patterns "$MAX_PATTERNS" 2>>"$LOG_FILE")
 
-      echo "✅ Session evaluated. Patterns extracted: $total_patterns"
-      log "Session evaluation complete. Patterns: $total_patterns"
+      update_state "${count:-0}"
+
+      echo "Session evaluated. Patterns extracted: ${count:-0}"
+      log "Session evaluation complete. Patterns: ${count:-0}"
       ;;
 
     list)
@@ -259,18 +209,19 @@ main() {
       ;;
 
     add)
-      # 수동 패턴 추가
       local category="${2:-project_specific}"
       local title="${3:-Manual Pattern}"
-      echo "Adding manual pattern..."
-      create_pattern_file "$category" "$title" "" "" "" ""
-      echo "✅ Pattern added"
+      local problem="${4:-}"
+      local solution="${5:-}"
+      local keywords="${6:-}"
+      create_pattern_file "$category" "$title" "$problem" "$solution" "" "$keywords"
+      echo "Pattern added"
       ;;
 
     clear)
-      echo "⚠️ Clearing all learned patterns..."
+      echo "Clearing all learned patterns..."
       rm -f "$PATTERNS_DIR"/*.md
-      echo "✅ All patterns cleared"
+      echo "All patterns cleared"
       ;;
 
     *)

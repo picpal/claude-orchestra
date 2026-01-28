@@ -105,7 +105,64 @@ Verification Loop (batch mode)
     │
     ▼
 PR Ready? → Git Commit (배치)
+    │
+    ▼
+Phase 5: Journal Report 작성
+    │
+    ▼
+.orchestra/journal/{plan-name}-{date}.md 생성
+    │
+    ▼
+state.json mode → IDLE 전환
 ```
+
+### Phase 5: 작업 완료 리포트 작성
+
+모든 TODO 완료 + Verification 통과 + Git Commit 후, `.orchestra/journal/`에 리포트를 작성합니다.
+
+**리포트 파일**: `.orchestra/journal/{plan-name}-{YYYYMMDD}.md`
+
+**리포트 포맷**:
+```markdown
+# 작업 완료 리포트
+
+## Meta
+- Plan: {plan-name}
+- Date: {YYYY-MM-DD}
+- Mode: {context}
+- TODOs: {completed}/{total}
+
+## Summary
+{1-2문장 작업 요약}
+
+## Completed TODOs
+- [x] {todo-id}: {내용} (executor: {agent})
+
+## Files Changed
+- `{path}`: {변경 설명}
+
+## Verification Results
+- Build: ✅/❌
+- Types: ✅/❌
+- Lint: ✅/❌
+- Tests: ✅/❌ ({passed}/{total}, coverage: {N}%)
+- Security: ✅/❌
+
+## Decisions & Notes
+- {결정사항이나 특이사항}
+
+## Issues Encountered
+- {발생한 문제와 해결 방법}
+
+## Next Steps
+- {후속 작업이 필요한 경우}
+```
+
+**절차**:
+1. `.orchestra/journal/` 디렉토리 확인 (없으면 생성)
+2. 리포트 파일 작성: `.orchestra/journal/{plan-name}-{YYYYMMDD}.md`
+3. `state.json`의 `mode`를 `"IDLE"`로 전환
+4. `[Orchestra] ✅ Journal 리포트 작성 완료: .orchestra/journal/{파일명}` 출력
 
 ## Complexity Assessment
 

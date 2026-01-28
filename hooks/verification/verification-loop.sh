@@ -4,6 +4,11 @@
 
 set -e
 
+# macOS/Linux 호환 밀리초 타임스탬프
+now_ms() {
+  python3 -c "import time; print(int(time.time()*1000))"
+}
+
 # 인자 파싱
 MODE="${1:-standard}"  # quick, standard, full, pre-pr
 EXPECTED_FILES="${2:-}"
@@ -24,7 +29,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # 시작 시간
-LOOP_START=$(date +%s%3N)
+LOOP_START=$(now_ms)
 
 echo ""
 echo "╔═══════════════════════════════════════════════════════════════╗"
@@ -112,7 +117,7 @@ if [[ " ${PHASES[*]} " =~ " build " ]]; then
     echo ""
     echo -e "${RED}❌ Build failed - stopping verification${NC}"
     # Build 실패 시 중단
-    LOOP_END=$(date +%s%3N)
+    LOOP_END=$(now_ms)
     TOTAL_DURATION=$((LOOP_END - LOOP_START))
 
     # 결과 출력
@@ -223,7 +228,7 @@ if [[ " ${PHASES[*]} " =~ " diff " ]]; then
 fi
 
 # 종료 시간
-LOOP_END=$(date +%s%3N)
+LOOP_END=$(now_ms)
 TOTAL_DURATION=$((LOOP_END - LOOP_START))
 
 # 리포트 생성

@@ -2,12 +2,23 @@
 # Test Logger Hook
 # 테스트 실행 결과를 기록하고 TDD 메트릭을 업데이트합니다.
 # PostToolUse Hook (Bash 매처)
+# Data is received via stdin JSON from Claude Code.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/stdin-reader.sh"
+
 "$SCRIPT_DIR/activity-logger.sh" HOOK test-logger 2>/dev/null || true
 
-TOOL_INPUT="$1"
-TOOL_OUTPUT="$2"
+# Extract command and output from stdin JSON
+TOOL_CMD=$(hook_get_field "tool_input.command")
+# tool_response can be a string or object with stdout/stderr
+TOOL_OUT="$HOOK_TOOL_RESPONSE"
+# Try to get stdout if it's an object
+TOOL_STDOUT=$(hook_get_field "tool_response.stdout")
+if [ -n "$TOOL_STDOUT" ]; then
+  TOOL_OUT="$TOOL_STDOUT"
+fi
+
 STATE_FILE=".orchestra/state.json"
 LOG_FILE=".orchestra/logs/test-runs.log"
 
@@ -57,7 +68,7 @@ parse_coverage() {
   echo "$coverage"
 }
 
-# TDD 사이클 감지 (RED → GREEN)
+# TDD 사이클 감지 (RED -> GREEN)
 detect_tdd_cycle() {
   local output="$1"
   local previous_state=""
@@ -78,7 +89,7 @@ detect_tdd_cycle() {
   # 상태 저장
   echo "$current_state" > ".orchestra/logs/last-test-state"
 
-  # RED → GREEN 사이클 감지
+  # RED -> GREEN 사이클 감지
   if [ "$previous_state" = "RED" ] && [ "$current_state" = "GREEN" ]; then
     echo "CYCLE_DETECTED"
     return 0
@@ -106,12 +117,12 @@ update_state() {
     # 테스트 수 업데이트
     jq ".tddMetrics.testCount = $total_tests" "$STATE_FILE" > "${STATE_FILE}.tmp" && mv "${STATE_FILE}.tmp" "$STATE_FILE"
 
-    # RED → GREEN 사이클 카운트 증가
+    # RED -> GREEN 사이클 카운트 증가
     if [ "$cycle_detected" = "CYCLE_DETECTED" ]; then
       local current=$(jq '.tddMetrics.redGreenCycles // 0' "$STATE_FILE")
       local new=$((current + 1))
       jq ".tddMetrics.redGreenCycles = $new" "$STATE_FILE" > "${STATE_FILE}.tmp" && mv "${STATE_FILE}.tmp" "$STATE_FILE"
-      log "RED → GREEN cycle detected! Total cycles: $new"
+      log "RED -> GREEN cycle detected! Total cycles: $new"
     fi
 
     # 커버리지 업데이트 (0보다 크면)
@@ -124,20 +135,20 @@ update_state() {
 # 메인 로직
 main() {
   # 테스트 명령어가 아니면 종료
-  if ! is_test_command "$TOOL_INPUT"; then
+  if ! is_test_command "$TOOL_CMD"; then
     exit 0
   fi
 
-  log "Test command detected: $TOOL_INPUT"
+  log "Test command detected: $TOOL_CMD"
 
   # 결과 파싱
-  read passed failed skipped <<< $(parse_test_results "$TOOL_OUTPUT")
-  coverage=$(parse_coverage "$TOOL_OUTPUT")
+  read passed failed skipped <<< $(parse_test_results "$TOOL_OUT")
+  coverage=$(parse_coverage "$TOOL_OUT")
 
   log "Results: passed=$passed, failed=$failed, skipped=$skipped, coverage=$coverage%"
 
   # TDD 사이클 감지
-  cycle_result=$(detect_tdd_cycle "$TOOL_OUTPUT")
+  cycle_result=$(detect_tdd_cycle "$TOOL_OUT")
 
   # 상태 업데이트
   update_state "$passed" "$failed" "$coverage" "$cycle_result"
@@ -145,7 +156,7 @@ main() {
   # 요약 출력
   if [ "$cycle_result" = "CYCLE_DETECTED" ]; then
     echo ""
-    echo "🔄 TDD Cycle Complete: RED → GREEN"
+    echo "TDD Cycle Complete: RED -> GREEN"
     echo "   Tests: $passed passed, $failed failed"
     if [ -n "$coverage" ] && [ "$coverage" != "0" ]; then
       echo "   Coverage: ${coverage}%"
@@ -157,7 +168,7 @@ main() {
     coverage_int=${coverage%.*}
     if [ "$coverage_int" -lt 80 ]; then
       echo ""
-      echo "⚠️ Coverage Warning: ${coverage}% (minimum: 80%)"
+      echo "Coverage Warning: ${coverage}% (minimum: 80%)"
     fi
   fi
 }

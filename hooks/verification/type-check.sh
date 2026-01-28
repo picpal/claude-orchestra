@@ -4,10 +4,15 @@
 
 set -e
 
+# macOS/Linux 호환 밀리초 타임스탬프
+now_ms() {
+  python3 -c "import time; print(int(time.time()*1000))"
+}
+
 RESULT_FILE="${1:-.orchestra/logs/verification-types.json}"
 
 # 시작 시간
-START_TIME=$(date +%s%3N)
+START_TIME=$(now_ms)
 
 # 결과 초기화
 STATUS="pass"
@@ -80,7 +85,7 @@ else
 fi
 
 # 종료 시간 및 duration 계산
-END_TIME=$(date +%s%3N)
+END_TIME=$(now_ms)
 DURATION=$((END_TIME - START_TIME))
 
 # 결과 JSON 생성
