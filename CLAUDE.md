@@ -64,6 +64,7 @@
 | `/verify` | 검증 루프 실행 |
 | `/code-review` | 코드 리뷰 실행 |
 | `/learn` | 세션에서 패턴 학습 |
+| `/update-docs` | 문서 동기화 |
 
 ## 컨텍스트 스킬
 
@@ -88,14 +89,25 @@ claude-orchestra/              # 플러그인 루트
 │   ├── tdd-guard.sh
 │   ├── test-logger.sh
 │   ├── agent-logger.sh
+│   ├── activity-logger.sh
+│   ├── mcp-logger.sh
+│   ├── skill-logger.sh
+│   ├── stdin-reader.sh
 │   ├── user-prompt-submit.sh
+│   ├── save-context.sh
+│   ├── load-context.sh
+│   ├── auto-format.sh
+│   ├── git-push-review.sh
 │   ├── verification/          # 검증 스크립트
 │   ├── learning/              # 패턴 학습
+│   │   ├── evaluate-session.sh
+│   │   └── analyze-session.py
 │   └── compact/               # 컨텍스트 압축
 ├── rules/                     # 코드 규칙 (/tuning 시 프로젝트에 복사)
 ├── contexts/                  # (호환용) 컨텍스트 파일
 ├── .claude/
-│   └── settings.json          # 에이전트/권한 설정
+│   ├── settings.json          # 에이전트/권한 설정
+│   └── commands/              # 슬래시 명령어 (ship, update-docs)
 └── CLAUDE.md
 ```
 
