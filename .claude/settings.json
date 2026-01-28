@@ -36,11 +36,11 @@
     },
     "planner": {
       "model": "opus",
-      "allowedTools": ["Task", "Bash", "Read", "Edit"]
+      "allowedTools": ["Task", "Bash", "Read", "Edit(.orchestra/**/*.md)"]
     },
     "interviewer": {
       "model": "opus",
-      "allowedTools": ["AskUserQuestion", "Task", "Write", "Read"]
+      "allowedTools": ["AskUserQuestion", "Task", "Write(.orchestra/**/*.md)", "Read"]
     },
     "plan-checker": {
       "model": "sonnet",
