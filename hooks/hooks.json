@@ -18,6 +18,10 @@
       {
         "matcher": "Skill",
         "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/activity-logger.sh SKILL \"$TOOL_INPUT\""}]
+      },
+      {
+        "matcher": "mcp__",
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/mcp-logger.sh pre \"$TOOL_INPUT\""}]
       }
     ],
     "PostToolUse": [
@@ -28,6 +32,10 @@
       {
         "matcher": "Task",
         "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/agent-logger.sh post \"$TOOL_INPUT\" \"$TOOL_OUTPUT\""}]
+      },
+      {
+        "matcher": "mcp__",
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/mcp-logger.sh post \"$TOOL_INPUT\" \"$TOOL_OUTPUT\""}]
       }
     ]
   }
