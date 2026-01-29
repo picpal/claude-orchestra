@@ -40,6 +40,21 @@ description: |
   <Edit ...> ← ❌ 금지!
   올바른 처리: 각 TODO 또는 그룹별로 Task(executor)를 호출하여 위임
   </example>
+
+  <example type="negative">
+  Context: Skill 도구를 직접 호출하여 코드 작성 — 프로토콜 위반
+  plan: "- [ ] [IMPL] 로그인 기능 구현"
+  assistant: "개발 컨텍스트를 활성화하고 구현하겠습니다."
+  <Skill tool call to context-dev> ← ❌ 금지! Planner는 Skill을 호출할 수 없음
+  올바른 처리: Task(high-player 또는 low-player)를 호출하여 구현 위임
+  </example>
+
+  <example type="negative">
+  Context: Journal Report 없이 완료 선언 — 프로토콜 위반
+  assistant: "[Planner] ✅ 계획 실행 완료: .orchestra/plans/feature.md\n- Status: completed"
+  ← ❌ 금지! Journal Report 작성 필수
+  올바른 처리: .orchestra/journal/{plan-name}-{YYYYMMDD}.md 파일 작성 후 완료 선언
+  </example>
 ---
 
 # Planner Agent
@@ -149,9 +164,11 @@ Phase 5: Journal Report 작성
 state.json mode → IDLE 전환
 ```
 
-### Phase 5: 작업 완료 리포트 작성
+### Phase 5: 작업 완료 리포트 작성 (MANDATORY GATE)
 
-모든 TODO 완료 + Verification 통과 + Git Commit 후, `.orchestra/journal/`에 리포트를 작성합니다.
+> 🚨 **Journal Report 없이 완료 출력 금지**
+
+모든 TODO 완료 + Verification 통과 + Git Commit 후, **반드시** Journal Report를 작성해야 합니다.
 
 **리포트 파일**: `.orchestra/journal/{plan-name}-{YYYYMMDD}.md`
 
@@ -348,6 +365,9 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 > ⚠️ **Edit, Write 도구 사용 금지** — Planner는 코드를 작성하지 않습니다.
 > state.json 업데이트가 필요하면 Bash로 jq 명령을 사용하거나 Executor에게 위임하세요.
 
+> ⚠️ **Skill 도구 사용 금지** — Planner는 Skill(context-dev 등)을 직접 호출할 수 없습니다.
+> Skill 호출은 Executor(High-Player/Low-Player)의 책임입니다.
+
 ## Constraints
 
 ### 필수 준수
@@ -359,6 +379,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 - **Edit 도구로 소스 코드(.ts, .js, .py 등) 수정** — 프로토콜 위반
 - **Write 도구로 소스 파일 생성** — 프로토콜 위반
 - **Bash로 코드 생성 (echo > file.ts 등)** — 프로토콜 위반
+- **Skill 도구 사용** — 프로토콜 위반 (context-dev, context-research 등 모든 Skill)
 - TODO 항목을 직접 구현하는 모든 행위
 
 ### 허용된 행동
@@ -369,3 +390,27 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 > 🚫 **Planner가 직접 코드를 작성하면 TDD 사이클, 테스트 커버리지 추적,
 > 작업 분리 원칙이 모두 깨집니다. 반드시 Executor에게 위임하세요.**
+
+## 완료 출력 (필수)
+
+> 🚫 **Journal Report 작성 없이 이 출력을 생성하면 프로토콜 위반입니다.**
+
+모든 TODO 완료 + Verification 통과 + Git Commit + Journal Report 작성 후, 아래 형식으로 결과를 반환하세요:
+
+```
+[Planner] ✅ 계획 실행 완료: .orchestra/plans/{plan-name}.md
+- Status: completed
+- TODOs: {completed}/{total}
+- Verification: passed ✅
+- Commit: {commit-hash}
+- Journal: .orchestra/journal/{plan-name}-{YYYYMMDD}.md ✅
+```
+
+### 완료 조건 체크리스트 (모두 충족 필수)
+- [ ] 모든 TODO 완료 (Executor 위임)
+- [ ] 6-Stage Verification Loop 통과
+- [ ] Git Commit 완료
+- [ ] Journal Report 작성 완료 (.orchestra/journal/{name}-{date}.md)
+- [ ] state.json mode → IDLE 전환
+
+⚠️ 위 조건 중 하나라도 미충족 시 완료 출력 금지!

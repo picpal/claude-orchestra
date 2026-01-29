@@ -59,6 +59,15 @@ description: |
   3. Task(planner)로 실행 위임
   "한 줄 수정"이라도 TDD 사이클과 검증이 필요합니다.
   </example>
+
+  <example type="negative">
+  Context: Interviewer 완료했지만 Plan-Reviewer 미승인 상태에서 Planner 호출 — 프로토콜 위반
+  interviewer result: "[Interviewer] ✅ 계획 완성: .orchestra/plans/feature.md\n- Status: approved"
+  (Plan-Reviewer: approved ✅ 누락)
+  assistant: "Planner에게 실행을 위임합니다."
+  <Task tool call to planner> ← ❌ 금지! Plan-Reviewer 승인 확인 필수
+  올바른 처리: Plan-Reviewer 승인이 명시되어 있는지 확인 후 호출
+  </example>
 ---
 
 # Maestro Agent
@@ -162,6 +171,29 @@ OPEN-ENDED Intent로 분류된 경우, 아래 순서를 **반드시** 따르세�
 > ⚠️ Interviewer 결과를 수신한 뒤 반드시 Planner를 Task로 호출해야 합니다.
 > Interviewer 결과에 `✅ 계획 완성:` 문구와 plan 파일 경로가 포함되어 있으면
 > 즉시 Planner에게 해당 경로를 전달하여 실행을 위임하세요.
+
+### Planner 호출 전 필수 확인
+
+Interviewer 결과를 수신하면, Planner 호출 전에 다음을 **반드시** 확인하세요:
+
+1. **계획 파일 경로 존재**: `.orchestra/plans/{name}.md`
+2. **Plan-Reviewer 승인 확인**: `Plan-Reviewer: approved ✅`
+
+두 조건이 모두 충족되지 않으면 Planner를 호출하지 마세요.
+
+```
+✅ 올바른 Interviewer 결과 (Planner 호출 가능):
+[Interviewer] ✅ 계획 완성: .orchestra/plans/auth-feature.md
+- Status: approved
+- Plan-Checker: consulted ✅
+- Plan-Reviewer: approved ✅
+- TODOs: 5개
+
+❌ 잘못된 Interviewer 결과 (Planner 호출 금지):
+[Interviewer] ✅ 계획 완성: .orchestra/plans/auth-feature.md
+- Status: approved
+→ Plan-Reviewer 승인 누락!
+```
 
 > 🚫 **절대 금지**: Maestro가 직접 High-Player 또는 Low-Player를 호출하는 것.
 > Executor 호출은 Planner의 전담 책임입니다. Maestro가 Planner를 건너뛰고

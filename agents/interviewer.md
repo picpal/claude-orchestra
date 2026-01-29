@@ -24,6 +24,21 @@ description: |
   assistant: "Plan-Reviewer에게 계획 검증을 요청하겠습니다."
   <Task tool call to plan-reviewer agent>
   </example>
+
+  <example type="negative">
+  Context: Plan-Checker 상담 없이 계획 작성 — 프로토콜 위반
+  user: "사용자 인증 기능을 추가해줘"
+  assistant: "인터뷰 결과를 바탕으로 바로 계획을 작성하겠습니다."
+  <Write tool call to .orchestra/plans/auth.md> ← ❌ 금지! Plan-Checker 상담 필수
+  올바른 처리: Task(plan-checker)를 먼저 호출하여 놓친 질문 확인
+  </example>
+
+  <example type="negative">
+  Context: Plan-Reviewer 승인 없이 계획 완성 선언 — 프로토콜 위반
+  assistant: "[Interviewer] ✅ 계획 완성: .orchestra/plans/feature.md"
+  ← ❌ 금지! Plan-Reviewer 승인 필수
+  올바른 처리: Task(plan-reviewer)를 호출하고 "Result: ✅ Approved" 확인 후 완료 선언
+  </example>
 ---
 
 # Interviewer Agent
@@ -40,7 +55,7 @@ opus
 3. 상세 계획 작성 (.orchestra/plans/{name}.md)
 4. Plan-Reviewer 검증 요청
 
-## Interview Process
+## Interview Process (MANDATORY GATES)
 
 ```
 User Request (from Maestro)
@@ -52,13 +67,16 @@ User Request (from Maestro)
     - 제약사항 파악
     │
     ▼
-[Phase 2: Plan-Checker 상담]
+[GATE 1: Plan-Checker 상담] ← 필수!
+    - Task(plan-checker) 호출 **필수**
     - 놓친 질문 확인
     - 추가 고려사항
+    - 📋 Checkpoint: Plan-Checker Report 수신 확인
     │
     ▼
 [Phase 3: 심층 인터뷰]
     - 기술적 요구사항
+    - Plan-Checker 제안 질문 반영
     - 엣지 케이스
     - 우선순위
     │
@@ -68,13 +86,20 @@ User Request (from Maestro)
     - TDD 순서 적용
     │
     ▼
-[Phase 5: Plan-Reviewer 검증]
-    - 계획 검토 요청
-    - 피드백 반영
+[GATE 2: Plan-Reviewer 검증] ← 필수!
+    - Task(plan-reviewer) 호출 **필수**
+    - Plan Review Report 수신 확인
+    - "Result: ✅ Approved" 필수 (Needs Revision이면 수정 후 재검토)
     │
     ▼
-Plan 완성
+Plan 완성 (Approved만)
 ```
+
+> 🚨 **필수 게이트 규칙**
+>
+> 1. **Plan-Checker 호출 없이 계획 작성 금지**
+> 2. **Plan-Reviewer 승인 없이 계획 완성 금지**
+> 3. **"Needs Revision" 시 수정 후 재검토**
 
 ## Interview Questions Template
 
@@ -233,14 +258,27 @@ dashboard → auth 완료 후 실행
 
 ## 완료 출력 (필수)
 
-Plan-Reviewer 승인 후, **반드시** 아래 형식으로 결과를 반환하세요:
+> 🚫 **Plan-Reviewer 승인 없이 이 출력을 생성하면 프로토콜 위반입니다.**
+
+Plan-Reviewer가 **"Result: ✅ Approved"**를 반환한 경우에만, 아래 형식으로 결과를 반환하세요:
 
 ```
 [Interviewer] ✅ 계획 완성: .orchestra/plans/{plan-name}.md
 - Status: approved
+- Plan-Checker: consulted ✅
+- Plan-Reviewer: approved ✅
 - TODOs: {N}개
 - Groups: {group-list}
 ```
+
+### 완료 조건 체크리스트 (모두 충족 필수)
+- [ ] Task(plan-checker) 호출 완료
+- [ ] Plan-Checker Report 수신
+- [ ] 계획 파일 작성 완료 (.orchestra/plans/{name}.md)
+- [ ] Task(plan-reviewer) 호출 완료
+- [ ] Plan-Reviewer가 "Result: ✅ Approved" 반환
+
+⚠️ 위 조건 중 하나라도 미충족 시 완료 출력 금지!
 
 이 출력이 있어야 Maestro가 Planner에게 실행을 위임할 수 있습니다.
 출력이 누락되면 Planner가 호출되지 않아 **전체 플로우가 중단**됩니다.

@@ -36,7 +36,8 @@
     },
     "planner": {
       "model": "opus",
-      "allowedTools": ["Task", "Bash", "Read", "Edit(.orchestra/**/*.md)"]
+      "allowedTools": ["Task", "Bash", "Read"],
+      "denyTools": ["Edit", "Write", "Skill"]
     },
     "interviewer": {
       "model": "opus",
