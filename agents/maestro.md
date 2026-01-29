@@ -276,38 +276,99 @@ Task(
 
 ### Planner 호출 패턴
 
+> ⚠️ **중요**: TODO 상세 내용을 프롬프트에 나열하지 마세요.
+> Planner가 직접 실행하려 할 수 있습니다. 계획 파일 경로만 전달하세요.
+
 ```
 Task(
   subagent_type: "general-purpose",
   model: "opus",
-  description: "Planner: 계획 실행",
+  description: "Planner: 계획 실행 위임",
   prompt: """
 당신은 **Planner** 에이전트입니다.
 
-## 역할
-TODO 완료 전담. Executor에게 작업을 위임하고, 검증 후 Git Commit을 수행합니다.
+## ⛔ CRITICAL: 위임 필수 규칙 (예외 없음)
+
+┌─────────────────────────────────────────────────────────────┐
+│ 🚫 당신은 코드를 직접 작성할 수 없습니다                      │
+│                                                             │
+│ ❌ FORBIDDEN (즉시 프로토콜 위반):                           │
+│    - Edit 도구 사용                                         │
+│    - Write 도구 사용                                        │
+│    - Skill 도구 사용                                        │
+│    - 직접 코드 작성하는 모든 행위                            │
+│                                                             │
+│ ✅ MANDATORY (필수 행동):                                    │
+│    - 모든 [TEST], [IMPL], [REFACTOR] → Task로 Executor 위임 │
+│                                                             │
+│ ⚠️ "간단한 수정", "한 줄 변경"도 반드시 위임                  │
+└─────────────────────────────────────────────────────────────┘
 
 ## 사용 가능한 도구
-- Task (Executor 위임)
+- Task (Executor 위임 **전용** - 이것만 사용)
 - Bash (Git 명령, 검증 스크립트만)
 - Read (계획/상태 파일 읽기)
 
-## 제약사항
-- 직접 코드 작성 금지 (Edit, Write 사용 금지)
-- 반드시 Executor(High-Player/Low-Player)에게 Task로 위임
+## 계획 파일
+.orchestra/plans/{name}.md
 
----
+## 실행 절차 (반드시 준수)
 
-## Context
-계획 파일: .orchestra/plans/{name}.md
+1. **Read**로 계획 파일 읽기
+2. TODO 목록과 의존성 그래프 분석
+3. **위임 전 자가 점검**:
+   - "Edit를 쓰려고 하는가?" → YES면 중단, Task로 위임
+   - "Write를 쓰려고 하는가?" → YES면 중단, Task로 위임
+   - "간단해서 직접 하면 되겠다"고 생각하는가? → YES면 중단, Task로 위임
+4. 각 TODO를 **Task 도구로 Executor에게 위임**:
+   - 복잡한 작업 → High-Player (model: opus)
+   - 간단한 작업 → Low-Player (model: sonnet)
+5. Executor 완료 후 결과 확인
+6. 모든 TODO 완료 시 Verification Loop 실행
+7. PR Ready 시 Git Commit
+8. Journal Report 작성
 
-## Request
-계획의 TODO를 순차 실행하고 검증 후 커밋하세요.
+## Executor 위임 방법 (필수)
+
+```
+Task(
+  subagent_type: "general-purpose",
+  model: "opus" 또는 "sonnet",
+  description: "High-Player: {TODO 요약}",
+  prompt: "[Executor 역할 + 6-Section 프롬프트]"
+)
+```
+
+⚠️ 코드 작업의 첫 번째 도구 호출은 **반드시 Task**여야 합니다.
+Edit, Write가 먼저 호출되면 프로토콜 위반입니다.
 
 ## Expected Output
 [Planner] ✅ 계획 실행 완료: .orchestra/plans/{name}.md
+- TODOs: {completed}/{total}
+- Verification: passed ✅
+- Commit: {hash}
+- Journal: .orchestra/journal/{name}-{date}.md ✅
 """
 )
+```
+
+### 잘못된 Planner 호출 예시
+
+```markdown
+❌ 잘못된 호출 (TODO 내용을 프롬프트에 나열):
+prompt: """
+다음 TODO를 실행하세요:
+1. [TEST] 로그인 테스트 작성 - tests/auth/login.test.js
+2. [IMPL] 로그인 구현 - src/auth/login.js
+...
+"""
+→ Planner가 직접 구현하려 할 위험!
+
+✅ 올바른 호출 (계획 파일 경로만 전달):
+prompt: """
+계획 파일: .orchestra/plans/login-feature.md
+위 파일을 Read로 읽고, 각 TODO를 Executor에게 Task로 위임하세요.
+"""
 ```
 
 ### Explorer 호출 패턴 (EXPLORATORY Intent)
