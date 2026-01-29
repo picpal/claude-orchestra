@@ -449,6 +449,7 @@ Task(
   subagent_type: "general-purpose",
   model: "opus",
   description: "High-Player: {작업 요약}",
+  allowed_tools: ["Read", "Edit", "Write", "Bash", "Glob", "Grep"],  # ← Executor는 Edit/Write 허용
   prompt: """
 당신은 **High-Player** 에이전트입니다.
 
@@ -481,6 +482,7 @@ Task(
   subagent_type: "general-purpose",
   model: "sonnet",
   description: "Low-Player: {작업 요약}",
+  allowed_tools: ["Read", "Edit", "Write", "Bash", "Grep"],  # ← Executor는 Edit/Write 허용
   prompt: """
 당신은 **Low-Player** 에이전트입니다.
 

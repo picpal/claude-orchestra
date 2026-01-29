@@ -242,6 +242,7 @@ Task(
   subagent_type: "general-purpose",
   model: "opus",
   description: "Interviewer: 요구사항 인터뷰",
+  allowed_tools: ["AskUserQuestion", "Task", "Write", "Read"],  # ← Edit 차단!
   prompt: """
 당신은 **Interviewer** 에이전트입니다.
 
@@ -284,6 +285,7 @@ Task(
   subagent_type: "general-purpose",
   model: "opus",
   description: "Planner: 계획 실행 위임",
+  allowed_tools: ["Task", "Bash", "Read"],  # ← Edit, Write 물리적 차단!
   prompt: """
 당신은 **Planner** 에이전트입니다.
 

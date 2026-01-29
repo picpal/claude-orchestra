@@ -304,6 +304,7 @@ Task(
   subagent_type: "general-purpose",
   model: "sonnet",
   description: "Plan-Checker: 놓친 질문 확인",
+  allowed_tools: ["Read", "Grep", "Glob"],  # ← 읽기 전용, Edit/Write 차단!
   prompt: """
 당신은 **Plan-Checker** 에이전트입니다.
 
@@ -350,6 +351,7 @@ Task(
   subagent_type: "general-purpose",
   model: "sonnet",
   description: "Plan-Reviewer: 계획 검증",
+  allowed_tools: ["Read", "Grep", "Glob"],  # ← 읽기 전용, Edit/Write 차단!
   prompt: """
 당신은 **Plan-Reviewer** 에이전트입니다.
 
