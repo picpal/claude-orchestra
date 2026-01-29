@@ -26,6 +26,10 @@
     ],
     "PostToolUse": [
       {
+        "matcher": "Edit|Write",
+        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/change-logger.sh"}]
+      },
+      {
         "matcher": "Bash",
         "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/test-logger.sh"}]
       },

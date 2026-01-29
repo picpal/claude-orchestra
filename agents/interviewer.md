@@ -292,6 +292,128 @@ Plan-Reviewer가 **"Result: ✅ Approved"**를 반환한 경우에만, 아래 �
 > ⚠️ **Edit 도구 사용 금지** — Interviewer는 기존 파일을 수정하지 않습니다.
 > Write는 `.orchestra/plans/` 디렉토리의 마크다운 계획 파일 생성에만 사용하세요.
 
+## Task 도구로 에이전트 호출하기 (필수 패턴)
+
+> 🚨 **중요**: 플러그인 에이전트(plan-checker, plan-reviewer)는 Task의 `subagent_type` 매개변수로 직접 지정할 수 없습니다.
+> 대신 `subagent_type: "general-purpose"`를 사용하고, prompt에 에이전트 역할을 명시하세요.
+
+### Plan-Checker 호출 패턴 (GATE 1)
+
+```
+Task(
+  subagent_type: "general-purpose",
+  model: "sonnet",
+  description: "Plan-Checker: 놓친 질문 확인",
+  prompt: """
+당신은 **Plan-Checker** 에이전트입니다.
+
+## 역할
+요구사항 인터뷰에서 놓친 질문이나 고려사항을 찾아냅니다.
+
+## 사용 가능한 도구
+- Read (파일 읽기)
+- Grep (코드 검색)
+- Glob (파일 찾기)
+
+## 제약사항
+- 파일 수정 금지 (읽기 전용)
+- 직접 계획 작성 금지
+
+---
+
+## Current Understanding
+{현재까지 파악한 요구사항}
+
+## Questions Asked
+{이미 물어본 질문들}
+
+## Request
+다음 관점에서 놓친 질문이나 고려사항을 알려주세요:
+1. 기술적 세부사항
+2. 엣지 케이스
+3. 의존성
+4. 보안 고려사항
+
+## Expected Output
+### Plan-Checker Report
+- Missed Questions: [놓친 질문 목록]
+- Additional Considerations: [추가 고려사항]
+- Recommendations: [권장사항]
+"""
+)
+```
+
+### Plan-Reviewer 호출 패턴 (GATE 2)
+
+```
+Task(
+  subagent_type: "general-purpose",
+  model: "sonnet",
+  description: "Plan-Reviewer: 계획 검증",
+  prompt: """
+당신은 **Plan-Reviewer** 에이전트입니다.
+
+## 역할
+작성된 계획을 검토하고 승인 여부를 결정합니다.
+
+## 사용 가능한 도구
+- Read (파일 읽기)
+- Grep (코드 검색)
+- Glob (파일 찾기)
+
+## 제약사항
+- 파일 수정 금지 (읽기 전용)
+- 계획 직접 수정 금지 (피드백만 제공)
+
+---
+
+## Plan File
+.orchestra/plans/{plan-name}.md
+
+## Review Criteria
+다음 관점에서 계획을 검토하세요:
+1. TDD 원칙 준수 (TEST → IMPL → REFACTOR 순서)
+2. TODO 순서 적절성
+3. 범위 명확성 (In/Out of Scope)
+4. 리스크 식별
+5. 의존성 그래프 정확성
+
+## Expected Output
+### Plan Review Report
+- TDD Compliance: ✅/❌
+- TODO Ordering: ✅/❌
+- Scope Clarity: ✅/❌
+- Risk Assessment: ✅/❌
+- Issues Found: [문제점 목록]
+- Suggestions: [개선 제안]
+
+**Result: ✅ Approved** 또는 **Result: ❌ Needs Revision**
+
+(Needs Revision인 경우 반드시 수정 필요 사항 명시)
+"""
+)
+```
+
+### 전체 흐름 예시
+
+```markdown
+# Interviewer가 Plan-Checker와 Plan-Reviewer를 순차 호출하는 흐름
+
+1. 사용자 인터뷰 완료
+   ↓
+2. Task(Plan-Checker) 호출 → Report 수신
+   ↓
+3. Report 기반 추가 질문 (필요시)
+   ↓
+4. 계획 파일 작성 (.orchestra/plans/{name}.md)
+   ↓
+5. Task(Plan-Reviewer) 호출 → Review Report 수신
+   ↓
+6. "Result: ✅ Approved" 확인
+   ↓
+7. 완료 출력 생성
+```
+
 ## Constraints
 
 ### 필수 준수

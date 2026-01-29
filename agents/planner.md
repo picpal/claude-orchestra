@@ -314,8 +314,19 @@ Plan: {plan-name}
 
 ```markdown
 # 하나의 응답에서 여러 Task tool 호출 (병렬)
-<Task: high-player, prompt: auth-group-todos>
-<Task: high-player, prompt: signup-group-todos>
+# 두 개의 Task 도구를 동시에 호출하면 병렬 실행됨
+
+Task 1:
+- subagent_type: "general-purpose"
+- model: "opus"
+- description: "High-Player: auth 그룹 구현"
+- prompt: "[High-Player 역할 + auth-group-todos 6-Section]"
+
+Task 2:
+- subagent_type: "general-purpose"
+- model: "sonnet"
+- description: "Low-Player: signup 그룹 구현"
+- prompt: "[Low-Player 역할 + signup-group-todos 6-Section]"
 ```
 
 ### 의존성 그래프 파싱
@@ -367,6 +378,131 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 > ⚠️ **Skill 도구 사용 금지** — Planner는 Skill(context-dev 등)을 직접 호출할 수 없습니다.
 > Skill 호출은 Executor(High-Player/Low-Player)의 책임입니다.
+
+## Task 도구로 Executor 호출하기 (필수 패턴)
+
+> 🚨 **중요**: Claude Code의 Task 도구는 `subagent_type: "general-purpose"`를 사용해야 합니다.
+> high-player/low-player는 내장 subagent_type이 아니므로, prompt에 역할을 명시해야 합니다.
+
+### High-Player 호출 패턴
+
+```
+Task(
+  subagent_type: "general-purpose",
+  model: "opus",
+  description: "High-Player: {작업 요약}",
+  prompt: """
+당신은 **High-Player** 에이전트입니다.
+
+## 역할
+복잡한 작업을 실행합니다. 아키텍처 변경, 다중 파일 수정, 보안/인증 로직 등을 담당합니다.
+
+## 사용 가능한 도구
+- Read (파일 읽기)
+- Edit (파일 수정)
+- Write (파일 생성)
+- Bash (테스트/빌드 실행)
+- Glob/Grep (코드 탐색)
+
+## 제약사항
+- 테스트 삭제/스킵 금지
+- 다른 에이전트에게 재위임 금지
+- 범위 외 수정 금지
+
+---
+
+{6-Section 프롬프트 내용}
+"""
+)
+```
+
+### Low-Player 호출 패턴
+
+```
+Task(
+  subagent_type: "general-purpose",
+  model: "sonnet",
+  description: "Low-Player: {작업 요약}",
+  prompt: """
+당신은 **Low-Player** 에이전트입니다.
+
+## 역할
+간단한 작업을 빠르게 실행합니다. 단일 파일 수정, 버그 수정, 테스트 추가 등을 담당합니다.
+
+## 사용 가능한 도구
+- Read (파일 읽기)
+- Edit (파일 수정)
+- Write (파일 생성)
+- Bash (테스트 실행)
+- Grep (빠른 검색)
+
+## 제약사항
+- 테스트 삭제/스킵 금지
+- 재위임 금지
+- 범위 외 수정 금지
+
+---
+
+{6-Section 프롬프트 내용}
+"""
+)
+```
+
+### 복잡도에 따른 선택
+
+| 복잡도 | Executor | model 파라미터 |
+|--------|----------|----------------|
+| High (아키텍처, 보안, 3+ 파일) | High-Player | `"opus"` |
+| Low (단일 파일, 버그 수정, 테스트) | Low-Player | `"sonnet"` |
+
+### 실제 호출 예시
+
+```markdown
+# Planner가 [TEST] 로그인 검증 테스트 작성을 Low-Player에게 위임
+
+Task 도구 호출:
+- subagent_type: "general-purpose"
+- model: "sonnet"
+- description: "Low-Player: 로그인 검증 테스트 작성"
+- prompt: """
+당신은 **Low-Player** 에이전트입니다.
+
+## 역할
+간단한 작업을 빠르게 실행합니다.
+
+## 사용 가능한 도구
+- Read, Edit, Write, Bash, Grep
+
+## 제약사항
+- 테스트 삭제/스킵 금지, 재위임 금지, 범위 외 수정 금지
+
+---
+
+## 1. TASK
+로그인 검증 테스트 작성
+- Type: [TEST]
+- ID: auth-001
+
+## 2. EXPECTED OUTCOME
+- 생성 파일: `src/auth/__tests__/login.test.ts`
+- 검증 명령어: `npm test -- login.test`
+
+## 3. REQUIRED TOOLS
+- Write: 테스트 파일 생성
+- Bash: 테스트 실행
+
+## 4. MUST DO
+- 실패하는 테스트 먼저 작성 (RED phase)
+- 로그인 성공/실패 케이스 포함
+
+## 5. MUST NOT DO
+- 구현 코드 작성 금지 (테스트만)
+- 다른 파일 수정 금지
+
+## 6. CONTEXT
+- 관련 파일: `src/auth/login.ts` (아직 미구현)
+"""
+```
 
 ## Constraints
 

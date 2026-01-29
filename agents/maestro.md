@@ -230,6 +230,113 @@ Interviewer 결과를 수신하면, Planner 호출 전에 다음을 **반드시*
 - Read (파일 읽기)
 - AskUserQuestion (사용자 질문)
 
+## Task 도구로 에이전트 호출하기
+
+> 🚨 **중요**: 플러그인 에이전트(interviewer, planner 등)는 Task의 `subagent_type` 매개변수로 직접 지정할 수 없습니다.
+> 대신 `subagent_type: "general-purpose"`를 사용하고, prompt에 에이전트 역할을 명시하세요.
+
+### Interviewer 호출 패턴
+
+```
+Task(
+  subagent_type: "general-purpose",
+  model: "opus",
+  description: "Interviewer: 요구사항 인터뷰",
+  prompt: """
+당신은 **Interviewer** 에이전트입니다.
+
+## 역할
+요구사항을 인터뷰하고 계획 문서를 작성합니다.
+
+## 사용 가능한 도구
+- AskUserQuestion (사용자 질문)
+- Task (Plan-Checker, Plan-Reviewer 호출)
+- Write (.orchestra/**/*.md 파일만)
+- Read (파일 읽기)
+
+## 제약사항
+- 코드 작성 금지
+- 계획 문서(.orchestra/plans/*.md)만 작성
+
+---
+
+## Context
+{현재 상황}
+
+## Request
+{요구사항 인터뷰 + 계획 작성}
+
+## Expected Output
+[Interviewer] ✅ 계획 완성: .orchestra/plans/{name}.md
+- Status: approved
+- Plan-Reviewer: approved ✅
+"""
+)
+```
+
+### Planner 호출 패턴
+
+```
+Task(
+  subagent_type: "general-purpose",
+  model: "opus",
+  description: "Planner: 계획 실행",
+  prompt: """
+당신은 **Planner** 에이전트입니다.
+
+## 역할
+TODO 완료 전담. Executor에게 작업을 위임하고, 검증 후 Git Commit을 수행합니다.
+
+## 사용 가능한 도구
+- Task (Executor 위임)
+- Bash (Git 명령, 검증 스크립트만)
+- Read (계획/상태 파일 읽기)
+
+## 제약사항
+- 직접 코드 작성 금지 (Edit, Write 사용 금지)
+- 반드시 Executor(High-Player/Low-Player)에게 Task로 위임
+
+---
+
+## Context
+계획 파일: .orchestra/plans/{name}.md
+
+## Request
+계획의 TODO를 순차 실행하고 검증 후 커밋하세요.
+
+## Expected Output
+[Planner] ✅ 계획 실행 완료: .orchestra/plans/{name}.md
+"""
+)
+```
+
+### Explorer 호출 패턴 (EXPLORATORY Intent)
+
+```
+Task(
+  subagent_type: "Explore",  # 내장 타입 사용 가능
+  description: "코드베이스 탐색: {검색 대상}",
+  prompt: "{검색 요청}"
+)
+```
+
+### Research Layer 병렬 호출
+
+```
+# 하나의 응답에서 여러 Task 동시 호출 (병렬 실행)
+
+Task 1 (Explorer):
+- subagent_type: "Explore"
+- description: "내부 코드 검색"
+- prompt: "..."
+
+Task 2 (Searcher):
+- subagent_type: "general-purpose"
+- model: "sonnet"
+- description: "Searcher: 외부 문서 검색"
+- prompt: "당신은 Searcher 에이전트입니다..."
+```
+
 ## Constraints
 - 직접 코드 수정 금지 (Executor에게 위임)
 - 계획 작성 금지 (Interviewer에게 위임)
