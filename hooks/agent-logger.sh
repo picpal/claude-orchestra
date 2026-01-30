@@ -213,6 +213,10 @@ case "$MODE" in
       ACTUAL_AGENT="plan-checker"
     elif echo "$DESC_LOWER" | grep -qE '^plan-reviewer:'; then
       ACTUAL_AGENT="plan-reviewer"
+    elif echo "$DESC_LOWER" | grep -qE '^conflict-checker:|conflict.checker|충돌.검사'; then
+      ACTUAL_AGENT="conflict-checker"
+    elif echo "$DESC_LOWER" | grep -qE '^code-reviewer:|code.reviewer|코드.리뷰'; then
+      ACTUAL_AGENT="code-reviewer"
     else
       ACTUAL_AGENT="$AGENT_TYPE"
     fi
