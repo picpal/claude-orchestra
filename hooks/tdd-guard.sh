@@ -70,9 +70,81 @@ record_deletion_attempt() {
   fi
 }
 
+# 에이전트 스택에서 현재 에이전트 타입 조회
+AGENT_STACK_FILE=".orchestra/logs/.agent-stack"
+
+get_current_agent_type() {
+  if [ -f "$AGENT_STACK_FILE" ]; then
+    tail -1 "$AGENT_STACK_FILE" 2>/dev/null | cut -d'|' -f2
+  fi
+}
+
+
+# 코드 작성 완전 금지 에이전트 (plan-checker, plan-reviewer, planner, architecture)
+# Note: Maestro는 .orchestra/ 경로에 한해 Write 허용 (journal, state 등)
+is_readonly_agent() {
+  local agent="$1"
+  local agent_lower
+  agent_lower=$(echo "$agent" | tr '[:upper:]' '[:lower:]')
+
+  case "$agent_lower" in
+    plan-checker|plan-reviewer|planner|architecture)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+# Maestro 에이전트인지 확인
+is_maestro_agent() {
+  local agent="$1"
+  local agent_lower
+  agent_lower=$(echo "$agent" | tr '[:upper:]' '[:lower:]')
+
+  [ "$agent_lower" = "maestro" ]
+}
+
+# Maestro용 허용 경로 (.orchestra/ 디렉토리)
+is_allowed_path_for_maestro() {
+  local file_path="$1"
+
+  if echo "$file_path" | grep -qE '^\.orchestra/'; then
+    return 0
+  fi
+  return 1
+}
+
+# Interviewer 에이전트인지 확인 (계획 문서만 작성 가능)
+is_interviewer_agent() {
+  local agent="$1"
+  local agent_lower
+  agent_lower=$(echo "$agent" | tr '[:upper:]' '[:lower:]')
+
+  [ "$agent_lower" = "interviewer" ]
+}
+
+# 허용된 경로인지 확인 (Interviewer용)
+is_allowed_path_for_interviewer() {
+  local file_path="$1"
+
+  # .orchestra/plans/ 또는 .orchestra/journal/ 경로 허용
+  if echo "$file_path" | grep -qE '^\.orchestra/(plans|journal)/.*\.md$'; then
+    return 0
+  fi
+  return 1
+}
+
 # 메인 로직
 main() {
-  # Extract file_path and old_string from stdin JSON
+  # 현재 활성 에이전트 확인
+  local current_agent
+  current_agent=$(get_current_agent_type)
+
+  log "Current agent: $current_agent"
+
+  # Extract file_path first (Interviewer 예외 처리에 필요)
   local file_path
   file_path=$(hook_get_field "tool_input.file_path")
   local old_string
@@ -80,7 +152,64 @@ main() {
   local content
   content=$(hook_get_field "tool_input.content")
 
-  log "Checking: file=$file_path"
+  log "Checking: file=$file_path, agent=$current_agent"
+
+  # Interviewer 에이전트: .orchestra/plans/, .orchestra/journal/ 경로만 허용
+  if [ -n "$current_agent" ] && is_interviewer_agent "$current_agent"; then
+    if [ -n "$file_path" ] && is_allowed_path_for_interviewer "$file_path"; then
+      log "ALLOWED: Interviewer writing to plan/journal: $file_path"
+    else
+      log "BLOCKED: Interviewer attempted to write to: $file_path"
+
+      echo "⛔ Protocol Violation Detected!"
+      echo ""
+      echo "[Interviewer] 에이전트는 계획 문서만 작성할 수 있습니다."
+      echo ""
+      echo "허용된 경로:"
+      echo "  - .orchestra/plans/*.md"
+      echo "  - .orchestra/journal/*.md"
+      echo ""
+      echo "차단된 경로: $file_path"
+      echo ""
+      exit 1
+    fi
+  fi
+
+  # Maestro 에이전트: .orchestra/ 경로만 허용 (journal, state, plans 수정)
+  if [ -n "$current_agent" ] && is_maestro_agent "$current_agent"; then
+    if [ -n "$file_path" ] && is_allowed_path_for_maestro "$file_path"; then
+      log "ALLOWED: Maestro writing to .orchestra: $file_path"
+    else
+      log "BLOCKED: Maestro attempted to write to: $file_path"
+
+      echo "⛔ Protocol Violation Detected!"
+      echo ""
+      echo "[Maestro] 에이전트는 코드를 직접 작성할 수 없습니다."
+      echo ""
+      echo "허용된 경로:"
+      echo "  - .orchestra/**/* (상태, 저널, 계획 파일)"
+      echo ""
+      echo "차단된 경로: $file_path"
+      echo ""
+      echo "올바른 처리:"
+      echo "  - Task로 High-Player/Low-Player에게 위임"
+      echo ""
+      exit 1
+    fi
+  fi
+
+  # 읽기 전용 에이전트 (plan-checker, plan-reviewer, planner, architecture): 모든 Write 차단
+  if [ -n "$current_agent" ] && is_readonly_agent "$current_agent"; then
+    log "BLOCKED: $current_agent attempted to use Edit/Write"
+
+    echo "⛔ Protocol Violation Detected!"
+    echo ""
+    echo "[$current_agent] 에이전트는 파일을 수정할 수 없습니다."
+    echo ""
+    echo "이 에이전트는 읽기 전용입니다."
+    echo ""
+    exit 1
+  fi
 
   # 테스트 파일 삭제 시도 확인
   if [ -n "$file_path" ] && is_test_file "$file_path"; then

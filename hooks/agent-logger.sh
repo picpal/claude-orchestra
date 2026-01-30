@@ -24,11 +24,38 @@ mkdir -p "$(dirname "$DEBUG_LOG")" 2>/dev/null || true
 AGENT_CACHE_DIR=".orchestra/logs/.agent-cache"
 mkdir -p "$AGENT_CACHE_DIR" 2>/dev/null || true
 
+# 에이전트 스택 파일 (현재 활성 에이전트 추적)
+AGENT_STACK_FILE=".orchestra/logs/.agent-stack"
+
 # 에이전트 정보 저장 (subagent-start 시 호출)
 cache_agent_info() {
   local agent_id="$1" agent_type="$2" description="$3"
   if [ -n "$agent_id" ] && [ -n "$agent_type" ]; then
     printf '%s\n%s' "$agent_type" "$description" > "$AGENT_CACHE_DIR/$agent_id"
+  fi
+}
+
+# 에이전트 스택에 push (subagent-start 시 호출)
+push_agent_stack() {
+  local agent_id="$1" agent_type="$2" description="$3"
+  # 스택에 추가 (형식: agent_id|agent_type|description)
+  echo "${agent_id}|${agent_type}|${description}" >> "$AGENT_STACK_FILE"
+}
+
+# 에이전트 스택에서 pop (subagent-stop 시 호출)
+pop_agent_stack() {
+  local agent_id="$1"
+  if [ -f "$AGENT_STACK_FILE" ]; then
+    # 해당 agent_id 라인 제거
+    grep -v "^${agent_id}|" "$AGENT_STACK_FILE" > "${AGENT_STACK_FILE}.tmp" 2>/dev/null || true
+    mv "${AGENT_STACK_FILE}.tmp" "$AGENT_STACK_FILE" 2>/dev/null || true
+  fi
+}
+
+# 현재 활성 에이전트 타입 조회 (스택 top)
+get_current_agent_type() {
+  if [ -f "$AGENT_STACK_FILE" ]; then
+    tail -1 "$AGENT_STACK_FILE" 2>/dev/null | cut -d'|' -f2
   fi
 }
 
@@ -169,11 +196,33 @@ case "$MODE" in
       AGENT_TYPE="unknown"
     fi
 
-    # 캐시에 저장 (subagent-stop에서 조회용)
-    cache_agent_info "$AGENT_ID" "$AGENT_TYPE" "$DESCRIPTION"
+    # description에서 실제 에이전트 이름 추출 (예: "Planner: 계획 실행" → "planner")
+    ACTUAL_AGENT=""
+    DESC_LOWER=$(echo "$DESCRIPTION" | tr '[:upper:]' '[:lower:]')
+    if echo "$DESC_LOWER" | grep -qE '^planner:|planner 에이전트|계획 실행'; then
+      ACTUAL_AGENT="planner"
+    elif echo "$DESC_LOWER" | grep -qE '^high-player:|high player'; then
+      ACTUAL_AGENT="high-player"
+    elif echo "$DESC_LOWER" | grep -qE '^low-player:|low player'; then
+      ACTUAL_AGENT="low-player"
+    elif echo "$DESC_LOWER" | grep -qE '^interviewer:'; then
+      ACTUAL_AGENT="interviewer"
+    elif echo "$DESC_LOWER" | grep -qE '^plan-checker:'; then
+      ACTUAL_AGENT="plan-checker"
+    elif echo "$DESC_LOWER" | grep -qE '^plan-reviewer:'; then
+      ACTUAL_AGENT="plan-reviewer"
+    else
+      ACTUAL_AGENT="$AGENT_TYPE"
+    fi
 
-    PHASE=$(resolve_phase "$AGENT_TYPE" "$DESCRIPTION")
-    "$SCRIPT_DIR/activity-logger.sh" AGENT "$AGENT_TYPE" "[start] id=${AGENT_ID:-?} $DESCRIPTION" "$PHASE" 2>/dev/null || true
+    # 캐시에 저장 (subagent-stop에서 조회용)
+    cache_agent_info "$AGENT_ID" "$ACTUAL_AGENT" "$DESCRIPTION"
+
+    # 에이전트 스택에 push (도구 제한 추적용)
+    push_agent_stack "$AGENT_ID" "$ACTUAL_AGENT" "$DESCRIPTION"
+
+    PHASE=$(resolve_phase "$ACTUAL_AGENT" "$DESCRIPTION")
+    "$SCRIPT_DIR/activity-logger.sh" AGENT "$ACTUAL_AGENT" "[start] id=${AGENT_ID:-?} $DESCRIPTION" "$PHASE" 2>/dev/null || true
     ;;
 
   subagent-stop)
@@ -191,6 +240,9 @@ case "$MODE" in
     if [ -z "$AGENT_TYPE" ]; then
       AGENT_TYPE="unknown"
     fi
+
+    # 에이전트 스택에서 pop (도구 제한 추적용)
+    pop_agent_stack "$AGENT_ID"
 
     PHASE=$(resolve_phase "$AGENT_TYPE" "${DESCRIPTION:-}")
     "$SCRIPT_DIR/activity-logger.sh" AGENT "$AGENT_TYPE" "[stop] id=${AGENT_ID:-?}" "$PHASE" 2>/dev/null || true

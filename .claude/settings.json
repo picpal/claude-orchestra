@@ -32,16 +32,17 @@
   "agents": {
     "maestro": {
       "model": "opus",
-      "allowedTools": ["Task", "Read", "AskUserQuestion"]
+      "allowedTools": ["Task", "Read", "Write", "Bash", "AskUserQuestion"]
     },
     "planner": {
       "model": "opus",
-      "allowedTools": ["Task", "Bash", "Read"],
-      "denyTools": ["Edit", "Write", "Skill"]
+      "allowedTools": ["Read"],
+      "denyTools": ["Task", "Edit", "Write", "Bash", "Skill"]
     },
     "interviewer": {
       "model": "opus",
-      "allowedTools": ["AskUserQuestion", "Task", "Write(.orchestra/**/*.md)", "Read"]
+      "allowedTools": ["AskUserQuestion", "Write(.orchestra/**/*.md)", "Read"],
+      "denyTools": ["Task", "Edit"]
     },
     "plan-checker": {
       "model": "sonnet",
@@ -53,7 +54,8 @@
     },
     "architecture": {
       "model": "opus",
-      "allowedTools": ["Read", "Grep", "Glob", "Task"]
+      "allowedTools": ["Read", "Grep", "Glob"],
+      "denyTools": ["Task", "Edit", "Write", "Bash"]
     },
     "searcher": {
       "model": "sonnet",

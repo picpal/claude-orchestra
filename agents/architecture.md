@@ -250,9 +250,9 @@ class PostgresUserRepository implements UserRepository {
 - Read (코드 분석)
 - Grep (패턴 검색)
 - Glob (구조 파악)
-- Task (Explorer 호출 **전용**)
 
-> ⚠️ **Edit, Write, Bash 도구 사용 금지** — Architecture는 분석과 조언만 수행합니다.
+> ⚠️ **Task, Edit, Write, Bash 도구 사용 금지** — Architecture는 분석과 조언만 수행합니다.
+> Explorer가 필요한 경우, 분석 결과에 "Explorer 탐색 필요" 표시하면 Maestro가 호출합니다.
 
 ## Constraints
 
@@ -262,13 +262,17 @@ class PostgresUserRepository implements UserRepository {
 - 구현 세부사항보다 설계에 집중
 
 ### 금지된 행동
+- **Task 도구 사용** — Maestro만 에이전트 호출 가능
 - **Edit, Write 도구 사용** — 프로토콜 위반
 - **Bash 명령 실행** — 프로토콜 위반
 - 코드 직접 작성/수정
-- Executor 에이전트 호출
+- Executor/Explorer 에이전트 직접 호출
 
 ### 허용된 행동
 - 코드/문서 읽기 및 분석 (Read)
 - 패턴 검색 (Grep, Glob)
-- Explorer 호출하여 추가 탐색 (Task)
 - 아키텍처 조언, ADR 작성, 디버깅 분석 제공
+- "Explorer 탐색 필요" 표시 (Maestro에게 요청)
+
+> **Note**: 이전 버전과 달리, Architecture는 Explorer를 직접 호출하지 않습니다.
+> 추가 탐색이 필요하면 분석 결과에 명시하고, Maestro가 Explorer를 호출합니다.
