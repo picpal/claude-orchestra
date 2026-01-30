@@ -37,11 +37,17 @@ MODE="IDLE"
 CONTEXT="dev"
 PLAN_INFO=""
 TODO_INFO=""
+JOURNAL_REQUIRED="false"
+JOURNAL_WRITTEN="false"
 
 # .orchestra/state.json 읽기 (있을 때만)
 if [ -f "$STATE_FILE" ]; then
   MODE=$(python3 -c "import json; d=json.load(open('$STATE_FILE')); print(d.get('mode','IDLE'))" 2>/dev/null || echo "IDLE")
   CONTEXT=$(python3 -c "import json; d=json.load(open('$STATE_FILE')); print(d.get('currentContext','dev'))" 2>/dev/null || echo "dev")
+
+  # Journal 상태 확인 (python3 사용 - 기존 패턴 유지)
+  JOURNAL_REQUIRED=$(python3 -c "import json; d=json.load(open('$STATE_FILE')); print(str(d.get('workflowStatus',{}).get('journalRequired',False)).lower())" 2>/dev/null || echo "false")
+  JOURNAL_WRITTEN=$(python3 -c "import json; d=json.load(open('$STATE_FILE')); print(str(d.get('workflowStatus',{}).get('journalWritten',False)).lower())" 2>/dev/null || echo "false")
 
   # 활성 계획 확인
   CURRENT_PLAN=$(python3 -c "import json; d=json.load(open('$STATE_FILE')); print(d.get('currentPlan','') or '')" 2>/dev/null || echo "")
@@ -55,6 +61,23 @@ if [ -f "$STATE_FILE" ]; then
     DONE=$(python3 -c "import json; d=json.load(open('$STATE_FILE')); print(sum(1 for t in d.get('todos',[]) if t.get('status')=='done'))" 2>/dev/null || echo "0")
     TODO_INFO="- progress: $DONE/$TOTAL TODOs"
   fi
+fi
+
+# Journal 차단 리마인더 (journalRequired=true && journalWritten=false)
+if [ "$JOURNAL_REQUIRED" = "true" ] && [ "$JOURNAL_WRITTEN" = "false" ]; then
+  cat <<'JOURNAL_BLOCK'
+
+## [차단] Journal 리포트 작성 필수
+
+Verification이 완료되었습니다. **Journal 리포트를 먼저 작성하세요.**
+
+### 즉시 수행:
+1. `.orchestra/journal/{plan-name}-{YYYYMMDD}-{HHmm}.md` 작성
+2. Journal Template 양식 준수 (Meta, Summary, TODOs, Files, Verification)
+
+**Journal 작성 전 다른 작업을 수행하지 마세요.**
+
+JOURNAL_BLOCK
 fi
 
 # 출력: 모드에 따라 분기

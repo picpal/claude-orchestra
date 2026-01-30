@@ -3,6 +3,12 @@
   "currentContext": "dev",
   "currentPlan": null,
   "todos": [],
+  "workflowStatus": {
+    "journalRequired": false,
+    "journalWritten": false,
+    "lastJournalPath": null,
+    "completedAt": null
+  },
   "todoSchema": {
     "_comment": "Each todo item can have these fields",
     "example": {

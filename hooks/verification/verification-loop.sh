@@ -257,7 +257,12 @@ if [ -f "$STATE_FILE" ] && command -v jq &> /dev/null; then
      '.verificationMetrics.mode = $mode |
       .verificationMetrics.lastRun = $lastRun |
       .verificationMetrics.prReady = ($prReady == "true") |
-      .verificationMetrics.blockers = $blockers' \
+      .verificationMetrics.blockers = $blockers |
+      if ($prReady == "true") then
+        .workflowStatus.journalRequired = true |
+        .workflowStatus.journalWritten = false |
+        .workflowStatus.completedAt = $lastRun
+      else . end' \
      "$STATE_FILE" > "${STATE_FILE}.tmp" && mv "${STATE_FILE}.tmp" "$STATE_FILE"
 fi
 
@@ -265,6 +270,7 @@ fi
 if [ "$PR_READY" = "true" ]; then
   echo ""
   echo -e "${GREEN}✅ PR Ready - All checks passed${NC}"
+  echo -e "${YELLOW}📝 Journal 리포트 작성이 필요합니다${NC}"
   exit 0
 else
   echo ""

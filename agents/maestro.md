@@ -208,11 +208,20 @@ Intent를 분류하고, 에이전트를 호출하고, 결과를 기반으로 다
 
 ## OPEN-ENDED Full Flow
 
+> **중요**: OPEN-ENDED 작업 시작 시 이전 작업의 상태 플래그를 초기화합니다.
+
 ```
 User Request
     │
     ▼
 [Intent: OPEN-ENDED]
+    │
+    ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Phase 0: State Reset (필수)                                  │
+│   workflowStatus 초기화 (이전 작업 플래그 제거)              │
+│   → jq로 state.json의 workflowStatus 리셋                    │
+└─────────────────────────────────────────────────────────────┘
     │
     ▼
 ┌─────────────────────────────────────────────────────────────┐
@@ -296,9 +305,17 @@ User Request
 │                                                              │
 │   PR Ready면:                                                │
 │   Bash(git add + git commit)                                 │
+│   → journalRequired = true 자동 설정                         │
+└─────────────────────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Phase 7: Journal Report (필수 - 차단 조건)                   │
 │                                                              │
-│   Journal Report 작성:                                       │
-│   Write(.orchestra/journal/{name}-{date}.md)                │
+│   Write(.orchestra/journal/{name}-{YYYYMMDD}-{HHmm}.md)     │
+│   → journal-tracker.sh가 자동으로:                           │
+│     - journalWritten = true 설정                             │
+│     - mode = "IDLE" 전환                                     │
 └─────────────────────────────────────────────────────────────┘
     │
     ▼
@@ -773,6 +790,22 @@ Task(
 )
 ```
 
+## State Reset (Phase 0)
+
+OPEN-ENDED 작업 시작 시 **반드시** 이전 작업의 상태 플래그를 초기화합니다.
+
+```bash
+# Maestro가 OPEN-ENDED 시작 시 Bash로 실행
+jq '.workflowStatus = {
+  "journalRequired": false,
+  "journalWritten": false,
+  "lastJournalPath": null,
+  "completedAt": null
+}' .orchestra/state.json > .orchestra/state.json.tmp && mv .orchestra/state.json.tmp .orchestra/state.json
+```
+
+> **왜 필요한가?** 이전 작업에서 `journalRequired: true`가 남아있으면 새 작업에서 오작동할 수 있습니다.
+
 ## Verification & Commit (Phase 6)
 
 모든 TODO 완료 후 Maestro가 직접 수행:
@@ -799,13 +832,13 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 ### Journal Report
 ```markdown
-# .orchestra/journal/{plan-name}-{YYYYMMDD}.md
+# .orchestra/journal/{plan-name}-{YYYYMMDD}-{HHmm}.md
 
 # 작업 완료 리포트
 
 ## Meta
 - Plan: {plan-name}
-- Date: {YYYY-MM-DD}
+- Date: {YYYY-MM-DD HH:mm}
 - TODOs: {completed}/{total}
 
 ## Summary
@@ -823,6 +856,43 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - Lint: ✅/❌
 - Tests: ✅/❌
 - Security: ✅/❌
+```
+
+## Journal Report (Phase 7) - 필수
+
+> **중요**: Verification 통과 후 `journalRequired` 플래그가 자동 설정됩니다.
+> Journal을 작성하지 않으면 user-prompt-submit이 매 요청마다 차단 리마인더를 주입합니다.
+
+### 수행 절차
+1. `.orchestra/journal/{plan-name}-{YYYYMMDD}-{HHmm}.md` 작성 (Write 도구)
+2. journal-tracker.sh가 자동으로:
+   - `journalWritten = true` 설정
+   - `mode = "IDLE"` 전환
+3. 완료 메시지 확인
+
+### Journal 파일명 형식
+`{plan-name}-{YYYYMMDD}-{HHmm}.md`
+- 예: `oauth-login-20260130-1430.md`
+- 시간 포함으로 같은 날 재실행 시 충돌 방지
+
+### 상태 흐름
+```
+Verification 통과
+       ↓
+journalRequired = true 설정 (verification-loop.sh)
+       ↓
+사용자 다음 프롬프트
+       ↓
+user-prompt-submit.sh: 차단 리마인더 주입
+"Journal 작성 전 다른 작업 금지"
+       ↓
+Maestro: Journal 파일 Write
+       ↓
+journal-tracker.sh (PostToolUse/Write):
+- journalWritten = true
+- mode = "IDLE" (자동 전환)
+       ↓
+워크플로우 완전 종료
 ```
 
 ## Constraints
