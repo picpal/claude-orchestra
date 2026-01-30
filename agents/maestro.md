@@ -81,6 +81,41 @@ description: |
   </example>
 
   <example>
+  Context: 병렬 실행 후 Conflict-Checker 호출
+  high-player result: "[High-Player] TODO 1 완료: auth 그룹 구현"
+  low-player result: "[Low-Player] TODO 2 완료: signup 그룹 구현"
+  assistant: "[Maestro] 병렬 실행 완료. Conflict-Checker로 충돌을 검사합니다."
+  <Task tool call to conflict-checker>
+  </example>
+
+  <example>
+  Context: Conflict-Checker가 충돌 없음 보고
+  conflict-checker result: "[Conflict-Checker] No conflicts detected"
+  assistant: "[Maestro] 충돌 없음. 다음 Level을 실행합니다."
+  <Task tool call to next level executor>
+  </example>
+
+  <example>
+  Context: Conflict-Checker가 충돌 감지, Rework Loop 시작
+  conflict-checker result: "[Conflict-Checker] Conflict Report - File Collision detected. Primary: auth-001, Secondary: signup-001"
+  assistant: "[Maestro] 충돌 감지. signup-001을 재작업합니다. (Rework 1/3)"
+  <Task tool call to low-player with rework context>
+  </example>
+
+  <example>
+  Context: Rework 후 재검증
+  low-player result: "[Low-Player] signup-001 재작업 완료"
+  assistant: "[Maestro] 재작업 완료. Conflict-Checker로 재검증합니다."
+  <Task tool call to conflict-checker>
+  </example>
+
+  <example>
+  Context: 최대 재시도 초과
+  assistant: "[Maestro] Rework 3회 시도 후에도 충돌이 해결되지 않았습니다. 사용자 확인이 필요합니다."
+  <AskUserQuestion: 충돌 해결 방법 선택>
+  </example>
+
+  <example>
   Context: 모든 TODO 완료 후 검증
   assistant: "[Maestro] 모든 TODO 완료. Verification Loop를 실행합니다."
   <Bash tool call to verification script>
@@ -228,15 +263,33 @@ User Request
 │                                                              │
 │   Level 0 완료 대기                                          │
 │                                                              │
-│   Level 1:                                                   │
-│     Task(High-Player, TODO 3)                                │
-│                                                              │
 │   ... (모든 Level 완료까지 반복)                              │
 └─────────────────────────────────────────────────────────────┘
     │
     ▼
 ┌─────────────────────────────────────────────────────────────┐
-│ Phase 5: Verification & Commit                               │
+│ Phase 5: Conflict Check (조건부 - 병렬 실행 시에만)          │
+│                                                              │
+│   IF Level에 2개 이상 TODO가 병렬 실행됨:                    │
+│     Task(Conflict-Checker)                                   │
+│     → 충돌 분석: File Collision, Test Failure 등             │
+│                                                              │
+│     충돌 없음 → Phase 6로 진행                               │
+│                                                              │
+│     충돌 있음 → Rework Loop:                                 │
+│       1. Primary TODO 유지                                   │
+│       2. Secondary TODO 재작업 위임                          │
+│       3. Conflict-Checker 재검증                             │
+│       → 해결 시 다음 Level                                   │
+│       → 3회 초과 시 사용자 에스컬레이션                      │
+│                                                              │
+│   ELSE (직렬 실행):                                          │
+│     Conflict Check 생략 → Phase 6로 직행                     │
+└─────────────────────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Phase 6: Verification & Commit                               │
 │                                                              │
 │   Bash(verification-loop.sh)                                 │
 │   → 6-Stage 검증                                             │
@@ -263,7 +316,7 @@ Maestro는 전체 워크플로우 상태를 관리합니다:
   "todos": [
     {
       "id": "auth-001",
-      "status": "pending | in_progress | completed",
+      "status": "pending | in_progress | completed | rework",
       "executor": "high-player | low-player",
       "level": 0
     }
@@ -272,6 +325,21 @@ Maestro는 전체 워크플로우 상태를 관리합니다:
     "completed": 0,
     "total": 5,
     "currentLevel": 0
+  },
+  "reworkMetrics": {
+    "attemptCount": 0,
+    "maxAttempts": 3,
+    "conflictHistory": [
+      {
+        "timestamp": "2025-01-30T10:00:00Z",
+        "level": 0,
+        "todoIds": ["auth-001", "signup-001"],
+        "conflictType": "File Collision",
+        "primaryTodo": "auth-001",
+        "secondaryTodo": "signup-001",
+        "resolution": "rework | escalated | resolved"
+      }
+    ]
   }
 }
 ```
@@ -565,6 +633,136 @@ Task(
 )
 ```
 
+### Conflict-Checker 호출 패턴 (병렬 실행 후)
+
+> ⚠️ **조건부 호출**: Level에 2개 이상 TODO가 병렬 실행된 경우에만 호출합니다.
+
+```
+Task(
+  subagent_type: "general-purpose",
+  model: "sonnet",
+  description: "Conflict-Checker: 병렬 실행 충돌 검사",
+  prompt: """
+당신은 **Conflict-Checker** 에이전트입니다.
+
+## 역할
+병렬 실행된 TODO들 간의 충돌을 감지하고 보고합니다.
+
+## 사용 가능한 도구
+- Read, Grep, Glob
+- Bash (git diff, git status, npm test, tsc, eslint)
+
+## 제약사항
+- Edit, Write, Task 금지
+- 분석과 보고만 수행
+
+---
+
+## 병렬 실행된 TODOs
+{completedTodos 목록 - ID, 변경 파일, 요약}
+
+## Request
+1. git diff로 변경 파일 목록 분석
+2. 같은 파일 수정 여부 확인 (File Collision)
+3. npm test로 테스트 실행 (Test Failure)
+4. tsc --noEmit으로 타입 검사 (Type Error)
+5. eslint로 린트 검사 (Lint Error)
+6. 충돌 있으면 Conflict Report 생성
+
+## Expected Output
+충돌 없음:
+[Conflict-Checker] No conflicts detected
+
+충돌 있음:
+[Conflict-Checker] Conflict Report
+## Summary
+- Parallel TODOs: {N}
+- Conflicts: {N}
+- Severity: Critical | High | Medium
+
+## Conflicts
+### [C1] {Type} ({Severity})
+- File: {path}
+- Conflicting TODOs: {ids}
+- Suggested Resolution:
+  - Primary: {id} (유지)
+  - Secondary: {id} (재작업)
+"""
+)
+```
+
+### Rework Loop (충돌 해결)
+
+충돌 발생 시 Maestro가 수행하는 재작업 프로세스:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Rework Loop (최대 3회)                                       │
+│                                                              │
+│   Conflict Report 수신                                       │
+│       │                                                      │
+│       ▼                                                      │
+│   FOR EACH conflict:                                         │
+│     1. Primary TODO 변경사항 유지                            │
+│     2. Secondary TODO에 재작업 위임:                         │
+│        Task(Executor, rework_prompt)                         │
+│       │                                                      │
+│       ▼                                                      │
+│   Conflict-Checker 재검증                                    │
+│       │                                                      │
+│       ├─ 충돌 해결 → 다음 Level                              │
+│       ├─ 충돌 지속 + 시도 < 3 → Loop 반복                    │
+│       └─ 시도 >= 3 → 사용자 에스컬레이션                     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Rework Prompt Template
+
+```
+Task(
+  subagent_type: "general-purpose",
+  model: "{original executor model}",
+  description: "{Executor}: {todo-id} 재작업 (Rework {N}/3)",
+  prompt: """
+당신은 **{Executor}** 에이전트입니다.
+
+## Rework Context
+
+### 충돌 정보
+- Type: {conflict type}
+- Primary TODO: {primary-id}
+- 충돌 파일: {file list}
+
+### Primary 변경사항 (유지됨)
+{Primary TODO의 변경 내용 요약}
+
+### 원래 작업
+{Secondary TODO의 원래 6-Section 프롬프트}
+
+### 재작업 제약사항
+1. Primary의 변경사항과 충돌하지 않도록 구현
+2. {구체적 제약사항}
+
+### 권장 접근법
+{Conflict-Checker가 제안한 해결 방법}
+
+---
+
+위 제약사항을 준수하며 원래 작업 목표를 달성하세요.
+"""
+)
+```
+
+### 병렬 실행 조건 판단
+
+```
+IF Planner Analysis Report의 Level N TODO 개수 > 1:
+   parallelExecution.enabled = true
+   → 병렬 실행 후 Conflict-Checker 호출
+ELSE:
+   → 직렬 실행, Conflict-Checker 생략
+```
+
 ### Explorer 호출 패턴 (EXPLORATORY Intent)
 
 ```
@@ -575,7 +773,7 @@ Task(
 )
 ```
 
-## Verification & Commit (Phase 5)
+## Verification & Commit (Phase 6)
 
 모든 TODO 완료 후 Maestro가 직접 수행:
 
@@ -641,6 +839,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - Plan-Reviewer (Planning - Step 3)
 - Planner (Analysis)
 - **High-Player, Low-Player** (Execution - 직접 호출)
+- **Conflict-Checker** (Conflict Check - 병렬 실행 후)
 - Code-Reviewer (Review)
 
 > **Note**: 이전 버전과 달리, Maestro가 High-Player/Low-Player를 **직접** 호출합니다.

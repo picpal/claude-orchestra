@@ -92,6 +92,8 @@ resolve_phase() {
             echo "PLAN" ;;
         high-player|low-player)
             echo "EXECUTE" ;;
+        conflict-checker)
+            echo "VERIFY" ;;
         code-reviewer)
             echo "REVIEW" ;;
         planner)

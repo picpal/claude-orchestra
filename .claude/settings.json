@@ -76,6 +76,11 @@
     "low-player": {
       "model": "sonnet",
       "allowedTools": ["Read", "Edit", "Write", "Bash", "Grep"]
+    },
+    "conflict-checker": {
+      "model": "sonnet",
+      "allowedTools": ["Read", "Grep", "Glob", "Bash(git diff*)", "Bash(git status*)", "Bash(git log*)", "Bash(npm test*)", "Bash(yarn test*)", "Bash(pnpm test*)", "Bash(bun test*)", "Bash(tsc *)", "Bash(eslint *)"],
+      "denyTools": ["Task", "Edit", "Write"]
     }
   },
   "defaults": {

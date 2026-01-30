@@ -80,7 +80,7 @@ get_current_agent_type() {
 }
 
 
-# 코드 작성 완전 금지 에이전트 (plan-checker, plan-reviewer, planner, architecture)
+# 코드 작성 완전 금지 에이전트 (plan-checker, plan-reviewer, planner, architecture, conflict-checker)
 # Note: Maestro는 .orchestra/ 경로에 한해 Write 허용 (journal, state 등)
 is_readonly_agent() {
   local agent="$1"
@@ -88,7 +88,7 @@ is_readonly_agent() {
   agent_lower=$(echo "$agent" | tr '[:upper:]' '[:lower:]')
 
   case "$agent_lower" in
-    plan-checker|plan-reviewer|planner|architecture)
+    plan-checker|plan-reviewer|planner|architecture|conflict-checker)
       return 0
       ;;
     *)

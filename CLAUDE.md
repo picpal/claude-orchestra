@@ -7,7 +7,7 @@
 
 ## 시스템 개요
 
-12개 전문 에이전트가 협력하여 TDD 기반 개발을 수행합니다.
+13개 전문 에이전트가 협력하여 TDD 기반 개발을 수행합니다.
 **Maestro가 중앙 허브 역할**을 하며 모든 에이전트를 직접 호출합니다.
 
 ```
@@ -35,9 +35,16 @@
 │ │ High-Player │    │ Low-Player  │    │  Research   │          │
 │ │ (복잡작업)  │    │ (간단작업)  │    │  Agents     │          │
 │ └─────────────┘    └─────────────┘    └─────────────┘          │
-│                           │                                      │
-│                   All agents report                              │
-│                   back to Maestro                                │
+│         │                 │                                      │
+│         └────────┬────────┘                                      │
+│                  ▼ (병렬 실행 시)                                │
+│           ┌─────────────────┐                                   │
+│           │Conflict-Checker │  ← 충돌 감지 → Rework Loop        │
+│           │   (충돌 검사)   │                                   │
+│           └─────────────────┘                                   │
+│                  │                                               │
+│          All agents report                                       │
+│          back to Maestro                                         │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -96,7 +103,7 @@
 
 ```
 claude-orchestra/              # 플러그인 루트
-├── agents/                    # 12개 에이전트 정의
+├── agents/                    # 13개 에이전트 정의
 ├── commands/                  # 슬래시 명령어
 ├── skills/                    # 컨텍스트 스킬
 │   ├── context-dev/SKILL.md
@@ -188,6 +195,9 @@ your-project/
 ### Execution Layer (Maestro가 직접 호출)
 - **High-Player** (Opus): 복잡한 작업 실행
 - **Low-Player** (Sonnet): 간단한 작업 실행
+
+### Verification Layer
+- **Conflict-Checker** (Sonnet): 병렬 실행 후 충돌 감지 → Rework Loop 트리거
 
 ### Review Layer
 - **Code-Reviewer** (Sonnet): 25+ 차원 코드 리뷰
