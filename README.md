@@ -194,6 +194,9 @@ cp -r rules/*.md /path/to/your/project/.claude/rules/
 | `/update-docs` | 코드 변경에 따른 문서 동기화 |
 | `/learn` | 세션에서 패턴 학습 |
 | `/checkpoint` | 현재 상태 체크포인트 저장 |
+| `/context` | 컨텍스트 모드 전환 |
+| `/e2e` | E2E 테스트 실행 |
+| `/refactor-clean` | 코드 리팩토링 (안전 모드) |
 
 ### 검증 모드
 
