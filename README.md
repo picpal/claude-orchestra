@@ -191,6 +191,7 @@ cp -r rules/*.md /path/to/your/project/.claude/rules/
 | `/tdd-cycle` | TDD 사이클 가이드 표시 |
 | `/verify` | 검증 루프 실행 |
 | `/code-review` | 코드 리뷰 실행 |
+| `/update-docs` | 코드 변경에 따른 문서 동기화 |
 | `/learn` | 세션에서 패턴 학습 |
 | `/checkpoint` | 현재 상태 체크포인트 저장 |
 
