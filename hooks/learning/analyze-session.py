@@ -9,9 +9,40 @@ import argparse
 import json
 import os
 import re
+import signal
 import sys
+import tempfile
 from collections import Counter
 from datetime import datetime, timezone
+
+
+# === 설정 상수 ===
+MAX_LOG_SIZE_MB = 10
+TIMEOUT_SECONDS = 30
+
+
+# === 타임아웃 보호 ===
+class TimeoutError(Exception):
+    pass
+
+
+def timeout_handler(signum, frame):
+    raise TimeoutError("Analysis exceeded timeout")
+
+
+# === 로그 크기 체크 ===
+def check_log_size(path, max_mb=MAX_LOG_SIZE_MB):
+    """Check if log file is within size limit."""
+    if not path or not os.path.exists(path):
+        return True
+    try:
+        size_mb = os.path.getsize(path) / (1024 * 1024)
+        if size_mb > max_mb:
+            sys.stderr.write(f"Log too large ({size_mb:.1f}MB > {max_mb}MB): {path}\n")
+            return False
+    except OSError:
+        pass
+    return True
 
 
 # --- Parsing ---
@@ -25,40 +56,59 @@ TEST_RE = re.compile(
 )
 
 
-def parse_activity_log(path):
-    """Parse activity.log lines into structured entries."""
+def parse_activity_log(path, max_lines=10000):
+    """Parse activity.log lines into structured entries.
+
+    Args:
+        path: Path to activity.log
+        max_lines: Maximum lines to parse (prevents memory issues)
+    """
     entries = []
     if not path or not os.path.isfile(path):
         return entries
-    with open(path, "r", encoding="utf-8", errors="replace") as f:
-        for line in f:
-            line = line.rstrip("\n")
-            m = ACTIVITY_RE.match(line)
-            if m:
-                entries.append({
-                    "ts": m.group(1),
-                    "type": m.group(2),
-                    "phase": m.group(3),
-                    "name": m.group(4).strip(),
-                    "detail": (m.group(5) or "").strip(),
-                })
+    if not check_log_size(path):
+        return entries
+    try:
+        with open(path, "r", encoding="utf-8", errors="replace") as f:
+            for i, line in enumerate(f):
+                if i >= max_lines:
+                    break
+                line = line.rstrip("\n")
+                m = ACTIVITY_RE.match(line)
+                if m:
+                    entries.append({
+                        "ts": m.group(1),
+                        "type": m.group(2),
+                        "phase": m.group(3),
+                        "name": m.group(4).strip(),
+                        "detail": (m.group(5) or "").strip(),
+                    })
+    except IOError as e:
+        sys.stderr.write(f"Error reading activity log: {e}\n")
     return entries
 
 
-def parse_test_log(path):
+def parse_test_log(path, max_lines=5000):
     """Parse test-runs.log into entries."""
     entries = []
     if not path or not os.path.isfile(path):
         return entries
-    with open(path, "r", encoding="utf-8", errors="replace") as f:
-        for line in f:
-            line = line.rstrip("\n")
-            m = TEST_RE.match(line)
-            if m:
-                entries.append({
-                    "ts": m.group(1),
-                    "message": m.group(2).strip(),
-                })
+    if not check_log_size(path):
+        return entries
+    try:
+        with open(path, "r", encoding="utf-8", errors="replace") as f:
+            for i, line in enumerate(f):
+                if i >= max_lines:
+                    break
+                line = line.rstrip("\n")
+                m = TEST_RE.match(line)
+                if m:
+                    entries.append({
+                        "ts": m.group(1),
+                        "message": m.group(2).strip(),
+                    })
+    except IOError as e:
+        sys.stderr.write(f"Error reading test log: {e}\n")
     return entries
 
 
@@ -67,7 +117,7 @@ def parse_tdd_guard_log(path):
     return parse_test_log(path)
 
 
-def parse_changes_log(path):
+def parse_changes_log(path, max_entries=1000):
     """Parse changes.jsonl into entries.
 
     Each entry contains:
@@ -80,9 +130,13 @@ def parse_changes_log(path):
     entries = []
     if not path or not os.path.isfile(path):
         return entries
+    if not check_log_size(path):
+        return entries
     try:
         with open(path, "r", encoding="utf-8", errors="replace") as f:
-            for line in f:
+            for i, line in enumerate(f):
+                if i >= max_entries:
+                    break
                 line = line.strip()
                 if not line:
                     continue
@@ -91,8 +145,8 @@ def parse_changes_log(path):
                     entries.append(entry)
                 except json.JSONDecodeError:
                     continue
-    except IOError:
-        pass
+    except IOError as e:
+        sys.stderr.write(f"Error reading changes log: {e}\n")
     return entries
 
 
@@ -172,28 +226,31 @@ def load_existing_patterns(patterns_dir):
     patterns = []
     if not patterns_dir or not os.path.isdir(patterns_dir):
         return patterns
-    for fname in os.listdir(patterns_dir):
-        if not fname.endswith(".md"):
-            continue
-        fpath = os.path.join(patterns_dir, fname)
-        keywords = set()
-        try:
-            with open(fpath, "r", encoding="utf-8") as f:
-                in_keywords = False
-                for line in f:
-                    line = line.strip()
-                    if line == "## Trigger Keywords":
-                        in_keywords = True
-                        continue
-                    if in_keywords:
-                        if line.startswith("##"):
+    try:
+        for fname in os.listdir(patterns_dir):
+            if not fname.endswith(".md"):
+                continue
+            fpath = os.path.join(patterns_dir, fname)
+            keywords = set()
+            try:
+                with open(fpath, "r", encoding="utf-8") as f:
+                    in_keywords = False
+                    for line in f:
+                        line = line.strip()
+                        if line == "## Trigger Keywords":
+                            in_keywords = True
+                            continue
+                        if in_keywords:
+                            if line.startswith("##"):
+                                break
+                            if line:
+                                keywords = {k.strip().lower() for k in line.split(",") if k.strip()}
                             break
-                        if line:
-                            keywords = {k.strip().lower() for k in line.split(",") if k.strip()}
-                        break
-        except IOError:
-            continue
-        patterns.append({"path": fpath, "keywords": keywords})
+            except IOError:
+                continue
+            patterns.append({"path": fpath, "keywords": keywords})
+    except OSError:
+        pass
     return patterns
 
 
@@ -408,7 +465,7 @@ def generate_pattern_id(category):
 
 
 def create_pattern_file(patterns_dir, category, title, problem, solution, code_example, keywords):
-    """Create a new pattern markdown file. Returns the file path.
+    """Create a new pattern markdown file atomically. Returns the file path.
 
     Args:
         patterns_dir: Directory to store pattern files
@@ -465,30 +522,56 @@ def create_pattern_file(patterns_dir, category, title, problem, solution, code_e
 {now}
 """
     os.makedirs(patterns_dir, exist_ok=True)
-    with open(fpath, "w", encoding="utf-8") as f:
-        f.write(content)
+
+    # 원자적 쓰기 (임시 파일 → 이동)
+    try:
+        fd, tmp_path = tempfile.mkstemp(dir=patterns_dir, suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(content)
+            os.rename(tmp_path, fpath)
+        except Exception:
+            os.unlink(tmp_path)
+            raise
+    except Exception as e:
+        # Fallback: 직접 쓰기
+        sys.stderr.write(f"Atomic write failed, using direct write: {e}\n")
+        with open(fpath, "w", encoding="utf-8") as f:
+            f.write(content)
+
     return fpath
 
 
 def update_pattern_file(path):
-    """Increment Usage Count and update Last Used in an existing pattern file."""
+    """Increment Usage Count and update Last Used in an existing pattern file atomically."""
     if not os.path.isfile(path):
         return
-    with open(path, "r", encoding="utf-8") as f:
-        content = f.read()
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            content = f.read()
 
-    # Update Usage Count
-    usage_match = re.search(r"(## Usage Count\n)(\d+)", content)
-    if usage_match:
-        old_count = int(usage_match.group(2))
-        content = content[:usage_match.start(2)] + str(old_count + 1) + content[usage_match.end(2):]
+        # Update Usage Count
+        usage_match = re.search(r"(## Usage Count\n)(\d+)", content)
+        if usage_match:
+            old_count = int(usage_match.group(2))
+            content = content[:usage_match.start(2)] + str(old_count + 1) + content[usage_match.end(2):]
 
-    # Update Last Used
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    content = re.sub(r"(## Last Used\n).*", rf"\g<1>{now}", content)
+        # Update Last Used
+        now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        content = re.sub(r"(## Last Used\n).*", rf"\g<1>{now}", content)
 
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(content)
+        # 원자적 쓰기
+        dir_path = os.path.dirname(path)
+        fd, tmp_path = tempfile.mkstemp(dir=dir_path, suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(content)
+            os.rename(tmp_path, path)
+        except Exception:
+            os.unlink(tmp_path)
+            raise
+    except Exception as e:
+        sys.stderr.write(f"Error updating pattern file: {e}\n")
 
 
 # --- Main ---
@@ -504,57 +587,81 @@ def main():
     parser.add_argument("--max-patterns", type=int, default=5, help="Max patterns per session")
     args = parser.parse_args()
 
-    # Parse logs
-    entries = parse_activity_log(args.activity)
-    test_entries = parse_test_log(args.tests)
-    tdd_guard_entries = parse_tdd_guard_log(args.tdd_guard)
-    changes = parse_changes_log(args.changes)
+    # 타임아웃 설정 (SIGALRM - Unix only)
+    if hasattr(signal, 'SIGALRM'):
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(TIMEOUT_SECONDS)
 
-    if not entries and not test_entries and not tdd_guard_entries and not changes:
+    try:
+        # 모든 로그가 없으면 조기 종료
+        if not any([
+            os.path.isfile(args.activity),
+            os.path.isfile(args.tests),
+            os.path.isfile(args.tdd_guard),
+            os.path.isfile(args.changes)
+        ]):
+            print(0)
+            return
+
+        # Parse logs
+        entries = parse_activity_log(args.activity)
+        test_entries = parse_test_log(args.tests)
+        tdd_guard_entries = parse_tdd_guard_log(args.tdd_guard)
+        changes = parse_changes_log(args.changes)
+
+        if not entries and not test_entries and not tdd_guard_entries and not changes:
+            print(0)
+            return
+
+        # Load config triggers and existing patterns
+        triggers = load_triggers(args.config)
+        existing = load_existing_patterns(args.patterns_dir)
+
+        # Detect patterns (pass changes for code example extraction)
+        candidates = []
+        candidates.extend(detect_errors(entries, test_entries, triggers, changes))
+        candidates.extend(detect_repeated_edits(entries, changes))
+        candidates.extend(detect_workarounds(entries, triggers))
+        candidates.extend(detect_tdd_issues(test_entries, tdd_guard_entries))
+
+        # Deduplicate & create/update
+        created_count = 0
+        updated_count = 0
+
+        for candidate in candidates:
+            if created_count + updated_count >= args.max_patterns:
+                break
+
+            kw = candidate.get("keywords", [])
+            dup_path = find_duplicate(kw, existing)
+
+            if dup_path:
+                update_pattern_file(dup_path)
+                updated_count += 1
+            else:
+                fpath = create_pattern_file(
+                    args.patterns_dir,
+                    candidate["category"],
+                    candidate["title"],
+                    candidate["problem"],
+                    candidate["solution"],
+                    candidate.get("code_example", ""),
+                    kw,
+                )
+                # Add to existing so subsequent candidates can dedup against it
+                existing.append({"path": fpath, "keywords": {k.lower() for k in kw}})
+                created_count += 1
+
+        total = created_count + updated_count
+        print(total)
+
+    except TimeoutError:
+        sys.stderr.write(f"Analysis timed out after {TIMEOUT_SECONDS} seconds\n")
         print(0)
-        return
-
-    # Load config triggers and existing patterns
-    triggers = load_triggers(args.config)
-    existing = load_existing_patterns(args.patterns_dir)
-
-    # Detect patterns (pass changes for code example extraction)
-    candidates = []
-    candidates.extend(detect_errors(entries, test_entries, triggers, changes))
-    candidates.extend(detect_repeated_edits(entries, changes))
-    candidates.extend(detect_workarounds(entries, triggers))
-    candidates.extend(detect_tdd_issues(test_entries, tdd_guard_entries))
-
-    # Deduplicate & create/update
-    created_count = 0
-    updated_count = 0
-
-    for candidate in candidates:
-        if created_count + updated_count >= args.max_patterns:
-            break
-
-        kw = candidate.get("keywords", [])
-        dup_path = find_duplicate(kw, existing)
-
-        if dup_path:
-            update_pattern_file(dup_path)
-            updated_count += 1
-        else:
-            fpath = create_pattern_file(
-                args.patterns_dir,
-                candidate["category"],
-                candidate["title"],
-                candidate["problem"],
-                candidate["solution"],
-                candidate.get("code_example", ""),
-                kw,
-            )
-            # Add to existing so subsequent candidates can dedup against it
-            existing.append({"path": fpath, "keywords": {k.lower() for k in kw}})
-            created_count += 1
-
-    total = created_count + updated_count
-    print(total)
+    finally:
+        # 타임아웃 해제
+        if hasattr(signal, 'SIGALRM'):
+            signal.alarm(0)
 
 
 if __name__ == "__main__":

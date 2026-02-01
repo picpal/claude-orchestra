@@ -3,7 +3,7 @@
   "minSessionLength": 10,
   "extractionThreshold": "medium",
   "autoApprove": false,
-  "learnedPatternsPath": ".orchestra/hooks/learning/learned-patterns/",
+  "learnedPatternsPath": ".orchestra/learning/learned-patterns/",
 
   "patternCategories": [
     {
@@ -55,7 +55,9 @@
   "extractionRules": {
     "minOccurrences": 2,
     "confidenceThreshold": 0.7,
-    "maxPatternsPerSession": 5
+    "maxPatternsPerSession": 5,
+    "maxLogSizeMB": 10,
+    "timeoutSeconds": 30
   },
 
   "triggers": {

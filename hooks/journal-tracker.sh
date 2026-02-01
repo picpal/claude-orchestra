@@ -8,8 +8,8 @@ source "$SCRIPT_DIR/stdin-reader.sh"
 FILE_PATH=$(hook_get_field "tool_input.file_path")
 STATE_FILE=".orchestra/state.json"
 
-# .orchestra/journal/ 경로 감지 (시간 포함 형식: *-YYYYMMDD-HHmm.md)
-if echo "$FILE_PATH" | grep -qE '\.orchestra/journal/.*-[0-9]{8}-[0-9]{4}\.md$'; then
+# .orchestra/journal/ 경로 감지 (YYYYMMDD 포함 형식: *-YYYYMMDD.md 또는 *-YYYYMMDD-HHmm.md)
+if echo "$FILE_PATH" | grep -qE '\.orchestra/journal/.*-[0-9]{8}(-[0-9]{4})?\.md$'; then
   if [ -f "$STATE_FILE" ] && command -v jq &> /dev/null; then
     jq --arg path "$FILE_PATH" \
        '.workflowStatus.journalWritten = true |

@@ -24,17 +24,15 @@ Continuous Learning 시스템은 개발 세션에서 발생하는 패턴을 자�
 ## 실행
 
 ```bash
-# 패턴 목록 보기
-.orchestra/hooks/learning/evaluate-session.sh list
-
-# 세션 평가 (자동으로 Stop 훅에서 실행됨)
-.orchestra/hooks/learning/evaluate-session.sh evaluate .orchestra/logs/activity.log
+# 플러그인에서 실행
+${CLAUDE_PLUGIN_ROOT}/hooks/learning/evaluate-session.sh list
+${CLAUDE_PLUGIN_ROOT}/hooks/learning/evaluate-session.sh evaluate
 
 # 수동 패턴 추가 (전체 인자)
-.orchestra/hooks/learning/evaluate-session.sh add project_specific "Custom Pattern" "문제 설명" "해결 방법" "keyword1, keyword2"
+${CLAUDE_PLUGIN_ROOT}/hooks/learning/evaluate-session.sh add project_specific "Custom Pattern" "문제 설명" "해결 방법" "keyword1, keyword2"
 
 # 패턴 초기화
-.orchestra/hooks/learning/evaluate-session.sh clear
+${CLAUDE_PLUGIN_ROOT}/hooks/learning/evaluate-session.sh clear
 ```
 
 ## 자동 분석 대상 로그
@@ -106,7 +104,7 @@ TS2532, Object is possibly, undefined, null check
 
 ## 설정
 
-`.orchestra/hooks/learning/config.json`:
+`${CLAUDE_PLUGIN_ROOT}/hooks/learning/config.json`:
 
 ```json
 {
@@ -152,11 +150,19 @@ Plan-Reviewer는 저장된 패턴을 참조하여:
 ## 저장 위치
 
 ```
-.orchestra/hooks/learning/
+# 사용자 프로젝트 (.orchestra/learning이 있으면 우선 사용)
+.orchestra/
+├── learning/
+│   └── learned-patterns/      # 프로젝트별 패턴 저장
+└── logs/
+    └── learning.log           # 실행 로그
+
+# 플러그인 (fallback)
+${CLAUDE_PLUGIN_ROOT}/hooks/learning/
 ├── config.json            # 학습 설정 (trigger 정규식 포함)
 ├── evaluate-session.sh    # 평가 스크립트 (Python 분석기 호출)
 ├── analyze-session.py     # Python 분석 엔진
-└── learned-patterns/      # 패턴 저장소
+└── learned-patterns/      # 패턴 저장소 (fallback)
     ├── error_resolution-*.md
     ├── user_corrections-*.md
     ├── workarounds-*.md

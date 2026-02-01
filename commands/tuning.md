@@ -43,6 +43,7 @@ mkdir -p .orchestra/journal
 mkdir -p .orchestra/logs
 mkdir -p .orchestra/mcp-configs
 mkdir -p .orchestra/templates
+mkdir -p .orchestra/learning/learned-patterns
 ```
 
 ### 3. config.json 생성
@@ -96,6 +97,7 @@ Orchestra 상태 추적 활성화 완료!
 - .orchestra/plans/      계획 문서
 - .orchestra/journal/    작업 일지
 - .orchestra/logs/       로그 파일
+- .orchestra/learning/   학습 패턴 저장
 
 다음 단계: /start-work 실행
 ```
