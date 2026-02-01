@@ -41,7 +41,7 @@ Claude Orchestra는 13개의 전문 에이전트가 계층 구조로 협력하�
 /plugin install claude-orchestra@claude-orchestra
 
 # 프로젝트 초기화 (rules 복사 + 상태 디렉토리 생성)
-/init
+/tuning
 ```
 
 ### Clone + Install
@@ -100,7 +100,7 @@ Claude Code 터미널에서:
 /plugin install claude-orchestra@claude-orchestra
 
 # Step 2: 프로젝트 초기화 (필수!)
-/init
+/tuning
 
 # Step 3: 작업 시작
 /start-work
@@ -173,9 +173,9 @@ cp -r rules/*.md /path/to/your/project/.claude/rules/
 | **Commands** | 12 | `commands/` | 슬래시 명령어 |
 | **Skills** | 3 | `skills/` | 컨텍스트 스킬 (dev, research, review) |
 | **Hooks** | 15 | `hooks/` | 자동화 훅 스크립트 + `hooks.json` |
-| **Rules** | 6 | `rules/` | 코드 규칙 (`/init` 시 프로젝트에 복사) |
+| **Rules** | 6 | `rules/` | 코드 규칙 (`/tuning` 시 프로젝트에 복사) |
 | **Settings** | 1 | `.claude/settings.json` | 에이전트/권한 설정 |
-| **Orchestra** | 2+ | `.orchestra/` | 상태 관리 파일 (`/init` 시 생성) |
+| **Orchestra** | 2+ | `.orchestra/` | 상태 관리 파일 (`/tuning` 시 생성) |
 
 ---
 
@@ -185,7 +185,7 @@ cp -r rules/*.md /path/to/your/project/.claude/rules/
 
 | 명령어 | 설명 |
 |--------|------|
-| `/init` | Orchestra 초기화 (rules 복사 + 상태 디렉토리 생성) |
+| `/tuning` | Orchestra 초기화 (rules 복사 + 상태 디렉토리 생성) |
 | `/start-work` | 작업 세션 시작, 상태 초기화 |
 | `/status` | 현재 상태, 진행 중인 작업 확인 |
 | `/tdd-cycle` | TDD 사이클 가이드 표시 |
@@ -262,7 +262,7 @@ claude-orchestra/               # 플러그인 루트
 │   ├── verification/           # 6단계 검증 스크립트
 │   ├── learning/               # 패턴 학습 시스템
 │   └── compact/                # 컨텍스트 압축
-├── rules/                      # 6개 코드 규칙 (/init 시 프로젝트에 복사)
+├── rules/                      # 6개 코드 규칙 (/tuning 시 프로젝트에 복사)
 │   ├── security.md
 │   ├── testing.md
 │   └── ...
@@ -272,7 +272,7 @@ claude-orchestra/               # 플러그인 루트
 └── CLAUDE.md                   # 프로젝트 안내
 ```
 
-### /init 후 프로젝트 구조
+### /tuning 후 프로젝트 구조
 
 ```
 your-project/
