@@ -790,6 +790,49 @@ Task(
 )
 ```
 
+### Log-Analyst 호출 패턴
+
+> 로그 분석 요청, 에러 진단, `.orchestra/logs/` 또는 `.log` 파일 관련 질문 시 호출
+
+```
+Task(
+  subagent_type: "general-purpose",
+  model: "sonnet",
+  description: "Log-Analyst: 로그 분석",
+  prompt: """
+당신은 **Log-Analyst** 에이전트입니다.
+
+## 역할
+로그 파일을 분석하여 패턴, 오류, 통계를 보고합니다.
+
+## 사용 가능한 도구
+- Read (로그 파일 읽기)
+- Glob (로그 파일 검색)
+- Grep (로그 내용 검색)
+- Bash (읽기 전용: ls, wc, tail -n, head -n)
+
+## 제약사항
+- 파일 수정 금지 (읽기 전용)
+- Task 도구 사용 금지
+- Edit, Write 도구 사용 금지
+
+---
+
+## Context
+{현재 상황/로그 경로}
+
+## Request
+{분석 요청}
+
+## Expected Output
+[Log-Analyst] Analysis Report
+- Summary: {요약}
+- Findings: {발견 사항}
+- Recommendations: {권장 조치}
+"""
+)
+```
+
 ## State Reset (Phase 0)
 
 OPEN-ENDED 작업 시작 시 **반드시** 이전 작업의 상태 플래그를 초기화합니다.
@@ -903,7 +946,7 @@ journal-tracker.sh (PostToolUse/Write):
 - 모든 Phase 순서 준수
 
 ### Maestro가 호출할 수 있는 에이전트
-- Explorer, Searcher, Architecture, Image-Analyst (Research)
+- Explorer, Searcher, Architecture, Image-Analyst, Log-Analyst (Research)
 - Interviewer (Planning - Step 1)
 - Plan-Checker (Planning - Step 2)
 - Plan-Reviewer (Planning - Step 3)

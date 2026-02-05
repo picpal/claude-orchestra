@@ -7,7 +7,7 @@
 
 ## 시스템 개요
 
-13개 전문 에이전트가 협력하여 TDD 기반 개발을 수행합니다.
+14개 전문 에이전트가 협력하여 TDD 기반 개발을 수행합니다.
 **Maestro가 중앙 허브 역할**을 하며 모든 에이전트를 직접 호출합니다.
 
 ```
@@ -103,7 +103,7 @@
 
 ```
 claude-orchestra/              # 플러그인 루트
-├── agents/                    # 13개 에이전트 정의
+├── agents/                    # 14개 에이전트 정의
 ├── commands/                  # 슬래시 명령어
 ├── skills/                    # 컨텍스트 스킬
 │   ├── context-dev/SKILL.md
@@ -191,6 +191,7 @@ your-project/
 - **Searcher** (Sonnet): 외부 문서 검색
 - **Explorer** (Haiku): 내부 코드 검색
 - **Image-Analyst** (Sonnet): 이미지 분석
+- **Log-Analyst** (Sonnet): 로그 분석, 오류 진단, 통계 생성
 
 ### Execution Layer (Maestro가 직접 호출)
 - **High-Player** (Opus): 복잡한 작업 실행
