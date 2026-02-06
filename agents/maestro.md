@@ -113,6 +113,36 @@ Task(Planner) → 6-Section 프롬프트 생성
 Task(Executor, Planner의 프롬프트 전달)  ← 여기서만 호출!
 ```
 
+### 🔄 Planning Phase 상태 추적
+
+**자동 감지 (SubagentStop Hook에서 description 기반):**
+- `interviewerCompleted`: Interviewer 완료 시 자동 설정
+- `planCheckerCompleted`: Plan-Checker 완료 시 자동 설정
+- `plannerCompleted`: Planner 완료 시 자동 설정
+
+**수동 설정 필요:**
+- `planReviewerApproved`: Plan-Reviewer 결과가 "Approved"일 때만 Maestro가 직접 설정
+  (응답 내용 파싱 불가능하므로 결과 확인 후 수동 설정)
+
+```python
+# Plan-Reviewer "Approved" 확인 후 실행
+python3 -c "
+import json
+with open('.orchestra/state.json', 'r') as f:
+    d = json.load(f)
+d['planningPhase']['planReviewerApproved'] = True
+with open('.orchestra/state.json', 'w') as f:
+    json.dump(d, f, indent=2, ensure_ascii=False)
+"
+```
+
+### ⚠️ Phase Gate 런타임 검증
+
+Executor(High-Player/Low-Player) 호출 시 `phase-gate.sh` Hook이 자동 검증:
+- `plannerCompleted = false` → **호출 차단** (exit 1)
+- `reworkStatus.active = true` → 예외적으로 통과 (Rework Loop)
+- `plannerCompleted = true` → 정상 통과
+
 ### Maestro가 호출할 수 있는 에이전트
 
 | Phase | 에이전트 | 선행 조건 |
@@ -188,7 +218,23 @@ User Request
     ↓
 ┌─────────────────────────────────────────────────────────────┐
 │ Phase 0: State Reset                                          │
-│   workflowStatus 초기화 (jq로 state.json 리셋)               │
+│   planningPhase + reworkStatus + workflowStatus 초기화        │
+│                                                               │
+│   python3 -c "                                                │
+│   import json                                                 │
+│   with open('.orchestra/state.json', 'r') as f:              │
+│       d = json.load(f)                                        │
+│   d['planningPhase'] = {                                      │
+│       'interviewerCompleted': False,                          │
+│       'planCheckerCompleted': False,                          │
+│       'planReviewerApproved': False,                          │
+│       'plannerCompleted': False                               │
+│   }                                                           │
+│   d['reworkStatus'] = {'active': False, 'trigger': None,      │
+│                        'attemptCount': 0}                     │
+│   with open('.orchestra/state.json', 'w') as f:              │
+│       json.dump(d, f, indent=2, ensure_ascii=False)           │
+│   "                                                           │
 └─────────────────────────────────────────────────────────────┘
     ↓
 ┌─────────────────────────────────────────────────────────────┐

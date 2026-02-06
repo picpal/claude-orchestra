@@ -3,6 +3,17 @@
   "currentContext": "dev",
   "currentPlan": null,
   "todos": [],
+  "planningPhase": {
+    "interviewerCompleted": false,
+    "planCheckerCompleted": false,
+    "planReviewerApproved": false,
+    "plannerCompleted": false
+  },
+  "reworkStatus": {
+    "active": false,
+    "trigger": null,
+    "attemptCount": 0
+  },
   "workflowStatus": {
     "journalRequired": false,
     "journalWritten": false,

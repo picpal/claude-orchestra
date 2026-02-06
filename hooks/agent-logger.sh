@@ -73,6 +73,73 @@ lookup_agent_info() {
   fi
 }
 
+# === Planning Phase 자동 업데이트 ===
+
+# Planning 플래그 업데이트 함수 (python3 사용)
+update_planning_flag() {
+  local flag="$1"
+  local state_file=".orchestra/state.json"
+
+  if [ -f "$state_file" ]; then
+    python3 -c "
+import json
+import sys
+
+flag = sys.argv[1]
+state_file = sys.argv[2]
+
+try:
+    with open(state_file, 'r') as f:
+        d = json.load(f)
+
+    if 'planningPhase' not in d:
+        d['planningPhase'] = {}
+
+    d['planningPhase'][flag] = True
+
+    with open(state_file, 'w') as f:
+        json.dump(d, f, indent=2, ensure_ascii=False)
+except Exception as e:
+    print(f'Warning: Failed to update {flag}: {e}', file=sys.stderr)
+" "$flag" "$state_file" 2>/dev/null || true
+  fi
+}
+
+# Planning 에이전트 완료 감지 및 state.json 업데이트
+# 정확한 매칭을 위해 "^에이전트명:" 또는 "에이전트명 에이전트" 패턴 사용
+detect_and_update_planning_phase() {
+  local desc="${1:-}"
+  local desc_lower
+  desc_lower=$(echo "$desc" | tr '[:upper:]' '[:lower:]')
+
+  local planning_log=".orchestra/logs/planning-detection.log"
+  mkdir -p "$(dirname "$planning_log")" 2>/dev/null || true
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] Checking: $desc_lower" >> "$planning_log" 2>/dev/null || true
+
+  # Interviewer 완료 감지 (예: "Interviewer: 요구사항 인터뷰")
+  if echo "$desc_lower" | grep -qE '^interviewer:'; then
+    update_planning_flag "interviewerCompleted"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Planning phase: Interviewer completed" >> "$planning_log" 2>/dev/null || true
+  fi
+
+  # Plan-Checker 완료 감지
+  if echo "$desc_lower" | grep -qE '^plan-checker:|plan.checker'; then
+    update_planning_flag "planCheckerCompleted"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Planning phase: Plan-Checker completed" >> "$planning_log" 2>/dev/null || true
+  fi
+
+  # Planner 완료 감지 (주의: Plan-Checker, Plan-Reviewer와 구분)
+  # "Planner:" 로 시작하거나 "Planner 에이전트"만 매칭
+  # Plan-Checker, Plan-Reviewer 제외를 위해 부정 조건 추가
+  if echo "$desc_lower" | grep -qE '^planner:|planner 에이전트|planner: todo'; then
+    # Plan-Checker, Plan-Reviewer가 아닌 경우에만
+    if ! echo "$desc_lower" | grep -qE '^plan-checker:|^plan-reviewer:|plan.checker|plan.reviewer'; then
+      update_planning_flag "plannerCompleted"
+      echo "[$(date '+%Y-%m-%d %H:%M:%S')] Planning phase: Planner completed" >> "$planning_log" 2>/dev/null || true
+    fi
+  fi
+}
+
 # === PHASE resolution functions ===
 
 resolve_phase() {
@@ -235,12 +302,17 @@ case "$MODE" in
     # SubagentStop: agent lifecycle tracking
     AGENT_TYPE=$(hook_get_field "agent_type")
     AGENT_ID=$(hook_get_field "agent_id")
+    DESCRIPTION=$(hook_get_field "description")
 
-    # JSON에 agent_type이 없으면 캐시에서 조회
-    if [ -z "$AGENT_TYPE" ] && [ -n "$AGENT_ID" ]; then
+    # JSON에 정보가 없으면 캐시에서 조회
+    if [ -n "$AGENT_ID" ]; then
       lookup_agent_info "$AGENT_ID"
-      AGENT_TYPE="${CACHED_AGENT_TYPE:-unknown}"
-      DESCRIPTION="${CACHED_DESCRIPTION:-}"
+      if [ -z "$AGENT_TYPE" ]; then
+        AGENT_TYPE="${CACHED_AGENT_TYPE:-unknown}"
+      fi
+      if [ -z "$DESCRIPTION" ]; then
+        DESCRIPTION="${CACHED_DESCRIPTION:-}"
+      fi
     fi
 
     if [ -z "$AGENT_TYPE" ]; then
@@ -249,6 +321,9 @@ case "$MODE" in
 
     # 에이전트 스택에서 pop (도구 제한 추적용)
     pop_agent_stack "$AGENT_ID"
+
+    # Planning 에이전트 완료 감지 및 state.json 업데이트
+    detect_and_update_planning_phase "${DESCRIPTION:-}"
 
     PHASE=$(resolve_phase "$AGENT_TYPE" "${DESCRIPTION:-}")
     "$SCRIPT_DIR/activity-logger.sh" AGENT "$AGENT_TYPE" "[stop] id=${AGENT_ID:-?}" "$PHASE" 2>/dev/null || true

@@ -13,7 +13,10 @@
       },
       {
         "matcher": "Task",
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/agent-logger.sh pre"}]
+        "hooks": [
+          {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/agent-logger.sh pre"},
+          {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/phase-gate.sh"}
+        ]
       },
       {
         "matcher": "Skill",
