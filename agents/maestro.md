@@ -298,12 +298,32 @@ User Request
     │
     ▼
 ┌─────────────────────────────────────────────────────────────┐
-│ Phase 6: Verification & Commit                               │
+│ Phase 6: Verification                                        │
 │                                                              │
 │   Bash(verification-loop.sh)                                 │
 │   → 6-Stage 검증                                             │
 │                                                              │
-│   PR Ready면:                                                │
+│   Verification 통과 → Phase 6a로 진행                        │
+└─────────────────────────────────────────────────────────────┘
+    │
+    ▼
+┌─────────────────────────────────────────────────────────────┐
+│ Phase 6a: Code-Review (Verification 통과 후)                 │
+│                                                              │
+│   IF prReady == true:                                        │
+│     Task(Code-Reviewer)                                      │
+│       → ✅ Approved: Commit → Phase 7로 진행                 │
+│       → ⚠️ Warning: Commit → Phase 7로 진행 (경고 기록)      │
+│       → ❌ Block: Rework Loop                                │
+│                                                              │
+│   Rework Loop (최대 3회):                                    │
+│     1. Block 이슈 목록 전달                                  │
+│     2. Executor에게 수정 위임                                │
+│     3. Verification 재실행                                   │
+│     4. Code-Review 재실행                                    │
+│     → 3회 초과 시 사용자 에스컬레이션                        │
+│                                                              │
+│   Commit:                                                    │
 │   Bash(git add + git commit)                                 │
 │   → journalRequired = true 자동 설정                         │
 └─────────────────────────────────────────────────────────────┘
@@ -357,6 +377,22 @@ Maestro는 전체 워크플로우 상태를 관리합니다:
         "resolution": "rework | escalated | resolved"
       }
     ]
+  },
+  "codeReviewMetrics": {
+    "lastRun": null,
+    "approval": null,
+    "issues": { "critical": 0, "high": 0, "medium": 0, "low": 0 },
+    "blockers": [],
+    "reworkCount": 0,
+    "maxRework": 3
+  },
+  "workflowStatus": {
+    "journalRequired": false,
+    "journalWritten": false,
+    "codeReviewRequired": false,
+    "codeReviewPassed": false,
+    "lastJournalPath": null,
+    "completedAt": null
   }
 }
 ```
@@ -778,6 +814,112 @@ IF Planner Analysis Report의 Level N TODO 개수 > 1:
    → 병렬 실행 후 Conflict-Checker 호출
 ELSE:
    → 직렬 실행, Conflict-Checker 생략
+```
+
+### Code-Reviewer 호출 패턴 (Verification 통과 후)
+
+> ⚠️ **조건부 호출**: Verification 6-Stage를 모두 통과하고 prReady가 true인 경우에만 호출합니다.
+
+```
+Task(
+  subagent_type: "general-purpose",
+  model: "sonnet",
+  description: "Code-Reviewer: 코드 리뷰",
+  prompt: """
+당신은 **Code-Reviewer** 에이전트입니다.
+
+## 역할
+완료된 코드 변경사항을 25+ 차원에서 심층 리뷰합니다.
+
+## 사용 가능한 도구
+- Read (코드 읽기)
+- Grep (패턴 검색)
+- Glob (파일 탐색)
+
+## 제약사항
+- Edit, Write, Bash 사용 금지 (리뷰만)
+- 코드 직접 수정 금지
+
+---
+
+## 리뷰 대상
+{변경된 파일 목록}
+
+## 변경 요약
+{TODO 완료 내역}
+
+## Expected Output
+[Code-Reviewer] Review Report
+- Approval: ✅ Approved | ⚠️ Warning | ❌ Block
+- Issues: {Critical/High/Medium/Low 개수}
+- Blockers: {Block 사유, 있을 경우}
+"""
+)
+```
+
+### Code-Review Rework Loop (Block 시)
+
+Code-Review에서 Block 판정 시 Maestro가 수행하는 재작업 프로세스:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Code-Review Rework Loop (최대 3회)                           │
+│                                                              │
+│   Code-Review Report 수신 (❌ Block)                         │
+│       │                                                      │
+│       ▼                                                      │
+│   FOR EACH blocker:                                          │
+│     1. 이슈 분석 (Critical/High)                             │
+│     2. 수정 TODO 생성                                        │
+│     3. Executor에게 수정 위임                                │
+│       │                                                      │
+│       ▼                                                      │
+│   Verification 재실행                                        │
+│       │                                                      │
+│       ▼                                                      │
+│   Code-Review 재실행                                         │
+│       │                                                      │
+│       ├─ ✅/⚠️ → Commit → Phase 7 (Journal)                  │
+│       ├─ ❌ + 시도 < 3 → Loop 반복                           │
+│       └─ 시도 >= 3 → 사용자 에스컬레이션                     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Code-Review Rework Prompt Template
+
+```
+Task(
+  subagent_type: "general-purpose",
+  model: "{original executor model}",
+  description: "{Executor}: Code-Review 이슈 수정 (Rework {N}/3)",
+  prompt: """
+당신은 **{Executor}** 에이전트입니다.
+
+## Rework Context
+
+### Code-Review 이슈
+- Severity: {Critical | High}
+- Category: {Security | Quality | Performance | BestPractice}
+- File: {file path}
+- Line: {line number}
+- Issue: {이슈 설명}
+
+### 원래 구현
+{해당 파일의 현재 코드}
+
+### 수정 요구사항
+{Code-Reviewer가 제안한 해결 방법}
+
+### 제약사항
+1. 해당 이슈만 수정 (범위 외 수정 금지)
+2. 테스트가 계속 통과해야 함
+3. TDD 원칙 준수
+
+---
+
+위 이슈를 수정하세요.
+"""
+)
 ```
 
 ### Explorer 호출 패턴 (EXPLORATORY Intent)

@@ -17,6 +17,14 @@
     "testCommand": "npm test",
     "coverageCommand": "npm test -- --coverage"
   },
+  "codeReview": {
+    "enabled": true,
+    "autoRunAfterVerification": true,
+    "blockOnCritical": true,
+    "blockOnHigh": true,
+    "warnOnMedium": true,
+    "maxReworkAttempts": 3
+  },
   "verification": {
     "defaultMode": "standard",
     "autoRunOnTodoComplete": true,

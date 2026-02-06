@@ -269,6 +269,54 @@ const categoryMap = new Map(categories.map(c => [c.id, c]));
 ### Handoff Document
 리뷰 결과를 `.orchestra/templates/handoff-document.md` 형식으로 전달
 
+## Maestro 연동
+
+### 호출 시점
+1. **자동 호출**: Verification Loop 통과 후 (Phase 6a)
+2. **수동 호출**: `/code-review` 명령어
+
+### 판정 결과 처리
+
+| 결과 | Maestro 처리 |
+|------|-------------|
+| ✅ Approved | Commit 진행 → Phase 7 (Journal) |
+| ⚠️ Warning | Commit 진행 (경고 기록) → Phase 7 (Journal) |
+| ❌ Block | Rework Loop 시작 |
+
+### Block 시 Rework 연동
+
+1. **이슈 전달**: Critical/High 이슈 목록을 Maestro에게 전달
+2. **수정 위임**: Maestro가 Executor(High-Player/Low-Player)에게 수정 위임
+3. **재검증**: 수정 완료 후 Verification 재실행
+4. **재리뷰**: Verification 통과 시 Code-Review 재실행
+5. **최대 재시도**: 3회 (초과 시 사용자 에스컬레이션)
+
+### Expected Output Format (Maestro 연동용)
+
+```markdown
+[Code-Reviewer] Review Report
+
+## Summary
+- Approval: ✅ Approved | ⚠️ Warning | ❌ Block
+- Issues: {Critical: N, High: N, Medium: N, Low: N}
+
+## Blockers (Block 시에만)
+### [B1] {Category} - {Severity}
+- File: {path}
+- Line: {line number}
+- Issue: {이슈 설명}
+- Fix: {수정 방법}
+
+## Warnings (Warning 시에만)
+### [W1] {Category} - Medium
+- File: {path}
+- Issue: {이슈 설명}
+- Suggestion: {권장 사항}
+
+## Approval Decision
+{최종 판정 및 근거}
+```
+
 ## Tools Available
 - Read (코드 읽기)
 - Grep (패턴 검색)

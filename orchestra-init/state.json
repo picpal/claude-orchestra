@@ -6,6 +6,8 @@
   "workflowStatus": {
     "journalRequired": false,
     "journalWritten": false,
+    "codeReviewRequired": false,
+    "codeReviewPassed": false,
     "lastJournalPath": null,
     "completedAt": null
   },
@@ -69,6 +71,19 @@
     },
     "prReady": false,
     "blockers": []
+  },
+  "codeReviewMetrics": {
+    "lastRun": null,
+    "approval": null,
+    "issues": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    },
+    "blockers": [],
+    "reworkCount": 0,
+    "maxRework": 3
   },
   "learningMetrics": {
     "totalSessions": 0,

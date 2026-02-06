@@ -74,8 +74,9 @@
 - Plan-Checker: 놓친 질문 확인
 - Plan-Reviewer: 계획 검증
 
-### 3. 검증 후 커밋
+### 3. 검증 후 리뷰 후 커밋
 - 6-Stage Verification Loop 통과 필수
+- Code-Review (25+ 차원) 통과 필수
 - PR Ready 상태에서만 자동 커밋
 
 ## 슬래시 명령어
@@ -201,7 +202,7 @@ your-project/
 - **Conflict-Checker** (Sonnet): 병렬 실행 후 충돌 감지 → Rework Loop 트리거
 
 ### Review Layer
-- **Code-Reviewer** (Sonnet): 25+ 차원 코드 리뷰
+- **Code-Reviewer** (Sonnet): 25+ 차원 코드 리뷰, **Verification 후 자동 실행**, Block 시 Rework Loop
 
 ## 6-Stage Verification Loop
 
@@ -212,6 +213,25 @@ your-project/
 4. Test Suite          - 테스트 + 커버리지
 5. Security Scan       - 시크릿/디버그 탐지
 6. Diff Review         - 의도치 않은 변경 확인
+```
+
+## Verification → Code-Review → Commit 흐름
+
+```
+Phase 5: Conflict Check (병렬 실행 시)
+    │
+    ▼
+Phase 6: Verification (6-Stage)
+    │
+    ▼
+Phase 6a: Code-Review (25+ 차원)
+    │
+    ├── ✅ Approved → Commit
+    ├── ⚠️ Warning → Commit (경고 기록)
+    └── ❌ Block → Rework Loop → 재검증 → 재리뷰
+    │
+    ▼
+Phase 7: Commit + Journal
 ```
 
 ## 프로젝트 규칙
