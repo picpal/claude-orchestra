@@ -1,4 +1,7 @@
 {
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
   "mcpServers": {
     "context7": {
       "command": "npx",
@@ -86,5 +89,21 @@
   "defaults": {
     "model": "sonnet",
     "context": "dev"
+  },
+  "agentTeams": {
+    "enabled": true,
+    "maxTeammates": 4,
+    "teammateMode": "tmux",
+    "useCase": "plan-validation",
+    "qualityGates": {
+      "unanimousApproval": false,
+      "weightedScoring": true,
+      "weights": {
+        "architect": 3,
+        "stability": 3,
+        "ux": 2,
+        "devilsAdvocate": 2
+      }
+    }
   }
 }

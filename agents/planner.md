@@ -260,6 +260,40 @@ graph TD
 - **6-Section Prompt**: ...
 ```
 
+## Agent Teams 분석 (병렬 실행 적합성)
+
+Planner는 병렬 실행 가능 여부를 분석하고 파일 충돌 위험을 평가합니다:
+
+### File Conflict Map
+
+각 TODO가 수정할 예상 파일을 식별하고 충돌 가능성을 분석합니다:
+
+```markdown
+## File Conflict Analysis
+
+### Level 0 TODOs
+| TODO ID | Expected Files | Conflict Risk |
+|---------|---------------|---------------|
+| auth-001 | src/auth/login.ts, src/auth/__tests__/login.test.ts | None |
+| signup-001 | src/auth/signup.ts | None |
+| common-001 | src/utils/validation.ts | ⚠️ Shared with auth-001 |
+
+### Conflict Groups
+- Group A: [auth-001, common-001] → 동일 파일 수정 가능
+- Recommendation: common-001을 Level 1로 이동 또는 순차 실행
+```
+
+### Agent Teams 적합성 판단
+
+| 조건 | 병렬 실행 | 권장 |
+|------|----------|------|
+| Level 0 TODO 2개 이상 + 파일 충돌 없음 | ✅ 가능 | Agent Teams 사용 |
+| Level 0 TODO 2개 이상 + 파일 충돌 있음 | ⚠️ 조건부 | 충돌 TODO 분리 후 사용 |
+| Level 0 TODO 1개 | ❌ 불필요 | 기존 Subagent 사용 |
+| Read-only 작업 (Research, Review) | ✅ 가능 | Agent Teams 권장 |
+
+---
+
 ## TDD Enforcement
 
 분석 시 TDD 순서 검증:

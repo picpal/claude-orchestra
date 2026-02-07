@@ -111,5 +111,28 @@
     "phaseHistory": []
   },
   "codeReviewHistory": [],
-  "checkpoints": []
+  "checkpoints": [],
+  "agentTeamsStatus": {
+    "active": false,
+    "teammates": [],
+    "allCompleted": false,
+    "completedAt": null,
+    "metrics": {
+      "totalTeammates": 0,
+      "parallelEfficiency": 0,
+      "sessionsRun": 0
+    },
+    "lastValidation": {
+      "planFile": null,
+      "results": {
+        "architect": null,
+        "stability": null,
+        "ux": null,
+        "devilsAdvocate": null
+      },
+      "weightedScore": null,
+      "decision": null,
+      "completedAt": null
+    }
+  }
 }
