@@ -88,6 +88,13 @@ cd claude-orchestra
 - Security, Quality, Performance 분석
 - Block 시 Rework Loop → 재검증 → 재리뷰
 
+### 🤝 Agent Teams 품질 게이트 (NEW)
+- **Phase 2a: Plan Validation Team** - 구현 전 계획 검증
+  - Architect (구조 호환) + Stability (리스크) + UX (사용성) + Devil's Advocate (반론)
+- **Phase 6b: Implementation Verification Team** - 커밋 전 구현 검증
+  - Plan Conformance + Quality Auditor + Integration Tester + Final Reviewer
+- 가중치 점수 기반 승인/조건부/반려 판정
+
 ---
 
 ## 설치
@@ -174,10 +181,16 @@ cp -r rules/*.md /path/to/your/project/.claude/rules/
 | **Agents** | 14 | `agents/` | AI 에이전트 정의 |
 | **Commands** | 12 | `commands/` | 슬래시 명령어 |
 | **Skills** | 3 | `skills/` | 컨텍스트 스킬 (dev, research, review) |
-| **Hooks** | 15 | `hooks/` | 자동화 훅 스크립트 + `hooks.json` |
+| **Hooks** | 18 | `hooks/` | 자동화 훅 스크립트 + `hooks.json` |
 | **Rules** | 6 | `rules/` | 코드 규칙 (`/tuning` 시 프로젝트에 복사) |
 | **Settings** | 1 | `.claude/settings.json` | 에이전트/권한 설정 |
 | **Orchestra** | 2+ | `.orchestra/` | 상태 관리 파일 (`/tuning` 시 생성) |
+
+### 환경 변수
+
+| 변수 | 설명 | 기본값 |
+|------|------|--------|
+| `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` | Agent Teams 기능 활성화 | `1` (활성화) |
 
 ---
 
@@ -266,6 +279,9 @@ claude-orchestra/               # 플러그인 루트
 │   ├── test-logger.sh
 │   ├── agent-logger.sh
 │   ├── user-prompt-submit.sh
+│   ├── team-logger.sh          # Agent Teams 활동 로깅 (NEW)
+│   ├── tdd-post-check.sh       # TDD 사후 검증 (NEW)
+│   ├── team-idle-handler.sh    # 유휴 팀원 처리 (NEW)
 │   ├── verification/           # 6단계 검증 스크립트
 │   ├── learning/               # 패턴 학습 시스템
 │   └── compact/                # 컨텍스트 압축
