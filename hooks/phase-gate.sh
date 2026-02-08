@@ -5,10 +5,13 @@
 
 # set -e를 사용하지 않음 (stdin-reader.sh 소싱 시 오류 방지)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/find-root.sh"
 source "$SCRIPT_DIR/stdin-reader.sh"
 
-STATE_FILE=".orchestra/state.json"
-LOG_FILE=".orchestra/logs/phase-gate.log"
+ensure_orchestra_dirs
+
+STATE_FILE="$ORCHESTRA_STATE_FILE"
+LOG_FILE="$ORCHESTRA_LOG_DIR/phase-gate.log"
 
 # 로깅 함수
 log() {

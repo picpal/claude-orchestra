@@ -2,9 +2,10 @@
 # Skill Logger for Claude Orchestra
 # PreToolUse Hook (Skill 매처)
 # Data is received via stdin JSON from Claude Code.
-# Logs Skill tool calls to activity.log via activity-logger.sh
+# Logs Skill tool calls to activity.jsonl via activity-logger.sh
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/find-root.sh"
 source "$SCRIPT_DIR/stdin-reader.sh"
 
 # Extract skill name from tool_input

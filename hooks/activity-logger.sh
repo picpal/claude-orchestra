@@ -6,25 +6,31 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/find-root.sh"
+
 TYPE="${1:-UNKNOWN}"
 NAME="${2:-}"
 DETAIL="${3:-}"
 PHASE="${4:--}"
 
-LOG_DIR=".orchestra/logs"
-LOG_FILE="$LOG_DIR/activity.log"
+LOG_FILE="$ORCHESTRA_LOG_DIR/activity.jsonl"
 
-mkdir -p "$LOG_DIR"
+ensure_orchestra_dirs
 
-TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+TIMESTAMP=$(date '+%Y-%m-%dT%H:%M:%S')
 
-# 타입을 7자로 패딩 (포맷 정렬)
-PADDED_TYPE=$(printf '%-7s' "$TYPE")
-# PHASE를 9자로 패딩 (포맷 정렬)
-PADDED_PHASE=$(printf '%-9s' "$PHASE")
+# JSONL 형식으로 출력 (python3 사용하여 올바른 JSON 이스케이핑)
+python3 -c "
+import json
+import sys
 
-if [ -n "$DETAIL" ]; then
-  echo "[$TIMESTAMP] $PADDED_TYPE | $PADDED_PHASE | $NAME | $DETAIL" >> "$LOG_FILE"
-else
-  echo "[$TIMESTAMP] $PADDED_TYPE | $PADDED_PHASE | $NAME" >> "$LOG_FILE"
-fi
+data = {
+    'ts': sys.argv[1],
+    'type': sys.argv[2],
+    'phase': sys.argv[3],
+    'name': sys.argv[4],
+    'detail': sys.argv[5] if len(sys.argv) > 5 else ''
+}
+print(json.dumps(data, ensure_ascii=False))
+" "$TIMESTAMP" "$TYPE" "$PHASE" "$NAME" "$DETAIL" >> "$LOG_FILE" 2>/dev/null || true

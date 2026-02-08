@@ -3,10 +3,12 @@
 # 코드 변경이 있으면 journal.md를 직접 생성하고 state.json을 업데이트 (사용자 개입 없음)
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/find-root.sh"
+
+ensure_orchestra_dirs
 
 # 디버그 로깅
-DEBUG_LOG=".orchestra/logs/stop-handler-debug.log"
-mkdir -p "$(dirname "$DEBUG_LOG")" 2>/dev/null
+DEBUG_LOG="$ORCHESTRA_LOG_DIR/stop-handler-debug.log"
 log_debug() {
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$DEBUG_LOG" 2>/dev/null
 }
@@ -43,11 +45,11 @@ run_learning_evaluation
 
 source "$SCRIPT_DIR/stdin-reader.sh"
 
-CHANGES_LOG=".orchestra/logs/changes.jsonl"
-STATE_FILE=".orchestra/state.json"
-SESSION_FILE=".orchestra/logs/session-start.txt"
-ACTIVITY_LOG=".orchestra/logs/activity.log"
-JOURNAL_DIR=".orchestra/journal"
+CHANGES_LOG="$ORCHESTRA_LOG_DIR/changes.jsonl"
+STATE_FILE="$ORCHESTRA_STATE_FILE"
+SESSION_FILE="$ORCHESTRA_LOG_DIR/session-start.txt"
+ACTIVITY_LOG="$ORCHESTRA_LOG_DIR/activity.jsonl"
+JOURNAL_DIR="$ORCHESTRA_DIR/journal"
 
 # stdin에서 stop_hook_active 확인 (무한 루프 방지)
 STOP_ACTIVE=$(hook_get_field "stop_hook_active")

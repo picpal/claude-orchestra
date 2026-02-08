@@ -2,11 +2,12 @@
 # MCP Tool Logger for Claude Orchestra
 # Usage: mcp-logger.sh <pre|post>
 # Data is received via stdin JSON from Claude Code.
-# Logs MCP tool calls to activity.log via activity-logger.sh
+# Logs MCP tool calls to activity.jsonl via activity-logger.sh
 
 MODE="$1"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/find-root.sh"
 source "$SCRIPT_DIR/stdin-reader.sh"
 
 # HOOK_TOOL_NAME contains the full tool name, e.g. "mcp__context7__resolve-library-id"

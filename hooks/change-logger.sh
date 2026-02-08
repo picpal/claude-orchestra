@@ -3,11 +3,13 @@
 # Phase 1: 기록만 수행, 분석 미연동
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/find-root.sh"
 source "$SCRIPT_DIR/stdin-reader.sh"
 
+ensure_orchestra_dirs
+
 # 로그 파일 경로 설정
-LOG_FILE=".orchestra/logs/changes.jsonl"
-mkdir -p "$(dirname "$LOG_FILE")"
+LOG_FILE="$ORCHESTRA_LOG_DIR/changes.jsonl"
 
 # 기본 정보 추출
 TOOL_NAME="$HOOK_TOOL_NAME"

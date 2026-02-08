@@ -5,12 +5,15 @@
 
 set -e
 
-STATE_FILE=".orchestra/state.json"
-LOG_FILE=".orchestra/logs/context.log"
-SESSION_LOG_DIR=".orchestra/logs/sessions"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/find-root.sh"
 
-# 로그 디렉토리 확인
-mkdir -p "$(dirname "$LOG_FILE")"
+ensure_orchestra_dirs
+
+STATE_FILE="$ORCHESTRA_STATE_FILE"
+LOG_FILE="$ORCHESTRA_LOG_DIR/context.log"
+SESSION_LOG_DIR="$ORCHESTRA_LOG_DIR/sessions"
+
 mkdir -p "$SESSION_LOG_DIR"
 
 log() {
@@ -118,8 +121,8 @@ warn_incomplete_work() {
 
 # 학습 평가 트리거
 trigger_learning_evaluation() {
-  local learning_script=".orchestra/hooks/learning/evaluate-session.sh"
-  local activity_log=".orchestra/logs/activity.log"
+  local learning_script="$SCRIPT_DIR/learning/evaluate-session.sh"
+  local activity_log="$ORCHESTRA_LOG_DIR/activity.jsonl"
 
   if [ -x "$learning_script" ] && [ -f "$activity_log" ]; then
     log "Triggering learning evaluation..."

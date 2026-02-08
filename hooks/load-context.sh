@@ -5,13 +5,15 @@
 
 set -e
 
-STATE_FILE=".orchestra/state.json"
-CONTEXT_DIR=".orchestra/contexts"
-PATTERNS_DIR=".orchestra/hooks/learning/learned-patterns"
-LOG_FILE=".orchestra/logs/context.log"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/find-root.sh"
 
-# 로그 디렉토리 확인
-mkdir -p "$(dirname "$LOG_FILE")"
+ensure_orchestra_dirs
+
+STATE_FILE="$ORCHESTRA_STATE_FILE"
+CONTEXT_DIR="$ORCHESTRA_DIR/contexts"
+PATTERNS_DIR="$SCRIPT_DIR/learning/learned-patterns"
+LOG_FILE="$ORCHESTRA_LOG_DIR/context.log"
 
 log() {
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"

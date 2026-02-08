@@ -4,6 +4,13 @@
 
 set -e
 
+# find-root.sh 소싱 (상위 디렉토리에 위치)
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+HOOKS_DIR="$(dirname "$SCRIPT_DIR")"
+source "$HOOKS_DIR/find-root.sh"
+
+ensure_orchestra_dirs
+
 # macOS/Linux 호환 밀리초 타임스탬프
 now_ms() {
   python3 -c "import time; print(int(time.time()*1000))"
@@ -14,12 +21,8 @@ MODE="${1:-standard}"  # quick, standard, full, pre-pr
 EXPECTED_FILES="${2:-}"
 MIN_COVERAGE="${3:-80}"
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-LOG_DIR=".orchestra/logs"
-STATE_FILE=".orchestra/state.json"
-
-# 로그 디렉토리 생성
-mkdir -p "$LOG_DIR"
+LOG_DIR="$ORCHESTRA_LOG_DIR"
+STATE_FILE="$ORCHESTRA_STATE_FILE"
 
 # 색상 정의
 RED='\033[0;31m'

@@ -5,7 +5,10 @@
 # Data is received via stdin JSON from Claude Code.
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/find-root.sh"
 source "$SCRIPT_DIR/stdin-reader.sh"
+
+ensure_orchestra_dirs
 
 "$SCRIPT_DIR/activity-logger.sh" HOOK test-logger 2>/dev/null || true
 
@@ -19,11 +22,8 @@ if [ -n "$TOOL_STDOUT" ]; then
   TOOL_OUT="$TOOL_STDOUT"
 fi
 
-STATE_FILE=".orchestra/state.json"
-LOG_FILE=".orchestra/logs/test-runs.log"
-
-# 로그 디렉토리 확인
-mkdir -p "$(dirname "$LOG_FILE")"
+STATE_FILE="$ORCHESTRA_STATE_FILE"
+LOG_FILE="$ORCHESTRA_LOG_DIR/test-runs.log"
 
 log() {
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
@@ -75,8 +75,8 @@ detect_tdd_cycle() {
   local current_state=""
 
   # 이전 테스트 상태 로드
-  if [ -f ".orchestra/logs/last-test-state" ]; then
-    previous_state=$(cat ".orchestra/logs/last-test-state")
+  if [ -f "$ORCHESTRA_LOG_DIR/last-test-state" ]; then
+    previous_state=$(cat "$ORCHESTRA_LOG_DIR/last-test-state")
   fi
 
   # 현재 상태 결정
@@ -87,7 +87,7 @@ detect_tdd_cycle() {
   fi
 
   # 상태 저장
-  echo "$current_state" > ".orchestra/logs/last-test-state"
+  echo "$current_state" > "$ORCHESTRA_LOG_DIR/last-test-state"
 
   # RED -> GREEN 사이클 감지
   if [ "$previous_state" = "RED" ] && [ "$current_state" = "GREEN" ]; then

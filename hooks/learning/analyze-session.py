@@ -47,6 +47,7 @@ def check_log_size(path, max_mb=MAX_LOG_SIZE_MB):
 
 # --- Parsing ---
 
+# 레거시 텍스트 형식용 정규식 (하위 호환성)
 ACTIVITY_RE = re.compile(
     r"\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\]\s+(\S+)\s+\|\s+(\S+)\s+\|\s+([^|]+?)(?:\s+\|\s+(.+))?$"
 )
@@ -57,10 +58,14 @@ TEST_RE = re.compile(
 
 
 def parse_activity_log(path, max_lines=10000):
-    """Parse activity.log lines into structured entries.
+    """Parse activity.jsonl (or legacy activity.log) into structured entries.
+
+    Supports both:
+    - JSONL format: {"ts":"...", "type":"...", "phase":"...", "name":"...", "detail":"..."}
+    - Legacy text format: [timestamp] TYPE | PHASE | NAME | DETAIL
 
     Args:
-        path: Path to activity.log
+        path: Path to activity.jsonl or activity.log
         max_lines: Maximum lines to parse (prevents memory issues)
     """
     entries = []
@@ -73,7 +78,27 @@ def parse_activity_log(path, max_lines=10000):
             for i, line in enumerate(f):
                 if i >= max_lines:
                     break
-                line = line.rstrip("\n")
+                line = line.strip()
+                if not line:
+                    continue
+
+                # JSONL 형식 시도
+                try:
+                    entry = json.loads(line)
+                    # 필수 필드 확인
+                    if "ts" in entry and "type" in entry:
+                        entries.append({
+                            "ts": entry.get("ts", ""),
+                            "type": entry.get("type", ""),
+                            "phase": entry.get("phase", "-"),
+                            "name": entry.get("name", ""),
+                            "detail": entry.get("detail", ""),
+                        })
+                        continue
+                except json.JSONDecodeError:
+                    pass
+
+                # 레거시 텍스트 형식 fallback
                 m = ACTIVITY_RE.match(line)
                 if m:
                     entries.append({
@@ -578,7 +603,7 @@ def update_pattern_file(path):
 
 def main():
     parser = argparse.ArgumentParser(description="Analyze session logs for learning patterns")
-    parser.add_argument("--activity", default=".orchestra/logs/activity.log", help="Path to activity.log")
+    parser.add_argument("--activity", default=".orchestra/logs/activity.jsonl", help="Path to activity.jsonl (or legacy activity.log)")
     parser.add_argument("--tests", default=".orchestra/logs/test-runs.log", help="Path to test-runs.log")
     parser.add_argument("--tdd-guard", default=".orchestra/logs/tdd-guard.log", help="Path to tdd-guard.log")
     parser.add_argument("--changes", default=".orchestra/logs/changes.jsonl", help="Path to changes.jsonl")

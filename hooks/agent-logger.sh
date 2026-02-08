@@ -7,11 +7,13 @@
 MODE="$1"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/find-root.sh"
 source "$SCRIPT_DIR/stdin-reader.sh"
 
+ensure_orchestra_dirs
+
 # Debug log
-DEBUG_LOG=".orchestra/logs/agent-debug.log"
-mkdir -p "$(dirname "$DEBUG_LOG")" 2>/dev/null || true
+DEBUG_LOG="$ORCHESTRA_LOG_DIR/agent-debug.log"
 {
   echo "=== $(date '+%Y-%m-%d %H:%M:%S') MODE=$MODE ==="
   echo "HOOK_EVENT: $HOOK_EVENT"
@@ -21,11 +23,11 @@ mkdir -p "$(dirname "$DEBUG_LOG")" 2>/dev/null || true
 } >> "$DEBUG_LOG" 2>/dev/null || true
 
 # === Agent cache (start↔stop 간 상태 공유) ===
-AGENT_CACHE_DIR=".orchestra/logs/.agent-cache"
+AGENT_CACHE_DIR="$ORCHESTRA_LOG_DIR/.agent-cache"
 mkdir -p "$AGENT_CACHE_DIR" 2>/dev/null || true
 
 # 에이전트 스택 파일 (현재 활성 에이전트 추적)
-AGENT_STACK_FILE=".orchestra/logs/.agent-stack"
+AGENT_STACK_FILE="$ORCHESTRA_LOG_DIR/.agent-stack"
 
 # 에이전트 정보 저장 (subagent-start 시 호출)
 cache_agent_info() {
@@ -78,7 +80,7 @@ lookup_agent_info() {
 # Planning 플래그 업데이트 함수 (python3 사용)
 update_planning_flag() {
   local flag="$1"
-  local state_file=".orchestra/state.json"
+  local state_file="$ORCHESTRA_STATE_FILE"
 
   if [ -f "$state_file" ]; then
     python3 -c "
@@ -112,8 +114,7 @@ detect_and_update_planning_phase() {
   local desc_lower
   desc_lower=$(echo "$desc" | tr '[:upper:]' '[:lower:]')
 
-  local planning_log=".orchestra/logs/planning-detection.log"
-  mkdir -p "$(dirname "$planning_log")" 2>/dev/null || true
+  local planning_log="$ORCHESTRA_LOG_DIR/planning-detection.log"
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] Checking: $desc_lower" >> "$planning_log" 2>/dev/null || true
 
   # Interviewer 완료 감지 (예: "Interviewer: 요구사항 인터뷰")

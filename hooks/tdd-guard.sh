@@ -7,15 +7,15 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/find-root.sh"
 source "$SCRIPT_DIR/stdin-reader.sh"
+
+ensure_orchestra_dirs
 
 "$SCRIPT_DIR/activity-logger.sh" HOOK tdd-guard 2>/dev/null || true
 
-STATE_FILE=".orchestra/state.json"
-LOG_FILE=".orchestra/logs/tdd-guard.log"
-
-# 로그 디렉토리 확인
-mkdir -p "$(dirname "$LOG_FILE")"
+STATE_FILE="$ORCHESTRA_STATE_FILE"
+LOG_FILE="$ORCHESTRA_LOG_DIR/tdd-guard.log"
 
 log() {
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
@@ -71,7 +71,7 @@ record_deletion_attempt() {
 }
 
 # 에이전트 스택에서 현재 에이전트 타입 조회
-AGENT_STACK_FILE=".orchestra/logs/.agent-stack"
+AGENT_STACK_FILE="$ORCHESTRA_LOG_DIR/.agent-stack"
 
 get_current_agent_type() {
   if [ -f "$AGENT_STACK_FILE" ]; then
