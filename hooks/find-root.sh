@@ -10,13 +10,26 @@
 #
 # 함수:
 #   ensure_orchestra_dirs() - 필요한 디렉토리 생성
+#
+# 디버그: ORCHESTRA_DEBUG=1 설정 시 /tmp/orchestra-debug.log에 로그 기록
+
+_orchestra_debug() {
+  if [ "${ORCHESTRA_DEBUG:-}" = "1" ]; then
+    echo "[$(date '+%H:%M:%S')] $*" >> /tmp/orchestra-debug.log
+  fi
+}
 
 find_project_root() {
   local dir="$PWD"
 
-  # 1. 우선순위: .orchestra/config.json 상향 탐색 (monorepo 지원)
+  _orchestra_debug "find_project_root called: PWD=$PWD"
+
+  # 1. 우선순위: .orchestra 디렉토리 상향 탐색 (monorepo 지원)
+  #    config.json 또는 state.json 중 하나라도 있으면 인식
   while [ "$dir" != "/" ]; do
-    if [ -f "$dir/.orchestra/config.json" ]; then
+    if [ -d "$dir/.orchestra" ] && \
+       { [ -f "$dir/.orchestra/config.json" ] || [ -f "$dir/.orchestra/state.json" ]; }; then
+      _orchestra_debug "Found .orchestra at: $dir"
       echo "$dir"
       return 0
     fi
@@ -27,17 +40,20 @@ find_project_root() {
   local git_root
   git_root=$(git rev-parse --show-toplevel 2>/dev/null)
   if [ -n "$git_root" ]; then
+    _orchestra_debug "Using git root: $git_root"
     echo "$git_root"
     return 0
   fi
 
   # 3. 최종 Fallback: 현재 디렉토리
+  _orchestra_debug "Using PWD as fallback: $PWD"
   echo "$PWD"
 }
 
 # 환경 변수 설정 (ORCHESTRA_ROOT만 export)
 if [ -z "$ORCHESTRA_ROOT" ]; then
   export ORCHESTRA_ROOT=$(find_project_root)
+  _orchestra_debug "ORCHESTRA_ROOT set to: $ORCHESTRA_ROOT"
 fi
 
 # 파생 변수 (export 불필요 - 현재 셸에서만 사용)
@@ -45,7 +61,12 @@ ORCHESTRA_DIR="$ORCHESTRA_ROOT/.orchestra"
 ORCHESTRA_LOG_DIR="$ORCHESTRA_DIR/logs"
 ORCHESTRA_STATE_FILE="$ORCHESTRA_DIR/state.json"
 
+_orchestra_debug "ORCHESTRA_LOG_DIR: $ORCHESTRA_LOG_DIR"
+
 # 디렉토리 생성 함수
 ensure_orchestra_dirs() {
-  mkdir -p "$ORCHESTRA_LOG_DIR" 2>/dev/null || true
+  _orchestra_debug "ensure_orchestra_dirs: creating $ORCHESTRA_LOG_DIR"
+  if ! mkdir -p "$ORCHESTRA_LOG_DIR" 2>/dev/null; then
+    _orchestra_debug "ERROR: Failed to create $ORCHESTRA_LOG_DIR"
+  fi
 }
