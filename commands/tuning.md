@@ -1,32 +1,75 @@
-# /tuning - Orchestra 상태 추적 활성화
+# /tuning - Orchestra 초기화
 
-`.orchestra/` 상태 디렉토리를 생성하여 상태 추적을 활성화합니다.
+프로젝트에 Orchestra 시스템을 초기화합니다.
 
-## 왜 필요한가?
+## 핵심 기능
 
-Orchestra는 **tuning 없이도 기본 동작**합니다. `UserPromptSubmit` hook이 매 요청마다 프로토콜을 자동 주입하므로, 플러그인 설치만으로 TDD 워크플로우와 Intent 분류가 작동합니다.
-
-`/tuning`을 실행하면 추가로:
-- **상태 추적**: mode, context, TODO 진행률 표시
-- **계획 관리**: `.orchestra/plans/`에 계획 문서 저장
-- **로그 기록**: 작업 이력 보관
-
-## tuning 없이 vs tuning 후
-
-| 기능 | tuning 없이 | tuning 후 |
-|------|-----------|---------|
-| 프로토콜 주입 | O | O |
-| Intent 분류 | O | O |
-| TDD 가이드 | O | O |
-| 슬래시 명령어 | O | O |
-| 상태 표시 (mode/context) | 기본값 | 실시간 |
-| 계획 문서 저장 | X | O |
-| TODO 진행률 | X | O |
-| 작업 로그 | X | O |
+`/tuning` 실행 시:
+1. **CLAUDE.md에 Maestro 프로토콜 주입** — 모든 요청에서 즉시 적용
+2. **상태 추적 활성화** — mode, context, TODO 진행률
+3. **계획/로그 디렉토리 생성** — 작업 이력 관리
 
 ## 실행 절차
 
-### 1. rules 복사
+### 1. CLAUDE.md에 Maestro 프로토콜 주입 (최우선)
+
+프로젝트 루트의 `CLAUDE.md` 상단에 Orchestra 지침을 추가합니다.
+
+**CLAUDE.md가 없는 경우**: 새로 생성
+**CLAUDE.md가 있는 경우**: 기존 내용 앞에 추가 (기존 내용 유지)
+**이미 Orchestra 블록이 있는 경우**: 건너뛰기
+
+추가할 내용:
+
+```markdown
+<!-- ORCHESTRA-START -->
+# 🎼 Claude Orchestra
+
+> **이 프로젝트는 Claude Orchestra 멀티 에이전트 시스템을 사용합니다.**
+
+## 🔒 Preflight Check (Edit/Write 호출 전 확인)
+
+**매번 Edit/Write 호출 전:**
+1. 이 파일이 코드 파일인가? (`.orchestra/`, `.claude/`, `*.md` 제외)
+2. **YES** → ⛔ STOP. `Task(High-Player/Low-Player)`로 위임
+3. **NO** → ✅ 진행 가능
+
+## 🚨 필수 규칙 (모든 요청에 적용)
+
+### 1. 매 응답 첫 줄: Intent 선언
+```
+[Maestro] Intent: {TYPE} | Reason: {근거}
+```
+
+### 2. Intent 분류
+| Intent | 조건 | 행동 |
+|--------|------|------|
+| **TRIVIAL** | 코드와 완전히 무관 | 직접 응답 |
+| **EXPLORATORY** | 코드 탐색/검색 | Task(Explorer) 호출 |
+| **AMBIGUOUS** | 불명확한 요청 | AskUserQuestion으로 명확화 |
+| **OPEN-ENDED** | **모든 코드 수정** | 전체 Phase 흐름 실행 |
+
+⚠️ **"간단한 수정"도 OPEN-ENDED** — 코드 변경 크기 무관!
+
+### 3. OPEN-ENDED 필수 체크리스트
+Executor 호출 전 반드시 완료:
+- □ Task(Interviewer) 완료?
+- □ Task(Plan-Checker) 완료?
+- □ Task(Plan-Reviewer) "Approved"?
+- □ Task(Planner) 6-Section 프롬프트?
+
+### 4. 금지 행위
+- ❌ **직접 Edit/Write (코드)** → Task(High-Player/Low-Player)로 위임
+- ❌ **직접 코드 탐색** → Task(Explorer)로 위임
+- ❌ **Planning 없이 코드 수정** → Interviewer → Planner → Executor 순서 필수
+
+### 5. 상세 규칙
+`.claude/rules/maestro-protocol.md` 참조
+
+<!-- ORCHESTRA-END -->
+```
+
+### 2. rules 복사
 
 프로젝트의 `.claude/rules/` 디렉토리에 Orchestra 규칙을 복사합니다:
 
@@ -35,7 +78,7 @@ mkdir -p .claude/rules
 cp -r ${CLAUDE_PLUGIN_ROOT}/rules/*.md .claude/rules/
 ```
 
-### 2. .orchestra 디렉토리 생성
+### 3. .orchestra 디렉토리 생성
 
 ```bash
 mkdir -p .orchestra/plans
@@ -46,7 +89,7 @@ mkdir -p .orchestra/templates
 mkdir -p .orchestra/learning/learned-patterns
 ```
 
-### 3. config.json 생성
+### 4. config.json 생성
 
 ```json
 {
@@ -59,7 +102,7 @@ mkdir -p .orchestra/learning/learned-patterns
 }
 ```
 
-### 4. state.json 생성
+### 5. state.json 생성
 
 ```json
 {
@@ -88,18 +131,18 @@ mkdir -p .orchestra/learning/learned-patterns
 }
 ```
 
-### 5. 완료 메시지
+### 6. 완료 메시지
 
 ```
-Orchestra 상태 추적 활성화 완료!
+🎼 Orchestra 초기화 완료!
 
-생성된 디렉토리:
-- .orchestra/plans/      계획 문서
-- .orchestra/journal/    작업 일지
-- .orchestra/logs/       로그 파일
-- .orchestra/learning/   학습 패턴 저장
+적용된 설정:
+✅ CLAUDE.md에 Maestro 프로토콜 주입
+✅ .claude/rules/에 상세 규칙 복사
+✅ .orchestra/ 상태 디렉토리 생성
 
-다음 단계: /start-work 실행
+Maestro 프로토콜이 활성화되었습니다.
+모든 요청에서 Intent 분류가 자동으로 적용됩니다.
 ```
 
 ## .gitignore 권장
@@ -113,5 +156,5 @@ Orchestra 상태 추적 활성화 완료!
 
 ## 관련 명령어
 
-- `/start-work` - 작업 세션 시작
 - `/status` - 현재 상태 확인
+- `/start-work` - 작업 세션 시작 (선택적)

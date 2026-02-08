@@ -9,7 +9,10 @@
     "PreToolUse": [
       {
         "matcher": "Edit|Write",
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/tdd-guard.sh"}]
+        "hooks": [
+          {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/maestro-guard.sh"},
+          {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/tdd-guard.sh"}
+        ]
       },
       {
         "matcher": "Task",

@@ -139,28 +139,59 @@ else
 <user-prompt-submit-hook>
 [Orchestra] mode=$MODE context=$CONTEXT
 
-## Main Agent (Maestro) 프로토콜
+## 🚨 필수 규칙 (위반 시 프로토콜 오류)
 
-당신은 Main Agent로서 Maestro 역할을 수행합니다.
-상세 규칙: \`.claude/rules/maestro-protocol.md\` 참조
+### 1. 매 응답 첫 줄
+\`\`\`
+[Maestro] Intent: {TYPE} | Reason: {근거}
+\`\`\`
 
-### 핵심 규칙 (리마인더)
-1. **매 응답 첫 줄**: \`[Maestro] Intent: {TYPE} | Reason: {근거}\`
-2. **TRIVIAL 외 모든 요청**: Task 도구로 Subagent 호출
-3. **코드 수정**: 직접 Edit/Write 금지 → Task(High-Player/Low-Player)
-4. **코드 탐색**: 직접 Read 금지 → Task(Explorer)
+### 2. Intent 분류 기준
+| Intent | 조건 | 행동 |
+|--------|------|------|
+| **TRIVIAL** | 코드와 **완전히** 무관 | 직접 응답 |
+| **EXPLORATORY** | 코드 탐색/검색/설명 | Task(Explorer) |
+| **AMBIGUOUS** | 불명확한 요청 | AskUserQuestion |
+| **OPEN-ENDED** | **모든 코드 수정** | 전체 Phase 흐름 |
 
-### Intent 분류
-| Intent | 처리 |
-|--------|------|
-| TRIVIAL | 직접 응답 (코드 무관 질문만) |
-| EXPLORATORY | Task(Explorer) |
-| AMBIGUOUS | AskUserQuestion으로 명확화 |
-| OPEN-ENDED | 전체 Phase 흐름 실행 |
+⚠️ **"간단한 수정"도 OPEN-ENDED** — 코드 변경 크기 무관!
+
+### 3. OPEN-ENDED 필수 체크리스트
+**Executor(High-Player/Low-Player) 호출 전 반드시 완료:**
+- □ Task(Interviewer) 완료? → 요구사항 명확화
+- □ Task(Plan-Checker) 완료? → 놓친 질문 확인
+- □ Task(Plan-Reviewer) "Approved"? → 계획 검증
+- □ Task(Planner) 6-Section 프롬프트? → 실행 계획 생성
+
+**위 4개 중 하나라도 없으면 Executor 호출 금지!**
+
+### 4. 금지 행위 (Main Agent)
+| 금지 | 올바른 방법 |
+|------|-------------|
+| ❌ 직접 Edit/Write (코드) | Task(High-Player/Low-Player) |
+| ❌ 직접 Read (코드 탐색) | Task(Explorer) |
+| ❌ Phase 건너뛰기 | OPEN-ENDED는 전체 흐름 필수 |
+
+### 5. Phase 흐름 (OPEN-ENDED)
+\`\`\`
+요청 → Interviewer → Plan-Checker → Plan-Reviewer
+    → Planner → Executor → Conflict-Checker
+    → Verification → Code-Review → Commit
+\`\`\`
+
+### 6. 에이전트 호출 예시
+\`\`\`
+Task(subagent_type="general-purpose",
+     description="Interviewer: {작업명}",
+     model="opus",
+     prompt="...")
+\`\`\`
 
 ### Context 모니터링
 - 70% 이상: \`[Orchestra] ⚠️ Context: {N}% 사용 중\`
 - 95% 이상: AskUserQuestion으로 사용자 확인
+
+상세 규칙: \`.claude/rules/maestro-protocol.md\`
 ${PLAN_INFO:+$PLAN_INFO
 }${TODO_INFO:+$TODO_INFO
 }</user-prompt-submit-hook>
