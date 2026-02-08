@@ -1,20 +1,22 @@
 #!/bin/bash
-# tdd-post-check.sh - Agent Teams 작업 완료 후 TDD 준수 검증
+# tdd-post-check.sh - Agent Teams 작업 완료 후 TDD 준수 검증 + Conflict-Checker 리마인더
 # Hook: TeammateStop
 #
 # TDD 3-Layer Defense의 Verification Layer 역할:
 # - 테스트 삭제/스킵 감지
 # - 테스트 없는 구현 감지
 # - 테스트 실패 감지
+# - 병렬 실행 완료 시 Conflict-Checker 리마인더
 
 set -euo pipefail
 
-TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
-LOG_DIR="${ORCHESTRA_STATE_DIR:-.orchestra}/logs"
-LOG_FILE="$LOG_DIR/tdd-violations.log"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/find-root.sh"
 
-# 로그 디렉토리 생성
-mkdir -p "$LOG_DIR"
+ensure_orchestra_dirs
+
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+LOG_FILE="$ORCHESTRA_LOG_DIR/tdd-violations.log"
 
 VIOLATIONS=0
 WARNINGS=""
@@ -88,17 +90,20 @@ if [ $VIOLATIONS -gt 0 ]; then
   echo "[$TIMESTAMP] TDD_POST_CHECK: FAILED (violations=$VIOLATIONS)" >> "$LOG_FILE"
 
   # state.json에 위반 기록
-  if [ -f ".orchestra/state.json" ]; then
+  if [ -f "$ORCHESTRA_STATE_FILE" ]; then
     python3 -c "
 import json
-with open('.orchestra/state.json', 'r') as f:
+import sys
+state_file = sys.argv[1]
+violations = int(sys.argv[2])
+with open(state_file, 'r') as f:
     d = json.load(f)
 if 'tddMetrics' not in d:
     d['tddMetrics'] = {'testCount': 0, 'redGreenCycles': 0, 'testDeletionAttempts': 0}
-d['tddMetrics']['testDeletionAttempts'] = d['tddMetrics'].get('testDeletionAttempts', 0) + $VIOLATIONS
-with open('.orchestra/state.json', 'w') as f:
+d['tddMetrics']['testDeletionAttempts'] = d['tddMetrics'].get('testDeletionAttempts', 0) + violations
+with open(state_file, 'w') as f:
     json.dump(d, f, indent=2, ensure_ascii=False)
-" 2>/dev/null || true
+" "$ORCHESTRA_STATE_FILE" "$VIOLATIONS" 2>/dev/null || true
   fi
 
   # STDERR로 경고 출력 (사용자에게 표시)
@@ -109,4 +114,43 @@ with open('.orchestra/state.json', 'w') as f:
 fi
 
 echo "[$TIMESTAMP] TDD_POST_CHECK: Completed (violations=$VIOLATIONS)" >> "$LOG_FILE"
+
+# 병렬 실행 완료 확인 및 Conflict-Checker 리마인더
+if [ -f "$ORCHESTRA_STATE_FILE" ]; then
+  # 모든 팀원이 완료되었는지 확인
+  ALL_DONE=$(python3 -c "
+import json
+import sys
+try:
+    with open(sys.argv[1], 'r') as f:
+        d = json.load(f)
+    ats = d.get('agentTeamsStatus', {})
+    teammates = ats.get('teammates', [])
+    if len(teammates) >= 2:  # 2명 이상 병렬 실행
+        all_completed = all(t.get('status') == 'completed' for t in teammates)
+        if all_completed:
+            print('yes')
+        else:
+            print('no')
+    else:
+        print('no')
+except:
+    print('no')
+" "$ORCHESTRA_STATE_FILE" 2>/dev/null)
+
+  if [ "$ALL_DONE" = "yes" ]; then
+    echo ""
+    echo "🔍 [Orchestra] 병렬 실행 완료 - Conflict-Checker 실행 필요!"
+    echo ""
+    echo "다음 단계로 Conflict-Checker를 호출하세요:"
+    echo "  Task(subagent_type=\"general-purpose\","
+    echo "       description=\"Conflict-Checker: 병렬 실행 충돌 검사\","
+    echo "       model=\"sonnet\","
+    echo "       prompt=\"병렬 실행된 작업들의 충돌을 검사해주세요.\")"
+    echo ""
+
+    echo "[$TIMESTAMP] CONFLICT_CHECK_REMINDER: Parallel execution completed, conflict check needed" >> "$LOG_FILE"
+  fi
+fi
+
 exit 0
