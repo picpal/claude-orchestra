@@ -64,8 +64,12 @@ except Exception as e:
   fi
 }
 
-# Planner 완료 확인 (python3 사용)
-check_planner_completed() {
+# Planning Phase 완료 확인 (4단계 모두 검증)
+# 반환값: 0=통과, 1=미완료 (어떤 단계가 누락)
+# MISSING_PHASES 변수에 누락된 단계들 저장
+check_planning_phase_completed() {
+  MISSING_PHASES=""
+
   if [ -f "$STATE_FILE" ]; then
     local result
     result=$(python3 -c "
@@ -74,14 +78,31 @@ import sys
 try:
     with open('$STATE_FILE') as f:
         d = json.load(f)
-    completed = d.get('planningPhase', {}).get('plannerCompleted', False)
-    print('completed=' + str(completed), file=sys.stderr)
-    sys.exit(0 if completed else 1)
+    pp = d.get('planningPhase', {})
+
+    missing = []
+    if not pp.get('interviewerCompleted', False):
+        missing.append('Interviewer')
+    if not pp.get('planCheckerCompleted', False):
+        missing.append('Plan-Checker')
+    if not pp.get('planReviewerCompleted', False):
+        missing.append('Plan-Reviewer')
+    if not pp.get('plannerCompleted', False):
+        missing.append('Planner')
+
+    if missing:
+        print(','.join(missing))
+        sys.exit(1)
+    else:
+        print('ALL_COMPLETE')
+        sys.exit(0)
 except Exception as e:
-    print('error=' + str(e), file=sys.stderr)
+    print('ERROR:' + str(e), file=sys.stderr)
     sys.exit(1)
-" 2>>"$LOG_FILE")
-    return $?
+" "$STATE_FILE" 2>>"$LOG_FILE")
+    local exit_code=$?
+    MISSING_PHASES="$result"
+    return $exit_code
   else
     return 0  # state.json 없으면 통과 (graceful)
   fi
@@ -106,25 +127,36 @@ main() {
     exit 0
   fi
 
-  # Planner 완료 확인 (필수)
-  if ! check_planner_completed; then
-    log "BLOCKED: Planner not completed for $target_agent"
+  # Planning Phase 완료 확인 (4단계 모두 필수)
+  if ! check_planning_phase_completed; then
+    log "BLOCKED: Planning phase incomplete for $target_agent (missing: $MISSING_PHASES)"
+
     echo "⛔ Phase Gate Violation!"
     echo ""
     echo "Executor($target_agent) 호출이 차단되었습니다."
     echo ""
-    echo "Planner가 먼저 완료되어야 합니다."
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "❌ 누락된 Planning 단계: $MISSING_PHASES"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
-    echo "올바른 순서:"
-    echo "  1. Interviewer → 요구사항 인터뷰"
-    echo "  2. Plan-Checker → 놓친 질문 확인"
-    echo "  3. Plan-Reviewer → 계획 승인"
-    echo "  4. Planner → 6-Section 프롬프트 생성"
-    echo "  5. Executor 호출 가능"
+    echo "OPEN-ENDED 작업은 반드시 다음 순서를 따라야 합니다:"
+    echo ""
+    echo "  1. Task(Interviewer)    → 요구사항 인터뷰"
+    echo "  2. Task(Plan-Checker)   → 놓친 질문 확인"
+    echo "  3. Task(Plan-Reviewer)  → 계획 승인 (Approved)"
+    echo "  4. Task(Planner)        → 6-Section 프롬프트 생성"
+    echo "  5. Task(Executor)       ← 지금 여기서 차단됨"
+    echo ""
+    echo "호출 예시:"
+    echo "  Task(subagent_type=\"general-purpose\","
+    echo "       description=\"Interviewer: {작업명}\","
+    echo "       model=\"opus\","
+    echo "       prompt=\"...\")"
+    echo ""
     exit 1
   fi
 
-  log "PASS: Planner completed, allowing $target_agent"
+  log "PASS: All planning phases completed, allowing $target_agent"
   exit 0
 }
 

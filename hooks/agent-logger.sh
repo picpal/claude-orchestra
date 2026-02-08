@@ -107,6 +107,38 @@ except Exception as e:
   fi
 }
 
+# Planning Phase 리셋 함수 (새 작업 시작 시 호출)
+reset_planning_phase() {
+  local state_file="$ORCHESTRA_STATE_FILE"
+
+  if [ -f "$state_file" ]; then
+    python3 -c "
+import json
+import sys
+
+state_file = sys.argv[1]
+
+try:
+    with open(state_file, 'r') as f:
+        d = json.load(f)
+
+    # Planning Phase 플래그 모두 리셋
+    d['planningPhase'] = {
+        'interviewerCompleted': False,
+        'planCheckerCompleted': False,
+        'planReviewerCompleted': False,
+        'plannerCompleted': False,
+        'resetAt': '$(date -u +%Y-%m-%dT%H:%M:%SZ)'
+    }
+
+    with open(state_file, 'w') as f:
+        json.dump(d, f, indent=2, ensure_ascii=False)
+except Exception as e:
+    print(f'Warning: Failed to reset planning phase: {e}', file=sys.stderr)
+" "$state_file" 2>/dev/null || true
+  fi
+}
+
 # Planning 에이전트 완료 감지 및 state.json 업데이트
 # 정확한 매칭을 위해 "^에이전트명:" 또는 "에이전트명 에이전트" 패턴 사용
 detect_and_update_planning_phase() {
@@ -127,6 +159,12 @@ detect_and_update_planning_phase() {
   if echo "$desc_lower" | grep -qE '^plan-checker:|plan.checker'; then
     update_planning_flag "planCheckerCompleted"
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] Planning phase: Plan-Checker completed" >> "$planning_log" 2>/dev/null || true
+  fi
+
+  # Plan-Reviewer 완료 감지
+  if echo "$desc_lower" | grep -qE '^plan-reviewer:|plan.reviewer'; then
+    update_planning_flag "planReviewerCompleted"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Planning phase: Plan-Reviewer completed" >> "$planning_log" 2>/dev/null || true
   fi
 
   # Planner 완료 감지 (주의: Plan-Checker, Plan-Reviewer와 구분)
@@ -294,6 +332,13 @@ case "$MODE" in
 
     # 에이전트 스택에 push (도구 제한 추적용)
     push_agent_stack "$AGENT_ID" "$ACTUAL_AGENT" "$DESCRIPTION"
+
+    # Interviewer 시작 시 Planning Phase 리셋 (새 작업 사이클 시작)
+    if [ "$ACTUAL_AGENT" = "interviewer" ]; then
+      reset_planning_phase
+      local planning_log="$ORCHESTRA_LOG_DIR/planning-detection.log"
+      echo "[$(date '+%Y-%m-%d %H:%M:%S')] Planning phase RESET: New interview started" >> "$planning_log" 2>/dev/null || true
+    fi
 
     PHASE=$(resolve_phase "$ACTUAL_AGENT" "$DESCRIPTION")
     "$SCRIPT_DIR/activity-logger.sh" AGENT "$ACTUAL_AGENT" "[start] id=${AGENT_ID:-?} $DESCRIPTION" "$PHASE" 2>/dev/null || true
