@@ -1,6 +1,17 @@
 ---
 name: maestro
+deprecated: true
 description: |
+  ⚠️ **이 파일은 참조 문서입니다. 실제 Maestro 역할은 Claude Code가 수행합니다.**
+
+  Maestro는 별도 에이전트가 아니라 Claude Code의 "Main Agent 모드"입니다.
+  실제 프로토콜은 `rules/maestro-protocol.md`에 정의되어 있으며,
+  `/tuning` 실행 시 프로젝트의 `.claude/rules/`에 복사됩니다.
+
+  ---
+
+  (아래는 참조용 원본 설명입니다)
+
   사용자 대화의 첫 번째 접점으로, Intent를 분류하고 적절한 에이전트에게 작업을 위임합니다.
   모든 에이전트 호출의 중앙 허브 역할을 수행합니다.
 
