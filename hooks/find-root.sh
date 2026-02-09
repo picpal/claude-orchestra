@@ -51,28 +51,39 @@ find_project_root() {
 
   _orchestra_debug "find_project_root called: PWD=$PWD"
 
-  # 1. 우선순위: .orchestra 디렉토리 상향 탐색 (monorepo 지원)
-  #    config.json 또는 state.json 중 하나라도 있으면 인식
+  # 1. 최우선: Git 루트에 .orchestra가 있으면 사용
+  local git_root
+  git_root=$(git rev-parse --show-toplevel 2>/dev/null)
+  if [ -n "$git_root" ] && [ -d "$git_root/.orchestra" ]; then
+    _orchestra_debug "Found .orchestra at git root: $git_root"
+    echo "$git_root"
+    return 0
+  fi
+
+  # 2. 상향 탐색: 가장 상위의 .orchestra 찾기
+  local found_root=""
   while [ "$dir" != "/" ]; do
-    if [ -d "$dir/.orchestra" ] && \
-       { [ -f "$dir/.orchestra/config.json" ] || [ -f "$dir/.orchestra/state.json" ]; }; then
-      _orchestra_debug "Found .orchestra at: $dir"
-      echo "$dir"
-      return 0
+    if [ -d "$dir/.orchestra" ]; then
+      found_root="$dir"
+      # 계속 상향 탐색하여 가장 상위 찾기
     fi
     dir=$(dirname "$dir")
   done
 
-  # 2. Fallback: Git 루트
-  local git_root
-  git_root=$(git rev-parse --show-toplevel 2>/dev/null)
+  if [ -n "$found_root" ]; then
+    _orchestra_debug "Found topmost .orchestra at: $found_root"
+    echo "$found_root"
+    return 0
+  fi
+
+  # 3. Fallback: Git 루트 (아직 .orchestra 없는 경우)
   if [ -n "$git_root" ]; then
     _orchestra_debug "Using git root: $git_root"
     echo "$git_root"
     return 0
   fi
 
-  # 3. 최종 Fallback: 현재 디렉토리
+  # 4. 최종 Fallback: 현재 디렉토리
   _orchestra_debug "Using PWD as fallback: $PWD"
   echo "$PWD"
 }
