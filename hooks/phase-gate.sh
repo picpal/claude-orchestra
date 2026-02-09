@@ -30,6 +30,12 @@ get_target_agent() {
     echo "high-player"
   elif echo "$desc_lower" | grep -qE '^low-player:|low.player'; then
     echo "low-player"
+  elif echo "$desc_lower" | grep -qE '^planner:|planner\s'; then
+    echo "planner"
+  elif echo "$desc_lower" | grep -qE '^plan-checker:|plan.checker'; then
+    echo "plan-checker"
+  elif echo "$desc_lower" | grep -qE '^plan-reviewer:|plan.reviewer'; then
+    echo "plan-reviewer"
   else
     echo ""
   fi
@@ -39,6 +45,15 @@ get_target_agent() {
 is_executor() {
   local agent="$1"
   [ "$agent" = "high-player" ] || [ "$agent" = "low-player" ]
+}
+
+# Gate 검증 대상 에이전트인지 확인
+is_gated_agent() {
+  local agent="$1"
+  case "$agent" in
+    high-player|low-player|planner|plan-checker|plan-reviewer) return 0 ;;
+    *) return 1 ;;
+  esac
 }
 
 # Rework 모드인지 확인 (python3 사용)
@@ -64,10 +79,18 @@ except Exception as e:
   fi
 }
 
-# Planning Phase 완료 확인 (4단계 모두 검증)
-# 반환값: 0=통과, 1=미완료 (어떤 단계가 누락)
+# 에이전트별 필요한 선행 단계 정의
+# - plan-checker: Interviewer 완료 필요
+# - plan-reviewer: Interviewer + Plan-Checker 완료 필요
+# - planner: Interviewer + Plan-Checker + Plan-Reviewer 완료 필요
+# - executor: 모든 Planning 단계 완료 필요
+
+# 에이전트별 필수 선행 단계 검증
+# $1: 대상 에이전트
+# 반환값: 0=통과, 1=미완료
 # MISSING_PHASES 변수에 누락된 단계들 저장
-check_planning_phase_completed() {
+check_required_phases() {
+  local target_agent="$1"
   MISSING_PHASES=""
 
   if [ -f "$STATE_FILE" ]; then
@@ -75,20 +98,35 @@ check_planning_phase_completed() {
     result=$(python3 -c "
 import json
 import sys
+
+target = sys.argv[1]
+
+# 에이전트별 필수 선행 단계 매트릭스
+REQUIRED_PHASES = {
+    'plan-checker': ['interviewerCompleted'],
+    'plan-reviewer': ['interviewerCompleted', 'planCheckerCompleted'],
+    'planner': ['interviewerCompleted', 'planCheckerCompleted', 'planReviewerCompleted'],
+    'high-player': ['interviewerCompleted', 'planCheckerCompleted', 'planReviewerCompleted', 'plannerCompleted'],
+    'low-player': ['interviewerCompleted', 'planCheckerCompleted', 'planReviewerCompleted', 'plannerCompleted']
+}
+
+PHASE_NAMES = {
+    'interviewerCompleted': 'Interviewer',
+    'planCheckerCompleted': 'Plan-Checker',
+    'planReviewerCompleted': 'Plan-Reviewer',
+    'plannerCompleted': 'Planner'
+}
+
 try:
     with open('$STATE_FILE') as f:
         d = json.load(f)
     pp = d.get('planningPhase', {})
 
+    required = REQUIRED_PHASES.get(target, [])
     missing = []
-    if not pp.get('interviewerCompleted', False):
-        missing.append('Interviewer')
-    if not pp.get('planCheckerCompleted', False):
-        missing.append('Plan-Checker')
-    if not pp.get('planReviewerCompleted', False):
-        missing.append('Plan-Reviewer')
-    if not pp.get('plannerCompleted', False):
-        missing.append('Planner')
+    for phase_key in required:
+        if not pp.get(phase_key, False):
+            missing.append(PHASE_NAMES[phase_key])
 
     if missing:
         print(','.join(missing))
@@ -99,13 +137,63 @@ try:
 except Exception as e:
     print('ERROR:' + str(e), file=sys.stderr)
     sys.exit(1)
-" "$STATE_FILE" 2>>"$LOG_FILE")
+" "$target_agent" 2>>"$LOG_FILE")
     local exit_code=$?
     MISSING_PHASES="$result"
     return $exit_code
   else
     return 0  # state.json 없으면 통과 (graceful)
   fi
+}
+
+# 하위 호환성: 기존 함수명 유지 (Executor용)
+check_planning_phase_completed() {
+  check_required_phases "high-player"
+}
+
+# 차단 메시지 출력
+print_block_message() {
+  local target_agent="$1"
+  local missing="$2"
+
+  echo "⛔ Phase Gate Violation!"
+  echo ""
+  echo "$target_agent 호출이 차단되었습니다."
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "❌ 누락된 선행 단계: $missing"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+  echo "OPEN-ENDED 작업은 반드시 다음 순서를 따라야 합니다:"
+  echo ""
+  echo "  1. Task(Interviewer)    → 요구사항 인터뷰"
+  echo "  2. Task(Plan-Checker)   → 놓친 질문 확인 (Interviewer 필요)"
+  echo "  3. Task(Plan-Reviewer)  → 계획 승인 (1-2 필요)"
+  echo "  4. Task(Planner)        → 6-Section 프롬프트 (1-3 필요)"
+  echo "  5. Task(Executor)       → 구현 실행 (1-4 필요)"
+  echo ""
+
+  # 에이전트별 다음 단계 힌트
+  case "$target_agent" in
+    plan-checker)
+      echo "💡 먼저 Interviewer를 호출하세요:"
+      echo "   Task(description=\"Interviewer: {작업명}\", ...)"
+      ;;
+    plan-reviewer)
+      echo "💡 먼저 Interviewer → Plan-Checker 순서로 호출하세요."
+      ;;
+    planner)
+      echo "💡 먼저 Interviewer → Plan-Checker → Plan-Reviewer 순서로 호출하세요."
+      ;;
+    *)
+      echo "💡 호출 예시:"
+      echo "   Task(subagent_type=\"general-purpose\","
+      echo "        description=\"Interviewer: {작업명}\","
+      echo "        model=\"opus\","
+      echo "        prompt=\"...\")"
+      ;;
+  esac
+  echo ""
 }
 
 # 메인 로직
@@ -115,9 +203,9 @@ main() {
 
   log "Checking: target_agent=$target_agent"
 
-  # Executor가 아니면 통과
-  if ! is_executor "$target_agent"; then
-    log "PASS: Not an Executor (agent=$target_agent)"
+  # Gate 대상 에이전트가 아니면 통과
+  if ! is_gated_agent "$target_agent"; then
+    log "PASS: Not a gated agent (agent=$target_agent)"
     exit 0
   fi
 
@@ -127,36 +215,14 @@ main() {
     exit 0
   fi
 
-  # Planning Phase 완료 확인 (4단계 모두 필수)
-  if ! check_planning_phase_completed; then
-    log "BLOCKED: Planning phase incomplete for $target_agent (missing: $MISSING_PHASES)"
-
-    echo "⛔ Phase Gate Violation!"
-    echo ""
-    echo "Executor($target_agent) 호출이 차단되었습니다."
-    echo ""
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "❌ 누락된 Planning 단계: $MISSING_PHASES"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo ""
-    echo "OPEN-ENDED 작업은 반드시 다음 순서를 따라야 합니다:"
-    echo ""
-    echo "  1. Task(Interviewer)    → 요구사항 인터뷰"
-    echo "  2. Task(Plan-Checker)   → 놓친 질문 확인"
-    echo "  3. Task(Plan-Reviewer)  → 계획 승인 (Approved)"
-    echo "  4. Task(Planner)        → 6-Section 프롬프트 생성"
-    echo "  5. Task(Executor)       ← 지금 여기서 차단됨"
-    echo ""
-    echo "호출 예시:"
-    echo "  Task(subagent_type=\"general-purpose\","
-    echo "       description=\"Interviewer: {작업명}\","
-    echo "       model=\"opus\","
-    echo "       prompt=\"...\")"
-    echo ""
+  # 에이전트별 필수 선행 단계 검증
+  if ! check_required_phases "$target_agent"; then
+    log "BLOCKED: Required phases incomplete for $target_agent (missing: $MISSING_PHASES)"
+    print_block_message "$target_agent" "$MISSING_PHASES"
     exit 1
   fi
 
-  log "PASS: All planning phases completed, allowing $target_agent"
+  log "PASS: All required phases completed, allowing $target_agent"
   exit 0
 }
 

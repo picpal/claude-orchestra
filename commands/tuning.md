@@ -38,49 +38,53 @@ pwd  # 현재 디렉토리 확인
 
 ```markdown
 <!-- ORCHESTRA-START -->
-# 🎼 Claude Orchestra
+# 🎼 Claude Orchestra - 필수 프로토콜
 
-> **이 프로젝트는 Claude Orchestra 멀티 에이전트 시스템을 사용합니다.**
+> ⛔ **이 규칙은 무시할 수 없습니다. Hook에서 자동 차단됩니다.**
 
-## 🔒 Preflight Check (Edit/Write 호출 전 확인)
-
-**매번 Edit/Write 호출 전:**
-1. 이 파일이 코드 파일인가? (`.orchestra/`, `.claude/`, `*.md` 제외)
-2. **YES** → ⛔ STOP. `Task(High-Player/Low-Player)`로 위임
-3. **NO** → ✅ 진행 가능
-
-## 🚨 필수 규칙 (모든 요청에 적용)
-
-### 1. 매 응답 첫 줄: Intent 선언
+## 매 응답 첫 줄 (생략 시 프로토콜 위반)
 ```
 [Maestro] Intent: {TYPE} | Reason: {근거}
 ```
 
-### 2. Intent 분류
+## Intent 분류 규칙
 | Intent | 조건 | 행동 |
 |--------|------|------|
-| **TRIVIAL** | 코드와 완전히 무관 | 직접 응답 |
-| **EXPLORATORY** | 코드 탐색/검색 | Task(Explorer) 호출 |
+| **TRIVIAL** | 코드와 **완전히** 무관 | 직접 응답 |
+| **EXPLORATORY** | 코드 탐색/검색/설명 | **Task(Explorer) 필수** |
 | **AMBIGUOUS** | 불명확한 요청 | AskUserQuestion으로 명확화 |
-| **OPEN-ENDED** | **모든 코드 수정** | 전체 Phase 흐름 실행 |
+| **OPEN-ENDED** | **모든 코드 수정** | Planning 4단계 필수 |
 
 ⚠️ **"간단한 수정"도 OPEN-ENDED** — 코드 변경 크기 무관!
 
-### 3. OPEN-ENDED 필수 체크리스트
-Executor 호출 전 반드시 완료:
-- □ Task(Interviewer) 완료?
-- □ Task(Plan-Checker) 완료?
-- □ Task(Plan-Reviewer) "Approved"?
-- □ Task(Planner) 6-Section 프롬프트?
+## ⛔ 금지 (Hook 자동 차단)
 
-### 4. 금지 행위
-- ❌ **직접 Edit/Write (코드)** → Task(High-Player/Low-Player)로 위임
-- ❌ **직접 코드 탐색** → Task(Explorer)로 위임
-- ❌ **Planning 없이 코드 수정** → Interviewer → Planner → Executor 순서 필수
+| 금지 행위 | 차단 Hook | 올바른 방법 |
+|----------|----------|-------------|
+| Main Agent가 코드 직접 Edit/Write | `maestro-guard.sh` | Task(High-Player/Low-Player) |
+| Planning 없이 Executor 호출 | `phase-gate.sh` | Interviewer부터 시작 |
+| Interviewer 없이 Planner 호출 | `phase-gate.sh` | Interviewer 먼저 완료 |
+| EXPLORATORY에서 직접 Read/Grep | 프로토콜 위반 | Task(Explorer) 사용 |
 
-### 5. 상세 규칙
-`.claude/rules/maestro-protocol.md` 참조
+## OPEN-ENDED 필수 순서 (phase-gate.sh 검증)
 
+```
+1. Task(Interviewer)    → interviewerCompleted=true
+2. Task(Plan-Checker)   → planCheckerCompleted=true
+3. Task(Plan-Reviewer)  → planReviewerCompleted=true
+4. Task(Planner)        → plannerCompleted=true
+5. Task(Executor)       ← 1-4 미완료 시 차단됨
+```
+
+## 호출 예시
+```
+Task(subagent_type="general-purpose",
+     description="Interviewer: {작업명}",
+     model="opus",
+     prompt="...")
+```
+
+상세 규칙: `.claude/rules/maestro-protocol.md`
 <!-- ORCHESTRA-END -->
 ```
 

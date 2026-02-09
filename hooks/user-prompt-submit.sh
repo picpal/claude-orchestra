@@ -139,47 +139,40 @@ else
 <user-prompt-submit-hook>
 [Orchestra] mode=$MODE context=$CONTEXT
 
-## 🚨 필수 규칙 (위반 시 프로토콜 오류)
+## ⛔ 무시 불가 규칙 (위반 시 Hook에서 자동 차단)
 
-### 1. 매 응답 첫 줄
+### 차단 메커니즘
+| 위반 행위 | 차단 Hook | 결과 |
+|----------|----------|------|
+| 직접 Edit/Write (코드) | \`maestro-guard.sh\` | ⛔ 즉시 차단 |
+| Planning 없이 Executor | \`phase-gate.sh\` | ⛔ 즉시 차단 |
+| 순서 없이 Planner 호출 | \`phase-gate.sh\` | ⛔ 즉시 차단 |
+
+### 1. 매 응답 첫 줄 (생략 = 프로토콜 위반)
 \`\`\`
 [Maestro] Intent: {TYPE} | Reason: {근거}
 \`\`\`
 
-### 2. Intent 분류 기준
-| Intent | 조건 | 행동 |
-|--------|------|------|
+### 2. Intent 분류 → 자동 라우팅
+| Intent | 조건 | 필수 행동 |
+|--------|------|----------|
 | **TRIVIAL** | 코드와 **완전히** 무관 | 직접 응답 |
-| **EXPLORATORY** | 코드 탐색/검색/설명 | Task(Explorer) |
+| **EXPLORATORY** | 코드 탐색/검색/설명 | **Task(Explorer) 필수** |
 | **AMBIGUOUS** | 불명확한 요청 | AskUserQuestion |
-| **OPEN-ENDED** | **모든 코드 수정** | 전체 Phase 흐름 |
+| **OPEN-ENDED** | **모든 코드 수정** | Planning 4단계 필수 |
 
 ⚠️ **"간단한 수정"도 OPEN-ENDED** — 코드 변경 크기 무관!
 
-### 3. OPEN-ENDED 필수 체크리스트
-**Executor(High-Player/Low-Player) 호출 전 반드시 완료:**
-- □ Task(Interviewer) 완료? → 요구사항 명확화
-- □ Task(Plan-Checker) 완료? → 놓친 질문 확인
-- □ Task(Plan-Reviewer) "Approved"? → 계획 검증
-- □ Task(Planner) 6-Section 프롬프트? → 실행 계획 생성
-
-**위 4개 중 하나라도 없으면 Executor 호출 금지!**
-
-### 4. 금지 행위 (Main Agent)
-| 금지 | 올바른 방법 |
-|------|-------------|
-| ❌ 직접 Edit/Write (코드) | Task(High-Player/Low-Player) |
-| ❌ 직접 Read (코드 탐색) | Task(Explorer) |
-| ❌ Phase 건너뛰기 | OPEN-ENDED는 전체 흐름 필수 |
-
-### 5. Phase 흐름 (OPEN-ENDED)
+### 3. OPEN-ENDED 필수 순서 (phase-gate.sh 검증)
 \`\`\`
-요청 → Interviewer → Plan-Checker → Plan-Reviewer
-    → Planner → Executor → Conflict-Checker
-    → Verification → Code-Review → Commit
+1. Task(Interviewer)    → 완료 후 다음 단계
+2. Task(Plan-Checker)   → Interviewer 완료 필수
+3. Task(Plan-Reviewer)  → 1-2 완료 필수
+4. Task(Planner)        → 1-3 완료 필수
+5. Task(Executor)       → 1-4 완료 필수 (미완료 시 차단)
 \`\`\`
 
-### 6. 에이전트 호출 예시
+### 4. 에이전트 호출 (올바른 방법)
 \`\`\`
 Task(subagent_type="general-purpose",
      description="Interviewer: {작업명}",
