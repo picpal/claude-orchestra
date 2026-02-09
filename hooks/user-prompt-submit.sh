@@ -27,7 +27,6 @@ if [ -n "$USER_PROMPT" ]; then
       /learn)        CMD_PHASE="RESEARCH" ;;
       *)             CMD_PHASE="-" ;;
     esac
-    "$SCRIPT_DIR/activity-logger.sh" COMMAND "$CMD_NAME" "" "$CMD_PHASE" 2>/dev/null || true
   fi
 fi
 STATE_FILE="$ORCHESTRA_STATE_FILE"

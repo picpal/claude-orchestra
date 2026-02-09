@@ -16,8 +16,6 @@ source "$SCRIPT_DIR/stdin-reader.sh"
 
 ensure_orchestra_dirs
 
-"$SCRIPT_DIR/activity-logger.sh" HOOK maestro-guard 2>/dev/null || true
-
 LOG_FILE="$ORCHESTRA_LOG_DIR/maestro-guard.log"
 AGENT_STACK_FILE="$ORCHESTRA_LOG_DIR/.agent-stack"
 

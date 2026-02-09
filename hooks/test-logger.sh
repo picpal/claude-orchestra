@@ -10,8 +10,6 @@ source "$SCRIPT_DIR/stdin-reader.sh"
 
 ensure_orchestra_dirs
 
-"$SCRIPT_DIR/activity-logger.sh" HOOK test-logger 2>/dev/null || true
-
 # Extract command and output from stdin JSON
 TOOL_CMD=$(hook_get_field "tool_input.command")
 # tool_response can be a string or object with stdout/stderr

@@ -88,6 +88,58 @@ Task(subagent_type="general-purpose",
 <!-- ORCHESTRA-END -->
 ```
 
+### 1.5. Hook 시스템 설정
+
+Claude Code Hook 시스템이 플러그인 스크립트를 실행하려면 wrapper와 hooks.json이 필요합니다.
+
+**⚠️ Bash 도구로 실제 실행하세요 (2개 명령):**
+
+```bash
+# 1. wrapper 스크립트 복사
+PLUGIN_ROOT=$(ls -td ~/.claude/plugins/cache/claude-orchestra/claude-orchestra/*/ 2>/dev/null | head -1) && mkdir -p .claude && cp "$PLUGIN_ROOT/hooks/run-hook.sh" .claude/run-hook.sh && chmod +x .claude/run-hook.sh
+```
+
+```bash
+# 2. hooks.json 생성 (wrapper 사용)
+cat > .claude/hooks.json << 'HOOKS_EOF'
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {"matcher": "", "hooks": [{"type": "command", "command": ".claude/run-hook.sh user-prompt-submit.sh"}]}
+    ],
+    "PreToolUse": [
+      {"matcher": "Edit|Write", "hooks": [
+        {"type": "command", "command": ".claude/run-hook.sh maestro-guard.sh"},
+        {"type": "command", "command": ".claude/run-hook.sh tdd-guard.sh"}
+      ]},
+      {"matcher": "Read|Grep", "hooks": [
+        {"type": "command", "command": ".claude/run-hook.sh explorer-hint.sh"}
+      ]},
+      {"matcher": "Task", "hooks": [
+        {"type": "command", "command": ".claude/run-hook.sh agent-logger.sh pre"},
+        {"type": "command", "command": ".claude/run-hook.sh phase-gate.sh"}
+      ]}
+    ],
+    "PostToolUse": [
+      {"matcher": "Edit|Write", "hooks": [{"type": "command", "command": ".claude/run-hook.sh change-logger.sh"}]},
+      {"matcher": "Write", "hooks": [{"type": "command", "command": ".claude/run-hook.sh journal-tracker.sh"}]},
+      {"matcher": "Bash", "hooks": [{"type": "command", "command": ".claude/run-hook.sh test-logger.sh"}]},
+      {"matcher": "Task", "hooks": [{"type": "command", "command": ".claude/run-hook.sh agent-logger.sh post"}]}
+    ],
+    "SubagentStart": [
+      {"matcher": "", "hooks": [{"type": "command", "command": ".claude/run-hook.sh agent-logger.sh subagent-start"}]}
+    ],
+    "SubagentStop": [
+      {"matcher": "", "hooks": [{"type": "command", "command": ".claude/run-hook.sh agent-logger.sh subagent-stop"}]}
+    ],
+    "Stop": [
+      {"matcher": "", "hooks": [{"type": "command", "command": ".claude/run-hook.sh stop-handler.sh"}]}
+    ]
+  }
+}
+HOOKS_EOF
+```
+
 ### 2. rules 복사
 
 프로젝트의 `.claude/rules/` 디렉토리에 Orchestra 규칙을 복사합니다.
@@ -95,7 +147,7 @@ Task(subagent_type="general-purpose",
 **⚠️ Bash 도구로 실제 실행하세요:**
 
 ```bash
-mkdir -p .claude/rules && cp -r "${CLAUDE_PLUGIN_ROOT:-$(dirname $(dirname $0))}/rules/"*.md .claude/rules/ 2>/dev/null || echo "Rules copy skipped"
+PLUGIN_ROOT=$(ls -td ~/.claude/plugins/cache/claude-orchestra/claude-orchestra/*/ 2>/dev/null | head -1) && mkdir -p .claude/rules && cp -r "$PLUGIN_ROOT/rules/"*.md .claude/rules/
 ```
 
 ### 3. .orchestra 디렉토리 생성

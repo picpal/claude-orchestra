@@ -12,8 +12,6 @@ source "$SCRIPT_DIR/stdin-reader.sh"
 
 ensure_orchestra_dirs
 
-"$SCRIPT_DIR/activity-logger.sh" HOOK tdd-guard 2>/dev/null || true
-
 STATE_FILE="$ORCHESTRA_STATE_FILE"
 LOG_FILE="$ORCHESTRA_LOG_DIR/tdd-guard.log"
 
