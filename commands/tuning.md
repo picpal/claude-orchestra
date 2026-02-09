@@ -90,7 +90,7 @@ Task(subagent_type="general-purpose",
 
 ### 1.5. Hook 시스템 설정
 
-Claude Code Hook 시스템이 플러그인 스크립트를 실행하려면 wrapper와 hooks.json이 필요합니다.
+Claude Code는 `settings.json` 안의 `hooks` 키를 읽습니다. 별도의 hooks.json 파일은 인식하지 않습니다.
 
 **⚠️ Bash 도구로 아래 2개 명령을 순서대로 실행하세요:**
 
@@ -100,44 +100,54 @@ PLUGIN_ROOT=$(ls -td ~/.claude/plugins/cache/claude-orchestra/claude-orchestra/*
 ```
 
 ```bash
-# 2. hooks.json 생성 (프로젝트 절대 경로 자동 삽입)
-PROJECT_PATH=$(pwd) && cat > .claude/hooks.json << HOOKS_EOF
-{
-  "hooks": {
+# 2. settings.json에 hooks 추가 (기존 설정 유지하며 병합)
+PROJECT_PATH=$(pwd) && python3 << 'PYEOF'
+import json, os
+
+settings_path = ".claude/settings.json"
+project_path = os.environ.get("PROJECT_PATH", os.getcwd())
+
+# 기존 settings.json 읽기 (없으면 빈 객체)
+settings = {}
+if os.path.exists(settings_path):
+    with open(settings_path, "r") as f:
+        settings = json.load(f)
+
+# hooks 추가
+settings["hooks"] = {
     "UserPromptSubmit": [
-      {"matcher": "", "hooks": [{"type": "command", "command": "${PROJECT_PATH}/.claude/run-hook.sh user-prompt-submit.sh"}]}
+        {"matcher": "", "hooks": [{"type": "command", "command": f"{project_path}/.claude/run-hook.sh user-prompt-submit.sh"}]}
     ],
     "PreToolUse": [
-      {"matcher": "Edit|Write", "hooks": [
-        {"type": "command", "command": "${PROJECT_PATH}/.claude/run-hook.sh maestro-guard.sh"},
-        {"type": "command", "command": "${PROJECT_PATH}/.claude/run-hook.sh tdd-guard.sh"}
-      ]},
-      {"matcher": "Read|Grep", "hooks": [
-        {"type": "command", "command": "${PROJECT_PATH}/.claude/run-hook.sh explorer-hint.sh"}
-      ]},
-      {"matcher": "Task", "hooks": [
-        {"type": "command", "command": "${PROJECT_PATH}/.claude/run-hook.sh agent-logger.sh pre"},
-        {"type": "command", "command": "${PROJECT_PATH}/.claude/run-hook.sh phase-gate.sh"}
-      ]}
+        {"matcher": "Edit|Write", "hooks": [
+            {"type": "command", "command": f"{project_path}/.claude/run-hook.sh maestro-guard.sh"},
+            {"type": "command", "command": f"{project_path}/.claude/run-hook.sh tdd-guard.sh"}
+        ]},
+        {"matcher": "Task", "hooks": [
+            {"type": "command", "command": f"{project_path}/.claude/run-hook.sh agent-logger.sh pre"},
+            {"type": "command", "command": f"{project_path}/.claude/run-hook.sh phase-gate.sh"}
+        ]}
     ],
     "PostToolUse": [
-      {"matcher": "Edit|Write", "hooks": [{"type": "command", "command": "${PROJECT_PATH}/.claude/run-hook.sh change-logger.sh"}]},
-      {"matcher": "Write", "hooks": [{"type": "command", "command": "${PROJECT_PATH}/.claude/run-hook.sh journal-tracker.sh"}]},
-      {"matcher": "Bash", "hooks": [{"type": "command", "command": "${PROJECT_PATH}/.claude/run-hook.sh test-logger.sh"}]},
-      {"matcher": "Task", "hooks": [{"type": "command", "command": "${PROJECT_PATH}/.claude/run-hook.sh agent-logger.sh post"}]}
+        {"matcher": "Edit|Write", "hooks": [{"type": "command", "command": f"{project_path}/.claude/run-hook.sh change-logger.sh"}]},
+        {"matcher": "Bash", "hooks": [{"type": "command", "command": f"{project_path}/.claude/run-hook.sh test-logger.sh"}]},
+        {"matcher": "Task", "hooks": [{"type": "command", "command": f"{project_path}/.claude/run-hook.sh agent-logger.sh post"}]}
     ],
     "SubagentStart": [
-      {"matcher": "", "hooks": [{"type": "command", "command": "${PROJECT_PATH}/.claude/run-hook.sh agent-logger.sh subagent-start"}]}
+        {"matcher": "", "hooks": [{"type": "command", "command": f"{project_path}/.claude/run-hook.sh agent-logger.sh subagent-start"}]}
     ],
     "SubagentStop": [
-      {"matcher": "", "hooks": [{"type": "command", "command": "${PROJECT_PATH}/.claude/run-hook.sh agent-logger.sh subagent-stop"}]}
-    ],
-    "Stop": [
-      {"matcher": "", "hooks": [{"type": "command", "command": "${PROJECT_PATH}/.claude/run-hook.sh stop-handler.sh"}]}
+        {"matcher": "", "hooks": [{"type": "command", "command": f"{project_path}/.claude/run-hook.sh agent-logger.sh subagent-stop"}]}
     ]
-  }
 }
-HOOKS_EOF
+
+# 저장
+os.makedirs(".claude", exist_ok=True)
+with open(settings_path, "w") as f:
+    json.dump(settings, f, indent=2, ensure_ascii=False)
+
+print(f"✅ hooks added to {settings_path}")
+PYEOF
 ```
 
 ### 2. rules 복사
