@@ -9,9 +9,17 @@
 
 MODE="$1"
 
+# === 디버그 로그 (항상 기록) ===
+DEBUG_LOG="/tmp/orchestra-hook-debug.log"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] agent-logger.sh called: MODE=$MODE PWD=$PWD" >> "$DEBUG_LOG"
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] SCRIPT_DIR=$SCRIPT_DIR" >> "$DEBUG_LOG"
+
 source "$SCRIPT_DIR/find-root.sh"
 source "$SCRIPT_DIR/stdin-reader.sh"
+
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] ORCHESTRA_ROOT=$ORCHESTRA_ROOT ORCHESTRA_LOG_DIR=$ORCHESTRA_LOG_DIR" >> "$DEBUG_LOG"
 
 ensure_orchestra_dirs
 
