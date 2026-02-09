@@ -13,10 +13,37 @@
 #
 # 디버그: ORCHESTRA_DEBUG=1 설정 시 /tmp/orchestra-debug.log에 로그 기록
 
+# 에러 로그 파일 (항상 기록)
+_ORCHESTRA_ERROR_LOG="/tmp/orchestra-errors-${USER:-unknown}.log"
+
 _orchestra_debug() {
   if [ "${ORCHESTRA_DEBUG:-}" = "1" ]; then
     echo "[$(date '+%H:%M:%S')] $*" >> /tmp/orchestra-debug.log
   fi
+}
+
+# 에러 로깅 함수 (항상 기록됨)
+_orchestra_error() {
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: $*" >> "$_ORCHESTRA_ERROR_LOG"
+}
+
+# 환경 검증 함수
+verify_orchestra_env() {
+  local errors=0
+
+  # Python3 확인
+  if ! command -v python3 &>/dev/null; then
+    _orchestra_error "Python3 not found"
+    errors=$((errors + 1))
+  fi
+
+  # 디렉토리 쓰기 권한 확인
+  if [ -d "${ORCHESTRA_DIR:-}" ] && [ ! -w "${ORCHESTRA_DIR:-}" ]; then
+    _orchestra_error "No write permission: $ORCHESTRA_DIR"
+    errors=$((errors + 1))
+  fi
+
+  return $errors
 }
 
 find_project_root() {
@@ -51,7 +78,8 @@ find_project_root() {
 }
 
 # 환경 변수 설정 (ORCHESTRA_ROOT만 export)
-if [ -z "$ORCHESTRA_ROOT" ]; then
+# 주의: ${ORCHESTRA_ROOT:-} 패턴으로 nounset 환경에서도 안전
+if [ -z "${ORCHESTRA_ROOT:-}" ]; then
   export ORCHESTRA_ROOT=$(find_project_root)
   _orchestra_debug "ORCHESTRA_ROOT set to: $ORCHESTRA_ROOT"
 fi
@@ -67,6 +95,7 @@ _orchestra_debug "ORCHESTRA_LOG_DIR: $ORCHESTRA_LOG_DIR"
 ensure_orchestra_dirs() {
   _orchestra_debug "ensure_orchestra_dirs: creating $ORCHESTRA_LOG_DIR"
   if ! mkdir -p "$ORCHESTRA_LOG_DIR" 2>/dev/null; then
-    _orchestra_debug "ERROR: Failed to create $ORCHESTRA_LOG_DIR"
+    _orchestra_error "Failed to create $ORCHESTRA_LOG_DIR"
+    return 1
   fi
 }

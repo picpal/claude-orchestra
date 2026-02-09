@@ -114,6 +114,43 @@ Orchestra를 통한 커밋 히스토리:
 Consider /compact for context optimization
 ```
 
+## Logging Health 진단
+
+시스템 로깅 상태를 확인합니다:
+
+```
+╔═══════════════════════════════════════╗
+║  LOGGING HEALTH                       ║
+║  ✅ Directory: .orchestra/logs        ║
+║  ✅ Writable: Yes                     ║
+║  ✅ Python3: /usr/bin/python3         ║
+║  ⚠️ Recent errors: 2                  ║
+║     → /tmp/orchestra-errors-$USER.log ║
+╚═══════════════════════════════════════╝
+```
+
+### 확인 항목
+
+| 항목 | 확인 방법 | 해결책 |
+|------|----------|--------|
+| Directory | `.orchestra/logs` 존재 확인 | `/tuning` 실행 |
+| Writable | 쓰기 권한 확인 | `chmod -R u+w .orchestra` |
+| Python3 | `python3` 명령 확인 | Python 3 설치 |
+| Errors | `/tmp/orchestra-errors-$USER.log` | 에러 로그 확인 |
+
+### 진단 명령어
+
+```bash
+# 로그 디렉토리 상태
+ls -la .orchestra/logs/
+
+# 최근 에러 확인
+cat /tmp/orchestra-errors-$USER.log | tail -20
+
+# Python3 경로 확인
+which python3
+```
+
 ## 관련 명령어
 
 - `/start-work` - 새 세션 시작

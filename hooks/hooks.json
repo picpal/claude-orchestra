@@ -20,14 +20,6 @@
           {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/agent-logger.sh pre"},
           {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/phase-gate.sh"}
         ]
-      },
-      {
-        "matcher": "Skill",
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/skill-logger.sh"}]
-      },
-      {
-        "matcher": "mcp__",
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/mcp-logger.sh pre"}]
       }
     ],
     "PostToolUse": [
@@ -46,10 +38,6 @@
       {
         "matcher": "Task",
         "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/agent-logger.sh post"}]
-      },
-      {
-        "matcher": "mcp__",
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/mcp-logger.sh post"}]
       }
     ],
     "SubagentStart": [
