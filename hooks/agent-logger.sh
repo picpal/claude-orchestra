@@ -15,6 +15,18 @@ source "$SCRIPT_DIR/stdin-reader.sh"
 
 ensure_orchestra_dirs
 
+# === Simple Activity Log ===
+ACTIVITY_LOG="$ORCHESTRA_LOG_DIR/activity.log"
+
+log_activity() {
+  local event="$1"
+  local agent="$2"
+  local detail="${3:-}"
+  local ts
+  ts=$(date '+%Y-%m-%d %H:%M:%S')
+  echo "[$ts] $event | $agent | $detail" >> "$ACTIVITY_LOG"
+}
+
 # === Agent Stack (for tool restriction tracking) ===
 AGENT_STACK_FILE="$ORCHESTRA_LOG_DIR/.agent-stack"
 AGENT_CACHE_DIR="$ORCHESTRA_LOG_DIR/.agent-cache"
@@ -147,8 +159,20 @@ extract_agent_name() {
 # === Mode Handlers ===
 
 case "$MODE" in
-  pre|post)
-    # PreToolUse/PostToolUse Task - minimal logging
+  pre)
+    # PreToolUse/Task
+    AGENT_NAME=$(hook_get_field "tool_input.subagent_type")
+    DESCRIPTION=$(hook_get_field "tool_input.description")
+    [ -z "$AGENT_NAME" ] && AGENT_NAME="unknown"
+    log_activity "TASK_START" "$AGENT_NAME" "${DESCRIPTION:0:80}"
+    ;;
+
+  post)
+    # PostToolUse/Task
+    AGENT_NAME=$(hook_get_field "tool_input.subagent_type")
+    DESCRIPTION=$(hook_get_field "tool_input.description")
+    [ -z "$AGENT_NAME" ] && AGENT_NAME="unknown"
+    log_activity "TASK_END" "$AGENT_NAME" "${DESCRIPTION:0:80}"
     ;;
 
   subagent-start)
@@ -161,6 +185,7 @@ case "$MODE" in
 
     cache_agent_info "$AGENT_ID" "$ACTUAL_AGENT" "$DESCRIPTION"
     push_agent_stack "$AGENT_ID" "$ACTUAL_AGENT" "$DESCRIPTION"
+    log_activity "AGENT_START" "$ACTUAL_AGENT" "id=$AGENT_ID $DESCRIPTION"
 
     # Reset planning phase when new interview starts
     if [ "$ACTUAL_AGENT" = "interviewer" ]; then
@@ -181,5 +206,6 @@ case "$MODE" in
 
     pop_agent_stack "$AGENT_ID"
     detect_planning_agent "${DESCRIPTION:-}"
+    log_activity "AGENT_STOP" "$AGENT_TYPE" "id=$AGENT_ID"
     ;;
 esac
