@@ -2,6 +2,17 @@
 
 프로젝트에 Orchestra 시스템을 초기화합니다.
 
+## ⚠️ 중요: 대상 프로젝트 확인
+
+**이 명령은 현재 작업 디렉토리(PWD)의 프로젝트에 적용됩니다.**
+
+실행 전 반드시 확인:
+```bash
+pwd  # 현재 디렉토리 확인
+```
+
+플러그인 디렉토리(`claude-orchestra/`)가 아닌, **실제 작업할 프로젝트 디렉토리**에서 실행해야 합니다.
+
 ## 핵심 기능
 
 `/tuning` 실행 시:
@@ -13,11 +24,15 @@
 
 ### 1. CLAUDE.md에 Maestro 프로토콜 주입 (최우선)
 
-프로젝트 루트의 `CLAUDE.md` 상단에 Orchestra 지침을 추가합니다.
+**현재 디렉토리**의 `CLAUDE.md` 상단에 Orchestra 지침을 추가합니다.
 
-**CLAUDE.md가 없는 경우**: 새로 생성
-**CLAUDE.md가 있는 경우**: 기존 내용 앞에 추가 (기존 내용 유지)
-**이미 Orchestra 블록이 있는 경우**: 건너뛰기
+**반드시 Write 도구로 직접 파일을 생성/수정하세요.**
+
+**CLAUDE.md가 없는 경우**: Write 도구로 새로 생성
+**CLAUDE.md가 있는 경우**: Read로 읽고 → 기존 내용 앞에 추가 → Write로 저장
+**이미 `<!-- ORCHESTRA-START -->`가 있는 경우**: 건너뛰기
+
+**⚠️ 이 단계를 반드시 실행하세요. 건너뛰지 마세요.**
 
 추가할 내용:
 
@@ -71,25 +86,25 @@ Executor 호출 전 반드시 완료:
 
 ### 2. rules 복사
 
-프로젝트의 `.claude/rules/` 디렉토리에 Orchestra 규칙을 복사합니다:
+프로젝트의 `.claude/rules/` 디렉토리에 Orchestra 규칙을 복사합니다.
+
+**⚠️ Bash 도구로 실제 실행하세요:**
 
 ```bash
-mkdir -p .claude/rules
-cp -r ${CLAUDE_PLUGIN_ROOT}/rules/*.md .claude/rules/
+mkdir -p .claude/rules && cp -r "${CLAUDE_PLUGIN_ROOT:-$(dirname $(dirname $0))}/rules/"*.md .claude/rules/ 2>/dev/null || echo "Rules copy skipped"
 ```
 
 ### 3. .orchestra 디렉토리 생성
 
+**⚠️ Bash 도구로 실제 실행하세요:**
+
 ```bash
-mkdir -p .orchestra/plans
-mkdir -p .orchestra/journal
-mkdir -p .orchestra/logs
-mkdir -p .orchestra/mcp-configs
-mkdir -p .orchestra/templates
-mkdir -p .orchestra/learning/learned-patterns
+mkdir -p .orchestra/plans .orchestra/journal .orchestra/logs .orchestra/mcp-configs .orchestra/templates .orchestra/learning/learned-patterns
 ```
 
 ### 4. config.json 생성
+
+**⚠️ Write 도구로 `.orchestra/config.json` 파일 생성하세요:**
 
 ```json
 {
@@ -103,6 +118,8 @@ mkdir -p .orchestra/learning/learned-patterns
 ```
 
 ### 5. state.json 생성
+
+**⚠️ Write 도구로 `.orchestra/state.json` 파일 생성하세요:**
 
 ```json
 {
