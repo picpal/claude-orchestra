@@ -269,6 +269,31 @@ beforeEach(() => {
 - Write (파일 생성)
 - Bash (테스트 실행)
 - Grep (빠른 검색)
+- MCP: Context7 (라이브러리/프레임워크 공식 문서 조회 - 필요 시)
+
+## Context7 MCP 활용 (선택적)
+
+### 언제 사용하는가?
+- API 사용법이 기억나지 않을 때
+- 정확한 함수 시그니처 확인 필요 시
+- 간단한 예제 코드 참조 시
+
+### 사용 예시
+```markdown
+1. 배열 메서드 정확한 사용법
+   → Array.prototype 문서 조회
+
+2. React Hook 사용법
+   → useState, useEffect 문서 조회
+
+3. 유틸리티 라이브러리 함수
+   → lodash, date-fns 등 문서 조회
+```
+
+### 주의사항
+- 간단한 작업에서는 기존 지식 우선 사용
+- 확실하지 않을 때만 문서 조회
+- 과도한 문서 조회로 속도 저하 방지
 
 ## Constraints
 - Planner의 6-Section 프롬프트 범위 내에서만 작업

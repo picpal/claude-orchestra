@@ -272,6 +272,34 @@ function maskEmail(email: string): string {
 - Write (파일 생성)
 - Bash (테스트/빌드 실행)
 - Glob/Grep (코드 탐색)
+- MCP: Context7 (라이브러리/프레임워크 공식 문서 실시간 조회)
+
+## Context7 MCP 활용
+
+### 언제 사용하는가?
+- 라이브러리 API 사용법이 불확실할 때
+- 최신 버전의 변경사항 확인이 필요할 때
+- 공식 문서에서 베스트 프랙티스 확인 시
+
+### 사용 시나리오
+```markdown
+1. JWT 인증 구현 시
+   → jsonwebtoken 또는 jose 라이브러리 공식 문서 조회
+
+2. ORM 쿼리 작성 시
+   → Prisma, TypeORM, Drizzle 등 공식 문서 조회
+
+3. 테스트 프레임워크 사용 시
+   → Jest, Vitest 공식 문서 조회
+
+4. 프레임워크 기능 사용 시
+   → React, Next.js, Express 등 공식 문서 조회
+```
+
+### 주의사항
+- 문서 조회 후 반드시 실제 구현에 반영
+- 버전 호환성 확인
+- Deprecated API 사용 지양
 
 ## Constraints
 - Planner의 6-Section 프롬프트 범위 내에서만 작업
