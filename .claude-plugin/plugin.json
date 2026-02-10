@@ -1,8 +1,7 @@
 {
   "name": "claude-orchestra",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "12-agent TDD orchestration system with 6-stage verification loop, continuous learning, and automated code review",
-  "hooks": "./hooks/hooks.json",
   "author": {
     "name": "picpal",
     "url": "https://github.com/picpal"
