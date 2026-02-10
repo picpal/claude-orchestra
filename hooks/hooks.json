@@ -63,27 +63,6 @@
         "matcher": "",
         "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/stop-handler.sh"}]
       }
-    ],
-    "TeammateStart": [
-      {
-        "matcher": "",
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/team-logger.sh start"}]
-      }
-    ],
-    "TeammateStop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/team-logger.sh stop"},
-          {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/tdd-post-check.sh"}
-        ]
-      }
-    ],
-    "TeammateIdle": [
-      {
-        "matcher": "",
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/team-idle-handler.sh"}]
-      }
     ]
   }
 }
