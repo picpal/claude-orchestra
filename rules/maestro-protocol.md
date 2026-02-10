@@ -85,8 +85,16 @@ User Request
     ↓
 [Intent: OPEN-ENDED]
     ↓
-Phase 1: Research (선택적)
-    Task(Explorer) + Task(Searcher) 병렬
+Phase 1: Research (선택적) — Research Team 병렬 실행
+    ┌──────────────────────────────────────────┐
+    │  Research Team (컨텍스트 공유 병렬)        │
+    │  ┌─────────┬─────────┬────────────┐      │
+    │  │Explorer │Searcher │Architecture│      │
+    │  │(haiku)  │(sonnet) │  (opus)    │      │
+    │  └─────────┴─────────┴────────────┘      │
+    │       ↓         ↓          ↓             │
+    │  Maestro가 3개 결과 종합                  │
+    └──────────────────────────────────────────┘
     ↓
 Phase 2: Planning
     Step 1: Task(Interviewer) → 요구사항 인터뷰 + 계획 초안
@@ -268,6 +276,90 @@ Task(
 """
 )
 ```
+
+### Research Team (Phase 1 병렬 실행)
+
+> 복잡한 요구사항 분석 시 3개 에이전트를 **동시에** 호출하여 컨텍스트 수집
+
+```
+# 3개 Task를 한 번에 병렬 호출 (단일 메시지에 3개 tool call)
+Task(
+  subagent_type: "Explore", model: "haiku",
+  description: "Explorer: 코드베이스 탐색",
+  prompt: """
+**Explorer** - 내부 코드베이스 탐색
+도구: Glob, Grep, Read
+제약: 파일 수정 금지 (읽기 전용)
+---
+## 사용자 요청
+{요청 내용}
+## Expected Output
+[Explorer] 코드베이스 분석 결과
+- 관련 파일: [목록]
+- 구조 분석: [요약]
+"""
+)
+
+Task(
+  subagent_type: "general-purpose", model: "sonnet",
+  description: "Searcher: 외부 문서 검색",
+  prompt: """
+**Searcher** - 외부 문서/라이브러리 검색
+도구: WebSearch, WebFetch, MCP(Context7)
+제약: 파일 수정 금지
+---
+## 사용자 요청
+{요청 내용}
+## Expected Output
+[Searcher] 외부 문서 검색 결과
+- 관련 문서: [목록]
+- 베스트 프랙티스: [요약]
+"""
+)
+
+Task(
+  subagent_type: "general-purpose", model: "opus",
+  description: "Architecture: 아키텍처 분석",
+  prompt: """
+**Architecture** - 아키텍처 조언 및 설계 분석
+도구: Read, Grep, Glob
+제약: 파일 수정 금지 (조언만)
+---
+## 사용자 요청
+{요청 내용}
+## Expected Output
+[Architecture] 아키텍처 분석 결과
+- 설계 권장: [내용]
+- 패턴 제안: [목록]
+- 주의사항: [목록]
+"""
+)
+```
+
+**Research Team 사용 조건:**
+- 복잡한 기능 개발 (새로운 모듈, 아키텍처 변경)
+- 외부 라이브러리 통합 필요
+- 기존 코드 이해가 필요한 대규모 수정
+
+**컨텍스트 공유 방식:**
+1. 각 팀원에게 동일한 사용자 요청 전달
+2. 3개 Task를 **한 메시지에서 병렬 호출**
+3. Maestro가 3개 결과를 종합하여 다음 Phase 진행
+
+**진행 상황 표시:**
+```
+[Maestro] Research Team 실행 중...
+├─ Explorer: 코드베이스 탐색 ⏳
+├─ Searcher: 외부 문서 검색 ⏳
+└─ Architecture: 아키텍처 분석 ⏳
+
+[Maestro] Research Team 완료 (3/3)
+├─ Explorer: ✅ 관련 파일 5개 발견
+├─ Searcher: ✅ 공식 문서 3개 확인
+└─ Architecture: ✅ 설계 패턴 제안
+```
+
+---
 
 ### Explorer (EXPLORATORY Intent)
 
