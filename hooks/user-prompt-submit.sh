@@ -158,17 +158,16 @@ else
 | **TRIVIAL** | 코드와 **완전히** 무관 | 직접 응답 |
 | **EXPLORATORY** | 코드 탐색/검색/설명 | **Task(Explorer) 필수** |
 | **AMBIGUOUS** | 불명확한 요청 | AskUserQuestion |
-| **OPEN-ENDED** | **모든 코드 수정** | Planning 4단계 필수 |
+| **OPEN-ENDED** | **모든 코드 수정** | Planning 3단계 필수 |
 
 ⚠️ **"간단한 수정"도 OPEN-ENDED** — 코드 변경 크기 무관!
 
 ### 3. OPEN-ENDED 필수 순서 (phase-gate.sh 검증)
 \`\`\`
-1. Task(Interviewer)    → 완료 후 다음 단계
-2. Task(Plan-Checker)   → Interviewer 완료 필수
-3. Task(Plan-Reviewer)  → 1-2 완료 필수
-4. Task(Planner)        → 1-3 완료 필수
-5. Task(Executor)       → 1-4 완료 필수 (미완료 시 차단)
+1. Task(Interviewer)     → 완료 후 다음 단계
+2. Task(Plan-Validator)  → Interviewer 완료 필수
+3. Task(Planner)         → 1-2 완료 필수
+4. Task(Executor)        → 1-3 완료 필수 (미완료 시 차단)
 \`\`\`
 
 ### 4. 에이전트 호출 (올바른 방법)

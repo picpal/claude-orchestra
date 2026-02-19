@@ -80,9 +80,8 @@ except Exception as e:
 }
 
 # 에이전트별 필요한 선행 단계 정의
-# - plan-checker: Interviewer 완료 필요
-# - plan-reviewer: Interviewer + Plan-Checker 완료 필요
-# - planner: Interviewer + Plan-Checker + Plan-Reviewer 완료 필요
+# - plan-validator: Interviewer 완료 필요
+# - planner: Interviewer + Plan-Validator 완료 필요
 # - executor: 모든 Planning 단계 완료 필요
 
 # 에이전트별 필수 선행 단계 검증
@@ -103,17 +102,15 @@ target = sys.argv[1]
 
 # 에이전트별 필수 선행 단계 매트릭스
 REQUIRED_PHASES = {
-    'plan-checker': ['interviewerCompleted'],
-    'plan-reviewer': ['interviewerCompleted', 'planCheckerCompleted'],
-    'planner': ['interviewerCompleted', 'planCheckerCompleted', 'planReviewerCompleted'],
-    'high-player': ['interviewerCompleted', 'planCheckerCompleted', 'planReviewerCompleted', 'plannerCompleted'],
-    'low-player': ['interviewerCompleted', 'planCheckerCompleted', 'planReviewerCompleted', 'plannerCompleted']
+    'plan-validator': ['interviewerCompleted'],
+    'planner': ['interviewerCompleted', 'planValidatorApproved'],
+    'high-player': ['interviewerCompleted', 'planValidatorApproved', 'plannerCompleted'],
+    'low-player': ['interviewerCompleted', 'planValidatorApproved', 'plannerCompleted']
 }
 
 PHASE_NAMES = {
     'interviewerCompleted': 'Interviewer',
-    'planCheckerCompleted': 'Plan-Checker',
-    'planReviewerCompleted': 'Plan-Reviewer',
+    'planValidatorApproved': 'Plan-Validator',
     'plannerCompleted': 'Planner'
 }
 
@@ -166,24 +163,20 @@ print_block_message() {
   echo ""
   echo "OPEN-ENDED 작업은 반드시 다음 순서를 따라야 합니다:"
   echo ""
-  echo "  1. Task(Interviewer)    → 요구사항 인터뷰"
-  echo "  2. Task(Plan-Checker)   → 놓친 질문 확인 (Interviewer 필요)"
-  echo "  3. Task(Plan-Reviewer)  → 계획 승인 (1-2 필요)"
-  echo "  4. Task(Planner)        → 6-Section 프롬프트 (1-3 필요)"
-  echo "  5. Task(Executor)       → 구현 실행 (1-4 필요)"
+  echo "  1. Task(Interviewer)     → 요구사항 인터뷰"
+  echo "  2. Task(Plan-Validator)  → 분석 + 검증 (Interviewer 필요)"
+  echo "  3. Task(Planner)         → 6-Section 프롬프트 (1-2 필요)"
+  echo "  4. Task(Executor)        → 구현 실행 (1-3 필요)"
   echo ""
 
   # 에이전트별 다음 단계 힌트
   case "$target_agent" in
-    plan-checker)
+    plan-validator)
       echo "💡 먼저 Interviewer를 호출하세요:"
       echo "   Task(description=\"Interviewer: {작업명}\", ...)"
       ;;
-    plan-reviewer)
-      echo "💡 먼저 Interviewer → Plan-Checker 순서로 호출하세요."
-      ;;
     planner)
-      echo "💡 먼저 Interviewer → Plan-Checker → Plan-Reviewer 순서로 호출하세요."
+      echo "💡 먼저 Interviewer → Plan-Validator 순서로 호출하세요."
       ;;
     *)
       echo "💡 호출 예시:"

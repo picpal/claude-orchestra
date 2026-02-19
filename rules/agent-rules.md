@@ -10,7 +10,7 @@
 │                         Maestro                                  │
 ├─────────────────────────────────────────────────────────────────┤
 │                    PLANNING LAYER                                │
-│        Interviewer  │  Planner  │  Plan-Checker  │  Plan-Reviewer│
+│        Interviewer  │  Plan-Validator  │  Planner                │
 ├─────────────────────────────────────────────────────────────────┤
 │                    RESEARCH LAYER                                │
 │    Architecture  │  Searcher  │  Explorer  │  Image-Analyst     │
@@ -40,9 +40,9 @@
 - **할 수 있음**: 사용자 질문, 계획 문서 작성
 - **할 수 없음**: 코드 작성, 코드 수정
 
-### Plan-Checker / Plan-Reviewer
-- **역할**: 계획 분석 및 검증
-- **할 수 있음**: 코드 읽기, 피드백 제공
+### Plan-Validator
+- **역할**: 계획 분석 및 검증 (Gap Analysis + Validation)
+- **할 수 있음**: 코드 읽기, 피드백 제공, 승인/거부 결정
 - **할 수 없음**: 계획 직접 수정, 코드 작성
 
 ### Architecture

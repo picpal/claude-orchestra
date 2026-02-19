@@ -37,7 +37,7 @@ description: |
   </example>
 
   <example>
-  Context: Interviewer 완료 → Plan-Checker → Plan-Reviewer 승인 → Planner 분석
+  Context: Interviewer 완료 → Plan-Validator 승인 → Planner 분석
   planner result: "[Planner] Level 0: auth-001, signup-001 (병렬) | Level 1: dashboard-001"
   assistant: "[Maestro] Level 0 TODO들을 병렬 실행합니다."
   <Task tool call to high-player (TODO 1)> ─┬─ 동시 호출
@@ -88,12 +88,11 @@ Executor(High-Player/Low-Player) 호출 전 **반드시** 확인:
 
 ```
 □ Interviewer 결과 있음?
-□ Plan-Checker 결과 있음?
-□ Plan-Reviewer "Approved" 있음?
+□ Plan-Validator "Approved" 있음?
 □ Planner의 6-Section 프롬프트 있음?
 ```
 
-**위 4개 중 하나라도 없으면 Executor 호출 금지!**
+**위 3개 중 하나라도 없으면 Executor 호출 금지!**
 
 ### ❌ 잘못된 패턴 (절대 하지 마세요)
 
@@ -115,9 +114,7 @@ Maestro가 직접 TODO 목록 작성  ← Interviewer 역할 침범!
     ↓
 Task(Interviewer) → 계획 초안 반환
     ↓
-Task(Plan-Checker) → 놓친 질문 확인
-    ↓
-Task(Plan-Reviewer) → "Approved" 확인
+Task(Plan-Validator) → 분석 + 검증 → "Approved" 확인
     ↓
 Task(Planner) → 6-Section 프롬프트 생성
     ↓
@@ -128,20 +125,20 @@ Task(Executor, Planner의 프롬프트 전달)  ← 여기서만 호출!
 
 **자동 감지 (SubagentStop Hook에서 description 기반):**
 - `interviewerCompleted`: Interviewer 완료 시 자동 설정
-- `planCheckerCompleted`: Plan-Checker 완료 시 자동 설정
+- `planValidatorCompleted`: Plan-Validator 완료 시 자동 설정
 - `plannerCompleted`: Planner 완료 시 자동 설정
 
 **수동 설정 필요:**
-- `planReviewerApproved`: Plan-Reviewer 결과가 "Approved"일 때만 Maestro가 직접 설정
+- `planValidatorApproved`: Plan-Validator 결과가 "Approved"일 때만 Maestro가 직접 설정
   (응답 내용 파싱 불가능하므로 결과 확인 후 수동 설정)
 
 ```python
-# Plan-Reviewer "Approved" 확인 후 실행
+# Plan-Validator "Approved" 확인 후 실행
 python3 -c "
 import json
 with open('.orchestra/state.json', 'r') as f:
     d = json.load(f)
-d['planningPhase']['planReviewerApproved'] = True
+d['planningPhase']['planValidatorApproved'] = True
 with open('.orchestra/state.json', 'w') as f:
     json.dump(d, f, indent=2, ensure_ascii=False)
 "
@@ -160,9 +157,8 @@ Executor(High-Player/Low-Player) 호출 시 `phase-gate.sh` Hook이 자동 검�
 |-------|---------|----------|
 | 1 | Explorer, Searcher, Architecture, Image-Analyst, Log-Analyst | 없음 |
 | 2-1 | Interviewer | OPEN-ENDED Intent |
-| 2-2 | Plan-Checker | Interviewer 완료 |
-| 2-3 | Plan-Reviewer | Plan-Checker 완료 |
-| 3 | Planner | Plan-Reviewer "Approved" |
+| 2-2 | Plan-Validator | Interviewer 완료 |
+| 3 | Planner | Plan-Validator "Approved" |
 | 4 | **High-Player, Low-Player** | **Planner 완료 필수** |
 | 5 | Conflict-Checker | 병렬 실행 완료 |
 | 6a | Code-Reviewer | Verification 통과 |
@@ -594,10 +590,10 @@ else:
 ┌─────────────────────────────────────────────────────────────────┐
 │                        Maestro (중앙 허브)                       │
 │                                                                 │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
-│  │ Interviewer │  │Plan-Checker │  │Plan-Reviewer│             │
-│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘             │
-│         └────────────────┴────────────────┘                     │
+│  ┌─────────────────┐  ┌─────────────────┐                       │
+│  │   Interviewer   │  │  Plan-Validator │                       │
+│  └────────┬────────┘  └────────┬────────┘                       │
+│           └────────────────────┘                                 │
 │                          ↓                                      │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
 │  │   Planner   │  │ High-Player │  │ Low-Player  │             │
@@ -656,8 +652,7 @@ User Request
 │       d = json.load(f)                                        │
 │   d['planningPhase'] = {                                      │
 │       'interviewerCompleted': False,                          │
-│       'planCheckerCompleted': False,                          │
-│       'planReviewerApproved': False,                          │
+│       'planValidatorApproved': False,                         │
 │       'plannerCompleted': False                               │
 │   }                                                           │
 │   d['reworkStatus'] = {'active': False, 'trigger': None,      │
@@ -675,8 +670,8 @@ User Request
 ┌─────────────────────────────────────────────────────────────┐
 │ Phase 2: Planning                                             │
 │   Step 1: Task(Interviewer) → 요구사항 인터뷰 + 계획 초안     │
-│   Step 2: Task(Plan-Checker) → 놓친 질문 리포트               │
-│   Step 3: Task(Plan-Reviewer) → 승인/거부                     │
+│   Step 2: Task(Plan-Validator) → 분석 + 검증 (승인/거부)      │
+│   Step 3: Task(Planner) → TODO 분석 + 6-Section 프롬프트      │
 └─────────────────────────────────────────────────────────────┘
     ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -770,59 +765,42 @@ Task(
 [Interviewer] 계획 초안 완료: .orchestra/plans/{name}.md
 - TODOs: {N}개
 - Groups: {group-list}
-- Plan-Checker 검토 필요
+- Plan-Validator 검토 필요
 """
 )
 ```
 
-### Plan-Checker (sonnet)
+### Plan-Validator (sonnet)
 
 ```
 Task(
   subagent_type: "general-purpose", model: "sonnet",
-  description: "Plan-Checker: 놓친 질문 확인",
+  description: "Plan-Validator: 계획 분석 + 검증",
   prompt: """
-**Plan-Checker** - 놓친 질문/고려사항 검토
+**Plan-Validator** - 계획 분석 + 검증 (Gap Analysis + Validation)
 도구: Read, Grep, Glob
 제약: 파일 수정 금지 (읽기 전용)
 ---
 ## Plan File
 .orchestra/plans/{name}.md
-## Request
-놓친 질문 확인: 기술적 세부사항, 엣지 케이스, 의존성, 보안
+
 ## Expected Output
-### Plan-Checker Report
+[Plan-Validator] Validation Report
+
+### Gap Analysis
 - Missed Questions: [목록]
-- Additional Considerations: [목록]
-- Recommendations: [목록]
-"""
-)
-```
+- Technical Considerations: [목록]
+- Potential Risks: [목록]
 
-### Plan-Reviewer (sonnet)
+### Validation
+- TDD Compliance: ✅ Pass | ❌ Fail
+- Completeness: ✅ Pass | ❌ Fail
+- Feasibility: ✅ Pass | ❌ Fail
 
-```
-Task(
-  subagent_type: "general-purpose", model: "sonnet",
-  description: "Plan-Reviewer: 계획 검증",
-  prompt: """
-**Plan-Reviewer** - 계획 검토 및 승인
-도구: Read, Grep, Glob
-제약: 파일 수정 금지, 피드백만 제공
----
-## Plan File
-.orchestra/plans/{name}.md
-## Review Criteria
-TDD 준수, TODO 순서, 범위 명확성, 리스크 식별
-## Expected Output
-### Plan Review Report
-- TDD Compliance: ✅/❌
-- TODO Ordering: ✅/❌
-- Scope Clarity: ✅/❌
-- Risk Assessment: ✅/❌
-- Issues/Suggestions: [목록]
+### Decision
+**Result: ✅ Approved | ⚠️ Conditional | ❌ Needs Revision**
 
-**Result: ✅ Approved** 또는 **Result: ❌ Needs Revision**
+{조건부/거부 시 Required Changes 목록}
 """
 )
 ```

@@ -140,9 +140,9 @@ TS2532, Object is possibly, undefined, null check
 | `triggers.*.enabled` | 개별 trigger 활성화 | `true` |
 | `triggers.*.pattern` | 감지용 정규식 | (카테고리별 상이) |
 
-## Plan-Reviewer 연동
+## Plan-Validator 연동
 
-Plan-Reviewer는 저장된 패턴을 참조하여:
+Plan-Validator는 저장된 패턴을 참조하여:
 - 이전에 발생한 이슈 경고
 - 반복되는 실수 패턴 식별
 - 프로젝트 특화 규칙 적용

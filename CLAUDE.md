@@ -42,7 +42,7 @@
 
 | 팀원 | 역할 | 검토 관점 |
 |------|------|-----------|
-| **아키텍트** | 구조 호환성 | 14개 에이전트 통합, Maestro 허브 구조 유지, Phase Gate 호환 |
+| **아키텍트** | 구조 호환성 | 13개 에이전트 통합, Maestro 허브 구조 유지, Phase Gate 호환 |
 | **안정성 전문가** | 리스크 분석 | 상태 동기화, 파일 충돌, 실패 복구, 토큰 비용 |
 | **UX 전문가** | 사용성 검토 | 설정 복잡도, 학습 곡선, 에러 메시지, 문서화 |
 | **Devil's Advocate** | 반론 제기 | 필요성 의문, 오버엔지니어링 검토, 대안 제시 |
@@ -185,7 +185,7 @@ Task(description: "Final Reviewer: 최종 검토", ...)
 
 ## 시스템 개요
 
-13개 전문 에이전트가 협력하여 TDD 기반 개발을 수행합니다.
+12개 전문 에이전트가 협력하여 TDD 기반 개발을 수행합니다.
 **Claude Code가 Main Agent(Maestro)로서** 모든 에이전트를 직접 호출합니다.
 
 ### 핵심 구조: Claude Code = Maestro (Main Agent)
@@ -205,8 +205,7 @@ Task(description: "Final Reviewer: 최종 검토", ...)
 └─────────────────────────────────────────────────────────────────┘
          │
          ├── Task(Interviewer)      → 요구사항 인터뷰
-         ├── Task(Plan-Checker)     → 놓친 질문 확인
-         ├── Task(Plan-Reviewer)    → 계획 검증
+         ├── Task(Plan-Validator)   → 계획 분석 + 검증
          ├── Task(Planner)          → TODO 분석 (실행은 Main Agent)
          ├── Task(High-Player)      → 복잡한 작업 실행
          ├── Task(Low-Player)       → 간단한 작업 실행
@@ -253,8 +252,7 @@ Task(description: "Final Reviewer: 최종 검토", ...)
 
 ### 2. 계획 기반 개발
 - 모든 작업은 계획 문서로 시작 (`.orchestra/plans/`)
-- Plan-Checker: 놓친 질문 확인
-- Plan-Reviewer: 계획 검증
+- Plan-Validator: 계획 분석 + 검증 (놓친 질문 확인 + 승인/거부)
 
 ### 3. 검증 후 리뷰 후 커밋
 - 6-Stage Verification Loop 통과 필수
@@ -286,7 +284,7 @@ Task(description: "Final Reviewer: 최종 검토", ...)
 
 ```
 claude-orchestra/              # 플러그인 루트
-├── agents/                    # 14개 에이전트 정의
+├── agents/                    # 13개 에이전트 정의
 ├── commands/                  # 슬래시 명령어
 ├── skills/                    # 컨텍스트 스킬
 │   ├── context-dev/SKILL.md
@@ -369,9 +367,8 @@ your-project/
 
 ### Planning Layer (Subagents)
 - **Interviewer** (Opus): 요구사항 인터뷰, 계획 초안 작성 → Main Agent에게 반환
+- **Plan-Validator** (Sonnet): 계획 분석 + 검증 (Gap Analysis + Validation) → Main Agent에게 반환
 - **Planner** (Opus): TODO 분석 전용 — 실행 순서 결정, 6-Section 프롬프트 생성 → Main Agent에게 반환
-- **Plan-Checker** (Sonnet): 놓친 질문 확인
-- **Plan-Reviewer** (Sonnet): 계획 검증
 
 ### Research Layer (Subagents)
 - **Architecture** (Opus): 아키텍처 조언, 디버깅 (분석 결과만 반환)
@@ -446,13 +443,17 @@ Maestro가 3개 Task를 한 메시지에서 병렬 호출:
 ## Verification → Code-Review → Commit 흐름
 
 ```
-Phase 5: Conflict Check (병렬 실행 시)
+Phase 4: Level별 Execution 완료
     │
     ▼
-Phase 6: Verification (6-Stage)
+Phase 5: Conflict Check (조건부 - Skip 가능)
+    │ 실행: Level 중 TODO 2개+ 또는 Level 2개+
+    │ Skip: 단일 Level, 단일 TODO (순차 실행)
+    ▼
+Phase 6: Verification (6-Stage) - 모든 Level 완료 후 1회
     │
     ▼
-Phase 6a: Code-Review (25+ 차원)
+Phase 6a: Code-Review (25+ 차원) - Verification 통과 후 1회
     │
     ├── ✅ Approved → Commit
     ├── ⚠️ Warning → Commit (경고 기록)

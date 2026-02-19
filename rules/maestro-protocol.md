@@ -98,23 +98,38 @@ Phase 1: Research (선택적) — Research Team 병렬 실행
     ↓
 Phase 2: Planning
     Step 1: Task(Interviewer) → 요구사항 인터뷰 + 계획 초안
-    Step 2: Task(Plan-Checker) → 놓친 질문 확인
-    Step 3: Task(Plan-Reviewer) → 승인/거부
+    Step 2: Task(Plan-Validator) → 분석 + 검증 (Gap Analysis + Validation)
+    Step 3: Task(Planner) → TODO 분석 + 6-Section 프롬프트 생성
     ↓
-Phase 3: Analysis
-    Task(Planner) → TODO 분석 + 6-Section 프롬프트 생성
-    ↓
-Phase 4: Execution
-    Task(High-Player) 또는 Task(Low-Player)
-    Planner가 생성한 6-Section 프롬프트 전달
-    ↓
-Phase 5: Conflict Check (병렬 실행 시)
-    Task(Conflict-Checker) → 충돌 시 Rework Loop
-    ↓
-Phase 6: Verification
+Phase 4: Execution (Level별 실행)
+    ┌────────────────────────────────────────────────┐
+    │ for each Level in Planner.executionLevels:     │
+    │   if level.todoCount >= 2:                     │
+    │     → 병렬 호출 (한 메시지에 다중 Task)         │
+    │   else:                                        │
+    │     → 단일 호출                                │
+    │   (다음 Level로 진행)                          │
+    └────────────────────────────────────────────────┘
+    ↓ 모든 Level 완료 후
+Phase 5: Conflict Check (조건부 실행 - Skip 가능)
+    ┌────────────────────────────────────────────────┐
+    │ 실행 조건 (자동 추론):                          │
+    │   - Level 중 하나라도 todoCount >= 2           │
+    │   - 또는 Level이 2개 이상                      │
+    │                                                │
+    │ Skip 조건:                                     │
+    │   - 모든 Level이 단일 TODO (순차 실행)          │
+    │                                                │
+    │ Yes → Task(Conflict-Checker) 호출              │
+    │ No  → Skip                                     │
+    │       "[Maestro] Phase 5 skipped: Sequential   │
+    │        execution, no conflict possible"        │
+    └────────────────────────────────────────────────┘
+    ↓ (충돌 시 Rework Loop)
+Phase 6: Verification (1회 - 모든 Level 완료 후)
     Bash(verification-loop.sh) → 6-Stage 검증
     ↓
-Phase 6a: Code-Review
+Phase 6a: Code-Review (1회 - Verification 통과 후)
     Task(Code-Reviewer)
     ✅ Approved → 다음 단계
     ❌ Block → Rework Loop
@@ -131,12 +146,11 @@ Executor(High-Player/Low-Player) 호출 전 **반드시** 확인:
 
 ```
 □ Interviewer 결과 있음?
-□ Plan-Checker 결과 있음?
-□ Plan-Reviewer "Approved" 있음?
+□ Plan-Validator "Approved" 있음?
 □ Planner의 6-Section 프롬프트 있음?
 ```
 
-**위 4개 중 하나라도 없으면 Executor 호출 금지!**
+**위 3개 중 하나라도 없으면 Executor 호출 금지!**
 
 ---
 
@@ -169,42 +183,37 @@ Task(
 )
 ```
 
-### Plan-Checker (sonnet)
+### Plan-Validator (sonnet)
 
 ```
 Task(
   subagent_type: "general-purpose", model: "sonnet",
-  description: "Plan-Checker: 놓친 질문 확인",
+  description: "Plan-Validator: 계획 분석 + 검증",
   prompt: """
-**Plan-Checker** - 놓친 질문/고려사항 검토
+**Plan-Validator** - 계획 분석 + 검증 (Gap Analysis + Validation)
 도구: Read, Grep, Glob
 제약: 파일 수정 금지 (읽기 전용)
 ---
 ## Plan File
 .orchestra/plans/{name}.md
+
 ## Expected Output
-### Plan-Checker Report
+[Plan-Validator] Validation Report
+
+### Gap Analysis
 - Missed Questions: [목록]
-- Additional Considerations: [목록]
-"""
-)
-```
+- Technical Considerations: [목록]
+- Potential Risks: [목록]
 
-### Plan-Reviewer (sonnet)
+### Validation
+- TDD Compliance: ✅ Pass | ❌ Fail
+- Completeness: ✅ Pass | ❌ Fail
+- Feasibility: ✅ Pass | ❌ Fail
 
-```
-Task(
-  subagent_type: "general-purpose", model: "sonnet",
-  description: "Plan-Reviewer: 계획 검증",
-  prompt: """
-**Plan-Reviewer** - 계획 검토 및 승인
-도구: Read, Grep, Glob
-제약: 파일 수정 금지
----
-## Plan File
-.orchestra/plans/{name}.md
-## Expected Output
-**Result: ✅ Approved** 또는 **Result: ❌ Needs Revision**
+### Decision
+**Result: ✅ Approved | ⚠️ Conditional | ❌ Needs Revision**
+
+{조건부/거부 시 Required Changes 목록}
 """
 )
 ```
