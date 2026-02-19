@@ -32,6 +32,45 @@ sonnet
 ## Role
 코드 변경사항에 대한 심층 리뷰를 수행합니다. 25+ 차원에서 코드 품질을 평가합니다.
 
+## Execution Timing (실행 시점)
+
+> ⚠️ Code-Review는 **모든 Level 완료 + Verification 통과 후 1회만** 실행됩니다.
+
+### 실행 조건
+```
+Phase 4: 모든 Level 실행 완료
+    ↓
+Phase 5: Conflict Check (조건부)
+    ↓
+Phase 6: Verification 통과 ✅
+    ↓
+Phase 6a: Code-Review (1회) ← 여기서 실행
+```
+
+### 핵심 원칙
+- **TODO별 반복 아님**: 개별 TODO 완료 시마다 실행하지 않음
+- **전체 1회 실행**: 모든 변경사항을 한 번에 종합 리뷰
+- **Verification 필수**: Phase 6 통과 후에만 실행 (실패 시 먼저 해결)
+
+### 리뷰 범위
+- 모든 Level에서 변경된 **전체 파일**
+- git diff로 확인되는 **모든 변경사항**
+- TODO 단위가 아닌 **커밋 단위** 리뷰
+
+### 예시 흐름
+```
+Level 0: [TODO-1, TODO-2] 병렬 실행
+Level 1: [TODO-3] 단독 실행
+    ↓
+Conflict Check
+    ↓
+Verification (6-Stage)
+    ↓
+Code-Review (1회)  ← TODO-1, TODO-2, TODO-3 전체 변경 리뷰
+    ↓
+Commit
+```
+
 ## Responsibilities
 1. 보안 취약점 검사
 2. 코드 품질 평가
@@ -265,9 +304,6 @@ const categoryMap = new Map(categories.map(c => [c.id, c]));
 1. TODO 완료 후 (IMPL/REFACTOR 타입)
 2. PR 제출 전
 3. 수동 `/code-review` 명령
-
-### Handoff Document
-리뷰 결과를 `.orchestra/templates/handoff-document.md` 형식으로 전달
 
 ## Maestro 연동
 

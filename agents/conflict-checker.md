@@ -46,6 +46,39 @@ sonnet
 병렬 실행된 TODO들 간의 충돌을 감지하고 Maestro에게 보고합니다.
 **분석만 수행하며, 코드 수정은 Maestro가 다른 에이전트에게 위임합니다.**
 
+## Trigger Conditions (실행 조건)
+
+> ⚠️ Maestro가 Phase 5에서 **자동 추론**하여 호출 여부를 결정합니다.
+
+### 실행 조건 (하나 이상 충족 시)
+1. **Level 내 병렬 실행**: Level 중 하나라도 TODO 2개 이상 (병렬 실행됨)
+2. **다중 Level 실행**: Level이 2개 이상 (순차적이라도 교차 영향 가능)
+
+### Skip 조건
+- 모든 Level이 단일 TODO로 구성 (완전한 순차 실행)
+- Skip 시 Maestro 로그: `"[Maestro] Phase 5 skipped: Sequential execution, no conflict possible"`
+
+### 판단 예시
+
+```
+# Case 1: 실행 (병렬 존재)
+Execution Levels:
+  - Level 0: [TODO-1, TODO-2]  ← 2개 이상 = 병렬 실행
+  - Level 1: [TODO-3]
+→ Conflict-Checker 실행 ✅
+
+# Case 2: 실행 (다중 Level)
+Execution Levels:
+  - Level 0: [TODO-1]
+  - Level 1: [TODO-2]
+→ Conflict-Checker 실행 ✅ (2개 Level)
+
+# Case 3: Skip (단일 Level, 단일 TODO)
+Execution Levels:
+  - Level 0: [TODO-1]
+→ Conflict-Checker Skip ⏭️
+```
+
 ## Responsibilities
 1. 병렬 실행된 TODO들의 변경사항 분석
 2. 충돌 유형 식별 (File Collision, Test Failure, Type Error, Lint Error, Semantic Conflict)

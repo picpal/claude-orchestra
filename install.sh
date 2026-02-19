@@ -133,7 +133,6 @@ mkdir -p "$TARGET_DIR/.orchestra/plans"
 mkdir -p "$TARGET_DIR/.orchestra/journal"
 mkdir -p "$TARGET_DIR/.orchestra/logs"
 mkdir -p "$TARGET_DIR/.orchestra/mcp-configs"
-mkdir -p "$TARGET_DIR/.orchestra/templates"
 
 # Copy agents
 echo "🤖 Installing 12 agents..."
@@ -171,9 +170,6 @@ if [ -d "$SCRIPT_DIR/orchestra-init/mcp-configs" ]; then
   cp -r "$SCRIPT_DIR/orchestra-init/mcp-configs/"* "$TARGET_DIR/.orchestra/mcp-configs/" 2>/dev/null || true
 fi
 
-if [ -d "$SCRIPT_DIR/orchestra-init/templates" ]; then
-  cp -r "$SCRIPT_DIR/orchestra-init/templates/"* "$TARGET_DIR/.orchestra/templates/" 2>/dev/null || true
-fi
 
 echo ""
 echo -e "${GREEN}╔═══════════════════════════════════════════════════════════════╗${NC}"

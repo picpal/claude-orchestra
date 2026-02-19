@@ -102,7 +102,7 @@ PLUGIN_ROOT=$(ls -td ~/.claude/plugins/cache/claude-orchestra/claude-orchestra/*
 **⚠️ Bash 도구로 실제 실행하세요:**
 
 ```bash
-mkdir -p .orchestra/plans .orchestra/journal .orchestra/logs .orchestra/mcp-configs .orchestra/templates .orchestra/learning/learned-patterns
+mkdir -p .orchestra/plans .orchestra/journal .orchestra/logs .orchestra/mcp-configs .orchestra/learning/learned-patterns
 ```
 
 ### 4. config.json 생성
@@ -147,6 +147,11 @@ mkdir -p .orchestra/plans .orchestra/journal .orchestra/logs .orchestra/mcp-conf
     "totalSessions": 0,
     "patternsExtracted": 0,
     "lastLearningRun": null
+  },
+  "workflowStatus": {
+    "journalWritten": false,
+    "lastJournalPath": null,
+    "journalRequired": true
   }
 }
 ```

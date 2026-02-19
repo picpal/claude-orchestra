@@ -10,7 +10,7 @@
 
 ```bash
 # 디렉토리 생성
-mkdir -p .orchestra/plans .orchestra/logs .orchestra/journal .orchestra/mcp-configs .orchestra/templates
+mkdir -p .orchestra/plans .orchestra/logs .orchestra/journal .orchestra/mcp-configs
 ```
 
 **config.json 생성:**
@@ -49,6 +49,11 @@ mkdir -p .orchestra/plans .orchestra/logs .orchestra/journal .orchestra/mcp-conf
     "totalSessions": 0,
     "patternsExtracted": 0,
     "lastLearningRun": null
+  },
+  "workflowStatus": {
+    "journalWritten": false,
+    "lastJournalPath": null,
+    "journalRequired": true
   }
 }
 ```
