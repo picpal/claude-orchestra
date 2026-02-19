@@ -275,7 +275,7 @@ Claude Code는 **프로젝트 디렉토리의 `.claude/rules/`만 규칙으로 �
 | **High-Player** | Opus | 복잡한 작업 실행 (3+ 파일) |
 | **Low-Player** | Sonnet | 간단한 작업 실행 (1-2 파일) |
 | **Conflict-Checker** | Sonnet | 병렬 실행 후 충돌 감지 |
-| **Code-Reviewer** | Sonnet | 25+ 차원 코드 리뷰, Verification 후 자동 실행 |
+| **Code-Reviewer** | Sonnet | 25+ 차원 코드 리뷰 + TDD 순서 검증, Verification 후 자동 실행 |
 
 ---
 

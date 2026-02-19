@@ -51,6 +51,13 @@
 - 접근성 (a11y)
 - 테스트 커버리지
 
+### 5. TDD Compliance (High)
+- 테스트 없는 구현 코드 (Missing Test)
+- 테스트 삭제 (Deleted Test) - Critical
+- 테스트 스킵 (`.skip()`, `xit`)
+- 구현 후 테스트 작성 (TDD 순서 위반)
+- 리팩토링 후 테스트 미검증
+
 ## 결과 예시
 
 ```
@@ -83,6 +90,13 @@
 - File: src/utils/pagination.ts:15
 - Pattern: Hardcoded `10`
 - Suggestion: Extract to constant
+
+### 🔵 TDD Compliance
+
+#### [T1] Missing Test
+- File: src/services/userService.ts
+- Pattern: 구현 변경, 테스트 없음
+- Suggestion: TDD 순서에 따라 테스트 먼저 작성
 
 ## Approval Decision
 ⚠️ Warning - May proceed, but fixes recommended
