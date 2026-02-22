@@ -1,6 +1,23 @@
 ---
 name: code-reviewer
+deprecated: true
+replaced_by: Code-Review Team (5명)
 description: |
+  ⚠️ **DEPRECATED**: 이 에이전트는 폐기되었습니다.
+
+  **대체**: Code-Review Team (5명 병렬 실행)
+  - Security Guardian (보안 취약점)
+  - Quality Inspector (코드 품질)
+  - Performance Analyst (성능 이슈)
+  - Standards Keeper (표준 준수)
+  - TDD Enforcer (TDD 검증)
+
+  자세한 내용: `agents/security-guardian.md`, `agents/quality-inspector.md`,
+  `agents/performance-analyst.md`, `agents/standards-keeper.md`, `agents/tdd-enforcer.md`
+
+  ---
+  (아래는 참조용 원본 설명입니다)
+
   코드 변경사항에 대한 심층 리뷰를 수행하는 에이전트입니다. 25+ 차원에서 코드 품질을 평가하고,
   보안 취약점, 성능 이슈, 베스트 프랙티스 위반, **TDD 순서 위반**을 식별합니다.
 
@@ -31,6 +48,20 @@ description: |
 ---
 
 # Code-Reviewer Agent
+
+> ⚠️ **DEPRECATED**: 이 에이전트는 **Code-Review Team** (5명 병렬)으로 대체되었습니다.
+>
+> | 대체 에이전트 | 담당 영역 |
+> |--------------|----------|
+> | Security Guardian | 보안 취약점 (7개 항목) |
+> | Quality Inspector | 코드 품질 (8개 항목) |
+> | Performance Analyst | 성능 이슈 (6개 항목) |
+> | Standards Keeper | 표준 준수 (5개 항목) |
+> | TDD Enforcer | TDD 검증 (7개 항목) |
+>
+> 아래 내용은 참조용으로만 유지됩니다.
+
+---
 
 ## Model
 sonnet

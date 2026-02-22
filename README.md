@@ -1,21 +1,24 @@
 # Claude Orchestra 🎼
 
-13개 전문 에이전트 기반 TDD 개발 오케스트레이션 시스템
+16개 전문 에이전트 기반 TDD 개발 오케스트레이션 시스템
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Claude Code](https://img.shields.io/badge/Claude-Code-blue)](https://claude.com/claude-code)
 
 ## 개요
 
-Claude Orchestra는 13개의 전문 에이전트가 계층 구조로 협력하여 TDD(Test-Driven Development) 기반의 고품질 코드를 생성하는 오케스트레이션 시스템입니다.
+Claude Orchestra는 16개의 전문 에이전트(11개 기본 + 5개 Code-Review Team)가 계층 구조로 협력하여 TDD(Test-Driven Development) 기반의 고품질 코드를 생성하는 오케스트레이션 시스템입니다.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    USER INTERACTION LAYER                        │
-│                         Maestro (Opus)                           │
+│                    Claude Code = Maestro                         │
 ├─────────────────────────────────────────────────────────────────┤
 │                    PLANNING LAYER                                │
-│        Interviewer │ Plan-Validator │ Planner                   │
+│                  Interviewer │ Planner                           │
+├─────────────────────────────────────────────────────────────────┤
+│              🔍 PLAN VALIDATION GATE (4명 병렬)                  │
+│    Architect │ Stability │ UX Expert │ Devil's Advocate         │
 ├─────────────────────────────────────────────────────────────────┤
 │                    RESEARCH LAYER                                │
 │    Architecture │ Searcher │ Explorer │ Image/Log-Analyst       │
@@ -26,8 +29,9 @@ Claude Orchestra는 13개의 전문 에이전트가 계층 구조로 협력하�
 │                    VERIFICATION LAYER                            │
 │                     Conflict-Checker                             │
 ├─────────────────────────────────────────────────────────────────┤
-│                    REVIEW LAYER                                  │
-│                      Code-Reviewer                               │
+│                    REVIEW LAYER: Code-Review Team (5명 병렬)     │
+│  Security Guardian │ Quality Inspector │ Performance Analyst    │
+│            Standards Keeper │ TDD Enforcer                      │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -83,16 +87,14 @@ cd claude-orchestra
 - 세션에서 재사용 가능한 패턴 자동 추출
 - 학습된 패턴 기반 개선 제안
 
-### 🔍 코드 리뷰 (Verification 후 자동 실행)
-- 25+ 차원 품질 평가
-- Security, Quality, Performance 분석
+### 🔍 코드 리뷰 (5명 전문팀, Verification 후 자동 실행)
+- 5명 병렬 리뷰: Security Guardian, Quality Inspector, Performance Analyst, Standards Keeper, TDD Enforcer
+- 가중치 기반 점수 계산 (총 15점)
 - Block 시 Rework Loop → 재검증 → 재리뷰
 
-### 🤝 Agent Teams 품질 게이트 (NEW)
-- **Phase 2a: Plan Validation Team** - 구현 전 계획 검증
+### 🤝 Agent Teams 품질 게이트
+- **Phase 2a: Plan Validation Team** - 구현 전 계획 검증 (4명 병렬)
   - Architect (구조 호환) + Stability (리스크) + UX (사용성) + Devil's Advocate (반론)
-- **Phase 6b: Implementation Verification Team** - 커밋 전 구현 검증
-  - Plan Conformance + Quality Auditor + Integration Tester + Final Reviewer
 - 가중치 점수 기반 승인/조건부/반려 판정
 
 ---
@@ -178,11 +180,11 @@ cp -r rules/*.md /path/to/your/project/.claude/rules/
 
 | 카테고리 | 개수 | 경로 | 설명 |
 |----------|------|------|------|
-| **Agents** | 14 | `agents/` | AI 에이전트 정의 |
+| **Agents** | 16 | `agents/` | AI 에이전트 정의 (11 기본 + 5 Code-Review Team) |
 | **Commands** | 12 | `commands/` | 슬래시 명령어 |
 | **Skills** | 3 | `skills/` | 컨텍스트 스킬 (dev, research, review) |
-| **Hooks** | 18 | `hooks/` | 자동화 훅 스크립트 + `hooks.json` |
-| **Rules** | 6 | `rules/` | 코드 규칙 (`/tuning` 시 프로젝트에 복사) |
+| **Hooks** | 20 | `hooks/` | 자동화 훅 스크립트 + `hooks.json` |
+| **Rules** | 7 | `rules/` | 코드 규칙 (`/tuning` 시 프로젝트에 복사) |
 | **Settings** | 1 | `.claude/settings.json` | 에이전트/권한 설정 |
 | **Orchestra** | 2+ | `.orchestra/` | 상태 관리 파일 (`/tuning` 시 생성) |
 
@@ -263,10 +265,9 @@ Claude Code는 **프로젝트 디렉토리의 `.claude/rules/`만 규칙으로 �
 
 | 에이전트 | 모델 | 역할 |
 |----------|------|------|
-| **Maestro** | Opus | 사용자 대화, Intent 분류, 전체 조율 |
+| **Maestro** | Opus | 사용자 대화, Intent 분류, 전체 조율 (= Claude Code) |
 | **Interviewer** | Opus | 요구사항 인터뷰, 계획 작성 |
-| **Plan-Validator** | Sonnet | 계획 분석 + 검증 (Gap Analysis + Validation) |
-| **Planner** | Opus | TODO 조율, 검증, Git 커밋 |
+| **Planner** | Opus | TODO 분석, 실행 순서 결정, 6-Section 프롬프트 생성 |
 | **Architecture** | Opus | 아키텍처 조언, 디버깅 |
 | **Searcher** | Sonnet | 외부 문서/API 검색 |
 | **Explorer** | Haiku | 내부 코드베이스 검색 |
@@ -275,7 +276,11 @@ Claude Code는 **프로젝트 디렉토리의 `.claude/rules/`만 규칙으로 �
 | **High-Player** | Opus | 복잡한 작업 실행 (3+ 파일) |
 | **Low-Player** | Sonnet | 간단한 작업 실행 (1-2 파일) |
 | **Conflict-Checker** | Sonnet | 병렬 실행 후 충돌 감지 |
-| **Code-Reviewer** | Sonnet | 25+ 차원 코드 리뷰 + TDD 순서 검증, Verification 후 자동 실행 |
+| **Security Guardian** | Sonnet | 보안 취약점 검토 (w=4, Auto-Block) |
+| **Quality Inspector** | Sonnet | 코드 품질 검사 (w=3) |
+| **Performance Analyst** | Haiku | 성능 이슈 분석 (w=2) |
+| **Standards Keeper** | Haiku | 표준 준수 검토 (w=2) |
+| **TDD Enforcer** | Sonnet | TDD 검증 (w=4, Auto-Block) |
 
 ---
 
@@ -285,15 +290,28 @@ Claude Code는 **프로젝트 디렉토리의 `.claude/rules/`만 규칙으로 �
 
 ```
 claude-orchestra/               # 플러그인 루트
-├── agents/                     # 13개 에이전트
-│   ├── maestro.md
-│   ├── planner.md
-│   ├── interviewer.md
-│   └── ...
+├── agents/                     # 16개 에이전트 (11 기본 + 5 Code-Review Team)
+│   ├── maestro.md              # Main Agent (= Claude Code)
+│   ├── interviewer.md          # 요구사항 인터뷰
+│   ├── planner.md              # TODO 분석
+│   ├── architecture.md         # 아키텍처 조언
+│   ├── searcher.md             # 외부 문서 검색
+│   ├── explorer.md             # 내부 코드 검색
+│   ├── image-analyst.md        # 이미지 분석
+│   ├── log-analyst.md          # 로그 분석
+│   ├── high-player.md          # 복잡 작업 실행
+│   ├── low-player.md           # 간단 작업 실행
+│   ├── conflict-checker.md     # 충돌 감지
+│   ├── security-guardian.md    # 보안 리뷰 (Code-Review Team)
+│   ├── quality-inspector.md    # 품질 리뷰 (Code-Review Team)
+│   ├── performance-analyst.md  # 성능 리뷰 (Code-Review Team)
+│   ├── standards-keeper.md     # 표준 리뷰 (Code-Review Team)
+│   └── tdd-enforcer.md         # TDD 리뷰 (Code-Review Team)
 ├── commands/                   # 12개 슬래시 명령어
-│   ├── init.md
+│   ├── tuning.md
 │   ├── start-work.md
 │   ├── verify.md
+│   ├── code-review.md
 │   └── ...
 ├── skills/                     # 3개 컨텍스트 스킬
 │   ├── context-dev/SKILL.md
@@ -301,23 +319,41 @@ claude-orchestra/               # 플러그인 루트
 │   └── context-review/SKILL.md
 ├── hooks/                      # 자동화 훅
 │   ├── hooks.json              # 플러그인 hooks 설정
-│   ├── tdd-guard.sh
-│   ├── test-logger.sh
-│   ├── agent-logger.sh
-│   ├── user-prompt-submit.sh
-│   ├── team-logger.sh          # Agent Teams 활동 로깅 (NEW)
-│   ├── tdd-post-check.sh       # TDD 사후 검증 (NEW)
-│   ├── team-idle-handler.sh    # 유휴 팀원 처리 (NEW)
+│   ├── user-prompt-submit.sh   # 프롬프트 제출 시 처리
+│   ├── maestro-guard.sh        # Maestro 규칙 보호
+│   ├── tdd-guard.sh            # TDD 순서 보호
+│   ├── tdd-post-check.sh       # TDD 사후 검증
+│   ├── phase-gate.sh           # Phase Gate 제어
+│   ├── agent-logger.sh         # 에이전트 활동 로깅
+│   ├── test-logger.sh          # 테스트 실행 로깅
+│   ├── change-logger.sh        # 파일 변경 로깅
+│   ├── team-logger.sh          # Agent Teams 활동 로깅
+│   ├── journal-tracker.sh      # 작업 일지 추적
+│   ├── explorer-hint.sh        # 탐색 힌트 제공
+│   ├── find-root.sh            # 프로젝트 루트 탐색
+│   ├── run-hook.sh             # 훅 실행 유틸리티
+│   ├── save-context.sh         # 컨텍스트 저장
+│   ├── load-context.sh         # 컨텍스트 복원
+│   ├── auto-format.sh          # 자동 포맷팅
+│   ├── git-push-review.sh      # Git Push 전 리뷰
+│   ├── stop-handler.sh         # 세션 종료 처리
+│   ├── team-idle-handler.sh    # 유휴 팀원 처리
+│   ├── stdin-reader.sh         # 표준 입력 처리
 │   ├── verification/           # 6단계 검증 스크립트
 │   ├── learning/               # 패턴 학습 시스템
 │   └── compact/                # 컨텍스트 압축
-├── rules/                      # 6개 코드 규칙 (/tuning 시 프로젝트에 복사)
+├── rules/                      # 7개 코드 규칙 (/tuning 시 프로젝트에 복사)
+│   ├── maestro-protocol.md
 │   ├── security.md
 │   ├── testing.md
-│   └── ...
+│   ├── coding-style.md
+│   ├── git-workflow.md
+│   ├── performance.md
+│   └── agent-rules.md
 ├── contexts/                   # (호환용) 컨텍스트 파일
 ├── .claude/
-│   └── settings.json           # 에이전트/권한 설정
+│   ├── settings.json           # 에이전트/권한 설정
+│   └── commands/               # 슬래시 명령어 (ship, update-docs)
 └── CLAUDE.md                   # 프로젝트 안내
 ```
 

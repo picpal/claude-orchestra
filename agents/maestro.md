@@ -37,7 +37,7 @@ description: |
   </example>
 
   <example>
-  Context: Interviewer 완료 → Plan-Validator 승인 → Planner 분석
+  Context: Interviewer 완료 → Plan Validation Team 승인 → Planner 분석
   planner result: "[Planner] Level 0: auth-001, signup-001 (병렬) | Level 1: dashboard-001"
   assistant: "[Maestro] Level 0 TODO들을 병렬 실행합니다."
   <Task tool call to high-player (TODO 1)> ─┬─ 동시 호출
@@ -88,7 +88,7 @@ Executor(High-Player/Low-Player) 호출 전 **반드시** 확인:
 
 ```
 □ Interviewer 결과 있음?
-□ Plan-Validator "Approved" 있음?
+□ Plan Validation Team "Approved" 있음?
 □ Planner의 6-Section 프롬프트 있음?
 ```
 
@@ -114,7 +114,7 @@ Maestro가 직접 TODO 목록 작성  ← Interviewer 역할 침범!
     ↓
 Task(Interviewer) → 계획 초안 반환
     ↓
-Task(Plan-Validator) → 분석 + 검증 → "Approved" 확인
+Plan Validation Team (4명 병렬) → "Approved" 확인
     ↓
 Task(Planner) → 6-Section 프롬프트 생성
     ↓
@@ -125,20 +125,19 @@ Task(Executor, Planner의 프롬프트 전달)  ← 여기서만 호출!
 
 **자동 감지 (SubagentStop Hook에서 description 기반):**
 - `interviewerCompleted`: Interviewer 완료 시 자동 설정
-- `planValidatorCompleted`: Plan-Validator 완료 시 자동 설정
 - `plannerCompleted`: Planner 완료 시 자동 설정
 
 **수동 설정 필요:**
-- `planValidatorApproved`: Plan-Validator 결과가 "Approved"일 때만 Maestro가 직접 설정
-  (응답 내용 파싱 불가능하므로 결과 확인 후 수동 설정)
+- `planValidationApproved`: Plan Validation Team 결과가 "Approved"일 때만 Maestro가 직접 설정
+  (4명 병렬 결과를 종합하여 승인/반려 판정 후 설정)
 
 ```python
-# Plan-Validator "Approved" 확인 후 실행
+# Plan Validation Team "Approved" 확인 후 실행
 python3 -c "
 import json
 with open('.orchestra/state.json', 'r') as f:
     d = json.load(f)
-d['planningPhase']['planValidatorApproved'] = True
+d['planningPhase']['planValidationApproved'] = True
 with open('.orchestra/state.json', 'w') as f:
     json.dump(d, f, indent=2, ensure_ascii=False)
 "
@@ -157,11 +156,11 @@ Executor(High-Player/Low-Player) 호출 시 `phase-gate.sh` Hook이 자동 검�
 |-------|---------|----------|
 | 1 | Explorer, Searcher, Architecture, Image-Analyst, Log-Analyst | 없음 |
 | 2-1 | Interviewer | OPEN-ENDED Intent |
-| 2-2 | Plan-Validator | Interviewer 완료 |
-| 3 | Planner | Plan-Validator "Approved" |
+| 2a | Plan Validation Team (4명) | Interviewer 완료 |
+| 3 | Planner | Plan Validation Team "Approved" |
 | 4 | **High-Player, Low-Player** | **Planner 완료 필수** |
 | 5 | Conflict-Checker | 병렬 실행 완료 |
-| 6a | Code-Reviewer | Verification 통과 |
+| 6a-CR | **Code-Review Team** (5명 병렬) | Verification 통과 |
 
 ---
 
@@ -386,215 +385,16 @@ Agent Teams로 실행되는 팀원들도 TDD를 준수해야 합니다:
 
 ---
 
-## 🔒 Phase 6b: Implementation Verification Team (Agent Teams)
-
-> **Orchestra 플러그인 수정 완료 후 필수 단계**
-> 모든 구현은 커밋 전에 4명 검토팀의 최종 검증을 거쳐야 합니다.
-
-### 실행 시점
-
-- Phase 6 (Verification) 통과 후
-- Phase 6a (Code-Review) 통과 후
-- 커밋 직전 최종 관문
-
-### 검토팀 구성 (4명 병렬 실행)
-
-| 팀원 | 가중치 | 검토 관점 |
-|------|--------|-----------|
-| **Plan Conformance** | 3 | 계획 일치성 (구현이 계획과 일치, 범위 초과/미달 없음) |
-| **Quality Auditor** | 3 | 품질 검사 (코드 품질, 테스트 커버리지, 문서화) |
-| **Integration Tester** | 2 | 통합 검증 (기존 시스템 호환, 부작용 없음) |
-| **Final Reviewer** | 2 | 최종 검토 (커밋 준비, 누락 확인) |
-
-### 프롬프트 템플릿
-
-#### 1. Plan Conformance (계획 일치성)
-
-```
-Task(
-  subagent_type: "general-purpose", model: "sonnet",
-  description: "Plan Conformance: 계획 일치성 검증",
-  prompt: """
-**Plan Conformance** - 구현과 계획 일치성 검증
-도구: Read, Grep, Glob
-제약: 파일 수정 금지 (읽기 전용)
----
-## 계획 파일
-{plan_file_path}
-
-## 변경된 파일
-{changed_files_list}
-
-## 검토 관점
-1. **범위 일치**: 계획된 TODO가 모두 구현되었는가?
-2. **범위 초과**: 계획에 없는 변경이 추가되지 않았는가?
-3. **범위 미달**: 구현되지 않은 TODO가 있는가?
-4. **의도 유지**: 원래 계획의 의도가 정확히 반영되었는가?
-
-## Expected Output
-### Plan Conformance Report
-- TODOs Implemented: {N}/{M}
-- Scope Creep: ✅ None / ⚠️ Minor / ❌ Significant
-- Missing Items: [목록]
-- Unplanned Changes: [목록]
-- Intent Preserved: ✅/⚠️/❌
-
-**Result: ✅ Approved** / **⚠️ Conditional** / **❌ Rejected**
-"""
-)
-```
-
-#### 2. Quality Auditor (품질 검사)
-
-```
-Task(
-  subagent_type: "general-purpose", model: "sonnet",
-  description: "Quality Auditor: 품질 검사",
-  prompt: """
-**Quality Auditor** - 코드 품질 및 테스트 검증
-도구: Read, Grep, Glob
-제약: 파일 수정 금지 (읽기 전용)
----
-## 변경된 파일
-{changed_files_list}
-
-## 검토 관점
-1. **코드 품질**: 코딩 표준 준수? 가독성? 유지보수성?
-2. **테스트 커버리지**: 새 코드에 대한 테스트 존재?
-3. **문서화**: 주석, JSDoc, README 업데이트 필요?
-4. **에러 핸들링**: 예외 처리 적절?
-5. **TDD 준수**: RED-GREEN-REFACTOR 사이클 준수?
-
-## Expected Output
-### Quality Audit Report
-- Code Quality: High/Medium/Low
-- Test Coverage: Sufficient/Partial/Missing
-- Documentation: ✅/⚠️/❌
-- Error Handling: ✅/⚠️/❌
-- TDD Compliance: ✅/⚠️/❌
-- Issues: [목록]
-- Recommendations: [개선 사항]
-
-**Result: ✅ Approved** / **⚠️ Conditional** / **❌ Rejected**
-"""
-)
-```
-
-#### 3. Integration Tester (통합 검증)
-
-```
-Task(
-  subagent_type: "general-purpose", model: "sonnet",
-  description: "Integration Tester: 통합 검증",
-  prompt: """
-**Integration Tester** - 시스템 통합 및 호환성 검증
-도구: Read, Grep, Glob
-제약: 파일 수정 금지 (읽기 전용)
----
-## 변경된 파일
-{changed_files_list}
-
-## 검토 관점
-1. **에이전트 호환**: 기존 14개 에이전트와 충돌 없는가?
-2. **Hook 호환**: 기존 Hook 시스템과 정상 동작?
-3. **State 호환**: state.json 구조 변경이 기존 로직과 호환?
-4. **의존성**: 새로운 외부 의존성이 추가되었는가?
-5. **부작용**: 의도치 않은 부작용 가능성?
-
-## Expected Output
-### Integration Test Report
-- Agent Compatibility: ✅/⚠️/❌
-- Hook Compatibility: ✅/⚠️/❌
-- State Compatibility: ✅/⚠️/❌
-- New Dependencies: [목록]
-- Potential Side Effects: [목록]
-- Regression Risk: Low/Medium/High
-
-**Result: ✅ Approved** / **⚠️ Conditional** / **❌ Rejected**
-"""
-)
-```
-
-#### 4. Final Reviewer (최종 검토)
-
-```
-Task(
-  subagent_type: "general-purpose", model: "sonnet",
-  description: "Final Reviewer: 최종 검토",
-  prompt: """
-**Final Reviewer** - 커밋 전 최종 체크리스트
-도구: Read, Grep, Glob
-제약: 파일 수정 금지 (읽기 전용)
----
-## 변경된 파일
-{changed_files_list}
-
-## 검토 관점
-1. **커밋 준비**: 모든 변경 사항이 스테이징 되었는가?
-2. **불필요한 파일**: .DS_Store, node_modules, 임시 파일 포함되지 않았는가?
-3. **민감 정보**: 시크릿, API 키, 개인정보 노출 없는가?
-4. **빌드 상태**: 빌드/테스트 모두 통과?
-5. **문서 동기화**: CLAUDE.md, README 업데이트 필요?
-
-## Expected Output
-### Final Review Checklist
-- [ ] All changes staged: ✅/❌
-- [ ] No unwanted files: ✅/❌
-- [ ] No sensitive data: ✅/❌
-- [ ] Build passing: ✅/❌
-- [ ] Tests passing: ✅/❌
-- [ ] Docs updated: ✅/⚠️/❌
-
-Missing Items: [목록]
-Blockers: [있다면]
-
-**Result: ✅ Ready to Commit** / **⚠️ Minor Issues** / **❌ Not Ready**
-"""
-)
-```
-
-### 결과 통합 (Weighted Scoring)
-
-```python
-weights = {
-    "plan_conformance": 3,   # 계획 불일치는 치명적
-    "quality_auditor": 3,    # 품질 문제는 치명적
-    "integration_tester": 2, # 통합 문제는 중요
-    "final_reviewer": 2      # 최종 체크는 중요
-}
-
-# Phase 2a와 동일한 계산 방식
-weighted_score = sum(weights[r] * score_map[results[r]] for r in results) / sum(weights.values())
-
-if weighted_score >= 0.8:
-    decision = "✅ 승인 - 커밋 진행"
-elif weighted_score >= 0.5:
-    decision = "⚠️ 조건부 - 경고 기록 후 커밋 또는 수정"
-else:
-    decision = "❌ 반려 - Rework Loop 진입"
-```
-
-### 판정 기준
-
-| 가중 점수 | 판정 | 조치 |
-|-----------|------|------|
-| ≥ 0.8 | **✅ 승인** | Phase 7 (Commit + Journal) 진행 |
-| 0.5 ~ 0.8 | **⚠️ 조건부** | 경고 기록 후 커밋 또는 수정 선택 |
-| < 0.5 | **❌ 반려** | Rework Loop 진입 → 재구현 → 재검증 |
-
----
-
 ## 핵심 아키텍처: 단일 계층 위임
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        Maestro (중앙 허브)                       │
 │                                                                 │
-│  ┌─────────────────┐  ┌─────────────────┐                       │
-│  │   Interviewer   │  │  Plan-Validator │                       │
-│  └────────┬────────┘  └────────┬────────┘                       │
-│           └────────────────────┘                                 │
-│                          ↓                                      │
+│  ┌─────────────────┐                                            │
+│  │   Interviewer   │                                            │
+│  └────────┬────────┘                                            │
+│           ↓                                                     │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
 │  │   Planner   │  │ High-Player │  │ Low-Player  │             │
 │  └─────────────┘  └─────────────┘  └─────────────┘             │
@@ -652,7 +452,7 @@ User Request
 │       d = json.load(f)                                        │
 │   d['planningPhase'] = {                                      │
 │       'interviewerCompleted': False,                          │
-│       'planValidatorApproved': False,                         │
+│       'planValidationApproved': False,                         │
 │       'plannerCompleted': False                               │
 │   }                                                           │
 │   d['reworkStatus'] = {'active': False, 'trigger': None,      │
@@ -670,8 +470,7 @@ User Request
 ┌─────────────────────────────────────────────────────────────┐
 │ Phase 2: Planning                                             │
 │   Step 1: Task(Interviewer) → 요구사항 인터뷰 + 계획 초안     │
-│   Step 2: Task(Plan-Validator) → 분석 + 검증 (승인/거부)      │
-│   Step 3: Task(Planner) → TODO 분석 + 6-Section 프롬프트      │
+│   Step 2: Task(Planner) → TODO 분석 + 6-Section 프롬프트      │
 └─────────────────────────────────────────────────────────────┘
     ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -710,23 +509,16 @@ User Request
 └─────────────────────────────────────────────────────────────┘
     ↓
 ┌─────────────────────────────────────────────────────────────┐
-│ Phase 6a: Code-Review                                         │
-│   Task(Code-Reviewer)                                         │
-│   ✅ Approved / ⚠️ Warning → 다음 단계                        │
-│   ❌ Block → Rework Loop                                      │
-└─────────────────────────────────────────────────────────────┘
-    ↓
-┌─────────────────────────────────────────────────────────────┐
-│ Phase 6b: Implementation Verification Team (Agent Teams)      │
-│   🔒 Orchestra 플러그인 수정 시 필수                          │
-│   4명 검토팀 병렬 실행 → 결과 통합 → 커밋 승인/반려           │
-│                                                               │
-│   ┌──────────────┬──────────────┬──────────────┬──────────┐  │
-│   │Plan Conform. │ Quality      │ Integration  │ Final    │  │
-│   │ (계획 일치)  │ (품질 검사)  │ (통합 검증)  │ Reviewer │  │
-│   └──────────────┴──────────────┴──────────────┴──────────┘  │
-│                          ↓                                    │
-│   가중치 점수 계산 → 승인 시 Commit, 반려 시 Rework           │
+│ Phase 6a-CR: Code-Review Team (5명 병렬)                      │
+│   ┌──────────┬──────────┬──────────┬──────────┬──────────┐   │
+│   │Security  │Quality   │Perform.  │Standards │  TDD     │   │
+│   │Guardian  │Inspector │Analyst   │Keeper    │Enforcer  │   │
+│   │(sonnet)  │(sonnet)  │(haiku)   │(haiku)   │(sonnet)  │   │
+│   └──────────┴──────────┴──────────┴──────────┴──────────┘   │
+│                        ↓                                      │
+│   Maestro: 5개 결과 종합 → 가중치 점수 계산 → 판정            │
+│   ✅ Approved / ⚠️ Warning → Phase 7                          │
+│   ❌ Block → Rework Loop (최대 3회)                           │
 └─────────────────────────────────────────────────────────────┘
     ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -765,42 +557,7 @@ Task(
 [Interviewer] 계획 초안 완료: .orchestra/plans/{name}.md
 - TODOs: {N}개
 - Groups: {group-list}
-- Plan-Validator 검토 필요
-"""
-)
-```
-
-### Plan-Validator (sonnet)
-
-```
-Task(
-  subagent_type: "general-purpose", model: "sonnet",
-  description: "Plan-Validator: 계획 분석 + 검증",
-  prompt: """
-**Plan-Validator** - 계획 분석 + 검증 (Gap Analysis + Validation)
-도구: Read, Grep, Glob
-제약: 파일 수정 금지 (읽기 전용)
----
-## Plan File
-.orchestra/plans/{name}.md
-
-## Expected Output
-[Plan-Validator] Validation Report
-
-### Gap Analysis
-- Missed Questions: [목록]
-- Technical Considerations: [목록]
-- Potential Risks: [목록]
-
-### Validation
-- TDD Compliance: ✅ Pass | ❌ Fail
-- Completeness: ✅ Pass | ❌ Fail
-- Feasibility: ✅ Pass | ❌ Fail
-
-### Decision
-**Result: ✅ Approved | ⚠️ Conditional | ❌ Needs Revision**
-
-{조건부/거부 시 Required Changes 목록}
+- Plan Validation Team 검토 필요
 """
 )
 ```
@@ -911,31 +668,223 @@ Task(
 )
 ```
 
-### Code-Reviewer (sonnet) - Verification 통과 후
+### Code-Review Team (5명 병렬) - Verification 통과 후
 
 > ⚠️ Verification 6-Stage 통과 후에만 호출
+> **기존 Code-Reviewer는 폐기되었습니다. 5명 전문팀으로 대체.**
+
+#### 팀 구성
+
+| 팀원 | 모델 | 가중치 | 담당 영역 | 항목 수 |
+|------|------|--------|----------|--------|
+| **Security Guardian** | sonnet | 4 | 보안 취약점 | 7 |
+| **Quality Inspector** | sonnet | 3 | 코드 품질 | 8 |
+| **Performance Analyst** | haiku | 2 | 성능 이슈 | 6 |
+| **Standards Keeper** | haiku | 2 | 표준 준수 | 5 |
+| **TDD Enforcer** | sonnet | 4 | TDD 검증 | 7 |
+
+**총 가중치**: 15 (4+3+2+2+4)
+
+#### 자동 Block 조건
+- **Security Guardian**: Critical 보안 이슈 발견
+- **TDD Enforcer**: 테스트 삭제 감지
+
+#### 병렬 호출 패턴
 
 ```
+# 5개 Task를 **동시에** 호출 (한 메시지에 5개 tool call)
 Task(
   subagent_type: "general-purpose", model: "sonnet",
-  description: "Code-Reviewer: 코드 리뷰",
+  description: "Security Guardian: 보안 취약점 검사",
   prompt: """
-**Code-Reviewer** - 25+ 차원 심층 리뷰
+**Security Guardian** - 보안 취약점 탐지
 도구: Read, Grep, Glob
-제약: Edit, Write, Bash 금지 (리뷰만)
+제약: Edit, Write, Bash 금지 (읽기 전용)
 ---
 ## 리뷰 대상
 {변경된 파일 목록}
-## 변경 요약
-{TODO 완료 내역}
+
+## 검토 항목
+1. Hardcoded Credentials (Critical)
+2. SQL Injection (Critical)
+3. XSS Vulnerability (Critical)
+4. Input Validation (High)
+5. Insecure Crypto (High)
+6. CSRF (High)
+7. Auth Bypass (Critical)
+
 ## Expected Output
-[Code-Reviewer] Review Report
-- Approval: ✅ Approved | ⚠️ Warning | ❌ Block
-- Issues: {Critical/High/Medium/Low 개수}
-- Blockers: {Block 사유, 있을 경우}
+### Security Guardian Report
+- Critical Issues: {N}
+- High Issues: {N}
+- Auto-Block: Yes/No
+
+**Result: ✅ Approved** / **⚠️ Warning** / **❌ Block**
+"""
+)
+
+Task(
+  subagent_type: "general-purpose", model: "sonnet",
+  description: "Quality Inspector: 코드 품질 검사",
+  prompt: """
+**Quality Inspector** - 코드 품질 평가
+도구: Read, Grep, Glob
+제약: Edit, Write, Bash 금지 (읽기 전용)
+---
+## 리뷰 대상
+{변경된 파일 목록}
+
+## 검토 항목
+1. Function Size >50줄 (Medium)
+2. File Size >800줄 (Medium)
+3. Nesting Depth >3 (Medium)
+4. Error Handling 누락 (High)
+5. Magic Numbers (Low)
+6. Dead Code (Low)
+7. Duplicate Code (Medium)
+8. Naming 불명확 (Low)
+
+## Expected Output
+### Quality Inspector Report
+- High Issues: {N}
+- Medium Issues: {N}
+- Low Issues: {N}
+
+**Result: ✅ Approved** / **⚠️ Warning** / **❌ Block**
+"""
+)
+
+Task(
+  subagent_type: "general-purpose", model: "haiku",
+  description: "Performance Analyst: 성능 이슈 분석",
+  prompt: """
+**Performance Analyst** - 성능 이슈 탐지
+도구: Read, Grep, Glob
+제약: Edit, Write, Bash 금지 (읽기 전용)
+---
+## 리뷰 대상
+{변경된 파일 목록}
+
+## 검토 항목
+1. Algorithm Complexity O(n²)+ (Medium)
+2. Unnecessary Re-render (Medium)
+3. N+1 Query (High)
+4. Memory Leak (High)
+5. Large Bundle (Low)
+6. Missing Memoization (Low)
+
+## Expected Output
+### Performance Analyst Report
+- High Issues: {N}
+- Medium Issues: {N}
+- Low Issues: {N}
+
+**Result: ✅ Approved** / **⚠️ Warning** / **❌ Block**
+"""
+)
+
+Task(
+  subagent_type: "general-purpose", model: "haiku",
+  description: "Standards Keeper: 표준 준수 검사",
+  prompt: """
+**Standards Keeper** - 표준 및 컨벤션 검증
+도구: Read, Grep, Glob
+제약: Edit, Write, Bash 금지 (읽기 전용)
+---
+## 리뷰 대상
+{변경된 파일 목록}
+
+## 검토 항목
+1. Naming Convention (Low)
+2. Documentation 누락 (Low)
+3. Accessibility (Medium)
+4. Test Coverage (Medium)
+5. TypeScript any 사용 (Low)
+
+## Expected Output
+### Standards Keeper Report
+- Medium Issues: {N}
+- Low Issues: {N}
+
+**Result: ✅ Approved** / **⚠️ Warning** / **❌ Block**
+"""
+)
+
+Task(
+  subagent_type: "general-purpose", model: "sonnet",
+  description: "TDD Enforcer: TDD 순서 검증",
+  prompt: """
+**TDD Enforcer** - TDD 순서 및 테스트 품질 검증
+도구: Read, Grep, Glob
+제약: Edit, Write, Bash 금지 (읽기 전용)
+---
+## 리뷰 대상
+{변경된 파일 목록}
+
+## 검토 항목
+1. Missing Test (High)
+2. Test-After-Impl (High)
+3. Deleted Test (Critical - Auto-Block)
+4. Skipped Test (High)
+5. Test-less Refactor (Medium)
+6. Insufficient Assertion (Medium)
+7. Mock Overuse (Low)
+
+## Expected Output
+### TDD Enforcer Report
+- TDD Compliance: {source → test 매칭}
+- Critical Issues: {N}
+- High Issues: {N}
+- Auto-Block: Yes/No
+
+**Result: ✅ Approved** / **⚠️ Warning** / **❌ Block**
 """
 )
 ```
+
+#### 결과 통합 (Weighted Scoring)
+
+```python
+# 가중치 점수 계산
+weights = {
+    "security_guardian": 4,   # 보안 이슈는 치명적
+    "quality_inspector": 3,   # 품질 문제는 중요
+    "performance_analyst": 2, # 성능은 중요하지만 후순위
+    "standards_keeper": 2,    # 표준은 중요하지만 후순위
+    "tdd_enforcer": 4         # TDD 위반은 프로젝트 원칙 위반
+}
+
+# 점수 변환
+score_map = {"Approved": 1.0, "Warning": 0.5, "Block": 0.0}
+
+# 가중 평균 계산 (총 가중치: 15)
+weighted_score = sum(weights[r] * score_map[results[r]] for r in results) / 15
+
+# 자동 Block 조건 체크
+auto_block = (
+    security_guardian.has_critical or
+    tdd_enforcer.test_deleted
+)
+
+# 최종 판정
+if auto_block:
+    decision = "❌ Block (Auto-Block 조건)"
+elif weighted_score >= 0.80:
+    decision = "✅ Approved"
+elif weighted_score >= 0.50:
+    decision = "⚠️ Warning"
+else:
+    decision = "❌ Block"
+```
+
+#### 판정 기준
+
+| 점수 | 판정 | 조치 |
+|------|------|------|
+| Auto-Block | **❌ Block** | Security Critical 또는 테스트 삭제 |
+| ≥ 0.80 | **✅ Approved** | Phase 7 → Commit |
+| 0.50-0.79 | **⚠️ Warning** | 경고 기록 후 진행 |
+| < 0.50 | **❌ Block** | Rework Loop |
 
 ### Explorer (EXPLORATORY Intent)
 

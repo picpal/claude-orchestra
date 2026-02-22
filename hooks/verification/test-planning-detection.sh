@@ -93,15 +93,8 @@ echo ""
 # 테스트 1: Interviewer 완료 감지
 run_detection_test "Interviewer 감지" "interviewerCompleted" "Interviewer: 요구사항 인터뷰"
 
-# 테스트 2: Plan-Validator 완료 감지
-run_detection_test "Plan-Validator 감지" "planValidatorApproved" "Plan-Validator: 계획 분석 + 검증"
-
-# 테스트 3: Planner 완료 감지
+# 테스트 2: Planner 완료 감지
 run_detection_test "Planner 감지" "plannerCompleted" "Planner: TODO 분석"
-
-# 테스트 4: Planner vs Plan-Validator 구분 (false positive 방지)
-# Plan-Validator가 실행되면 plannerCompleted는 설정되지 않아야 함
-run_negative_test "Plan-Validator에서 Planner 오탐지 방지" "plannerCompleted" "Plan-Validator: planner 결과 검토"
 
 # 테스트 5: 다른 에이전트는 Planning 플래그 설정 안함
 run_negative_test "Explorer는 plannerCompleted 설정 안함" "plannerCompleted" "Explorer: 코드베이스 탐색"

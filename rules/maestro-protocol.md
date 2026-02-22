@@ -98,8 +98,7 @@ Phase 1: Research (선택적) — Research Team 병렬 실행
     ↓
 Phase 2: Planning
     Step 1: Task(Interviewer) → 요구사항 인터뷰 + 계획 초안
-    Step 2: Task(Plan-Validator) → 분석 + 검증 (Gap Analysis + Validation)
-    Step 3: Task(Planner) → TODO 분석 + 6-Section 프롬프트 생성
+    Step 2: Task(Planner) → TODO 분석 + 6-Section 프롬프트 생성
     ↓
 Phase 4: Execution (Level별 실행)
     ┌────────────────────────────────────────────────┐
@@ -129,10 +128,14 @@ Phase 5: Conflict Check (조건부 실행 - Skip 가능)
 Phase 6: Verification (1회 - 모든 Level 완료 후)
     Bash(verification-loop.sh) → 6-Stage 검증
     ↓
-Phase 6a: Code-Review (1회 - Verification 통과 후)
-    Task(Code-Reviewer)
-    ✅ Approved → 다음 단계
-    ❌ Block → Rework Loop
+Phase 6a-CR: Code-Review Team (5명 병렬 - Verification 통과 후)
+    ┌──────────┬──────────┬──────────┬──────────┬──────────┐
+    │Security  │Quality   │Perform.  │Standards │  TDD     │
+    │Guardian  │Inspector │Analyst   │Keeper    │Enforcer  │
+    └──────────┴──────────┴──────────┴──────────┴──────────┘
+    Maestro: 결과 종합 → 가중치 점수 계산
+    ✅ Approved / ⚠️ Warning → 다음 단계
+    ❌ Block → Rework Loop (최대 3회)
     ↓
 Phase 7: Commit + Journal
     ├── Step 1: Git Commit (기존 형식)
@@ -194,7 +197,7 @@ Executor(High-Player/Low-Player) 호출 전 **반드시** 확인:
 
 ```
 □ Interviewer 결과 있음?
-□ Plan-Validator "Approved" 있음?
+□ Plan Validation Team "Approved" 있음?
 □ Planner의 6-Section 프롬프트 있음?
 ```
 
@@ -227,41 +230,6 @@ Task(
 {요구사항 인터뷰 + 계획 초안 작성}
 ## Expected Output
 [Interviewer] 계획 초안 완료: .orchestra/plans/{name}.md
-"""
-)
-```
-
-### Plan-Validator (sonnet)
-
-```
-Task(
-  subagent_type: "general-purpose", model: "sonnet",
-  description: "Plan-Validator: 계획 분석 + 검증",
-  prompt: """
-**Plan-Validator** - 계획 분석 + 검증 (Gap Analysis + Validation)
-도구: Read, Grep, Glob
-제약: 파일 수정 금지 (읽기 전용)
----
-## Plan File
-.orchestra/plans/{name}.md
-
-## Expected Output
-[Plan-Validator] Validation Report
-
-### Gap Analysis
-- Missed Questions: [목록]
-- Technical Considerations: [목록]
-- Potential Risks: [목록]
-
-### Validation
-- TDD Compliance: ✅ Pass | ❌ Fail
-- Completeness: ✅ Pass | ❌ Fail
-- Feasibility: ✅ Pass | ❌ Fail
-
-### Decision
-**Result: ✅ Approved | ⚠️ Conditional | ❌ Needs Revision**
-
-{조건부/거부 시 Required Changes 목록}
 """
 )
 ```
@@ -428,26 +396,193 @@ Task(
 )
 ```
 
-### Code-Reviewer (sonnet)
+### Code-Review Team (5명 병렬)
 
 > ⚠️ Verification 6-Stage 통과 후에만 호출
+> **기존 Code-Reviewer는 폐기되었습니다. 5명 전문팀으로 대체.**
+
+#### 팀 구성
+
+| 팀원 | 모델 | 가중치 | 담당 영역 |
+|------|------|--------|----------|
+| Security Guardian | sonnet | 4 | 보안 취약점 (7개 항목) |
+| Quality Inspector | sonnet | 3 | 코드 품질 (8개 항목) |
+| Performance Analyst | haiku | 2 | 성능 이슈 (6개 항목) |
+| Standards Keeper | haiku | 2 | 표준 준수 (5개 항목) |
+| TDD Enforcer | sonnet | 4 | TDD 검증 (7개 항목) |
+
+#### 병렬 호출 (5개 Task 동시 호출)
 
 ```
+# 5개 Task를 한 번에 병렬 호출 (단일 메시지에 5개 tool call)
+
 Task(
   subagent_type: "general-purpose", model: "sonnet",
-  description: "Code-Reviewer: 코드 리뷰",
+  description: "Security Guardian: 보안 취약점 검사",
   prompt: """
-**Code-Reviewer** - 25+ 차원 심층 리뷰
+**Security Guardian** - 보안 취약점 탐지 (Auto-Block 권한)
 도구: Read, Grep, Glob
-제약: Edit, Write, Bash 금지 (리뷰만)
+제약: Edit, Write, Bash 금지 (읽기 전용)
 ---
 ## 리뷰 대상
 {변경된 파일 목록}
+
+## 검토 항목 (Critical → Auto-Block)
+1. Hardcoded Credentials (Critical)
+2. SQL Injection (Critical)
+3. XSS Vulnerability (Critical)
+4. Auth Bypass (Critical)
+5. Input Validation (High)
+6. Insecure Crypto (High)
+7. CSRF (High)
+
 ## Expected Output
-[Code-Reviewer] Review Report
-- Approval: ✅ Approved | ⚠️ Warning | ❌ Block
+[Security Guardian] Report
+- Critical: {N} | High: {N}
+- Auto-Block: Yes/No
+- **Result: ✅/⚠️/❌**
 """
 )
+
+Task(
+  subagent_type: "general-purpose", model: "sonnet",
+  description: "Quality Inspector: 코드 품질 검사",
+  prompt: """
+**Quality Inspector** - 코드 품질 평가
+도구: Read, Grep, Glob
+제약: Edit, Write, Bash 금지 (읽기 전용)
+---
+## 리뷰 대상
+{변경된 파일 목록}
+
+## 검토 항목
+1. Function Size >50줄 (Medium)
+2. File Size >800줄 (Medium)
+3. Nesting Depth >3 (Medium)
+4. Error Handling 누락 (High)
+5. Magic Numbers (Low)
+6. Dead Code (Low)
+7. Duplicate Code (Medium)
+8. Naming 불명확 (Low)
+
+## Expected Output
+[Quality Inspector] Report
+- High: {N} | Medium: {N} | Low: {N}
+- **Result: ✅/⚠️/❌**
+"""
+)
+
+Task(
+  subagent_type: "general-purpose", model: "haiku",
+  description: "Performance Analyst: 성능 이슈 분석",
+  prompt: """
+**Performance Analyst** - 성능 이슈 탐지
+도구: Read, Grep, Glob
+제약: Edit, Write, Bash 금지 (읽기 전용)
+---
+## 리뷰 대상
+{변경된 파일 목록}
+
+## 검토 항목
+1. Algorithm Complexity O(n²)+ (Medium)
+2. Unnecessary Re-render (Medium)
+3. N+1 Query (High)
+4. Memory Leak (High)
+5. Large Bundle (Low)
+6. Missing Memoization (Low)
+
+## Expected Output
+[Performance Analyst] Report
+- High: {N} | Medium: {N} | Low: {N}
+- **Result: ✅/⚠️/❌**
+"""
+)
+
+Task(
+  subagent_type: "general-purpose", model: "haiku",
+  description: "Standards Keeper: 표준 준수 검사",
+  prompt: """
+**Standards Keeper** - 표준 및 컨벤션 검증
+도구: Read, Grep, Glob
+제약: Edit, Write, Bash 금지 (읽기 전용)
+---
+## 리뷰 대상
+{변경된 파일 목록}
+
+## 검토 항목
+1. Naming Convention (Low)
+2. Documentation 누락 (Low)
+3. Accessibility (Medium)
+4. Test Coverage (Medium)
+5. TypeScript any 사용 (Low)
+
+## Expected Output
+[Standards Keeper] Report
+- Medium: {N} | Low: {N}
+- **Result: ✅/⚠️/❌**
+"""
+)
+
+Task(
+  subagent_type: "general-purpose", model: "sonnet",
+  description: "TDD Enforcer: TDD 순서 검증",
+  prompt: """
+**TDD Enforcer** - TDD 순서 및 테스트 품질 검증 (Auto-Block 권한)
+도구: Read, Grep, Glob
+제약: Edit, Write, Bash 금지 (읽기 전용)
+---
+## 리뷰 대상
+{변경된 파일 목록}
+
+## 검토 항목 (Deleted Test → Auto-Block)
+1. Missing Test (High)
+2. Test-After-Impl (High)
+3. Deleted Test (Critical - Auto-Block)
+4. Skipped Test (High)
+5. Test-less Refactor (Medium)
+6. Insufficient Assertion (Medium)
+7. Mock Overuse (Low)
+
+## Expected Output
+[TDD Enforcer] Report
+- TDD Compliance: {source → test 매칭표}
+- Critical: {N} | High: {N}
+- Auto-Block: Yes/No
+- **Result: ✅/⚠️/❌**
+"""
+)
+```
+
+#### 결과 통합
+
+```
+weighted_score = (4×Security + 3×Quality + 2×Performance + 2×Standards + 4×TDD) / 15
+
+Auto-Block 조건:
+- Security Guardian: Critical 이슈 발견
+- TDD Enforcer: 테스트 삭제 감지
+
+판정:
+- Auto-Block → ❌ Block
+- ≥ 0.80 → ✅ Approved
+- 0.50-0.79 → ⚠️ Warning
+- < 0.50 → ❌ Block
+```
+
+#### Rework Loop (Block 시)
+
+```
+❌ Block 발생
+    ↓
+Maestro: Block 사유 분석
+    ↓
+Player 재호출 (원래 프롬프트 + 수정 컨텍스트)
+    ↓
+Verification → Code-Review Team (재실행)
+    ↓
+├─ 해결됨 → Phase 7 (Commit)
+├─ 미해결 + 시도 < 3 → Loop 반복
+└─ 시도 >= 3 → 사용자 에스컬레이션
 ```
 
 ---

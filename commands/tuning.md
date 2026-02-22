@@ -69,10 +69,10 @@ pwd  # 현재 디렉토리 확인
 ## OPEN-ENDED 필수 순서 (phase-gate.sh 검증)
 
 ```
-1. Task(Interviewer)     → interviewerCompleted=true
-2. Task(Plan-Validator)  → planValidatorApproved=true
-3. Task(Planner)         → plannerCompleted=true
-4. Task(Executor)        ← 1-3 미완료 시 차단됨
+1. Task(Interviewer)        → interviewerCompleted=true
+2. Plan Validation Team     → planValidationApproved=true
+3. Task(Planner)            → plannerCompleted=true
+4. Task(Executor)           ← 1-3 미완료 시 차단됨
 ```
 
 ## 호출 예시

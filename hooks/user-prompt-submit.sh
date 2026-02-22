@@ -164,10 +164,10 @@ else
 
 ### 3. OPEN-ENDED 필수 순서 (phase-gate.sh 검증)
 \`\`\`
-1. Task(Interviewer)     → 완료 후 다음 단계
-2. Task(Plan-Validator)  → Interviewer 완료 필수
-3. Task(Planner)         → 1-2 완료 필수
-4. Task(Executor)        → 1-3 완료 필수 (미완료 시 차단)
+1. Task(Interviewer)        → 완료 후 다음 단계
+2. Plan Validation Team     → Interviewer 완료 필수 (4명 병렬)
+3. Task(Planner)            → 1-2 완료 필수
+4. Task(Executor)           → 1-3 완료 필수 (미완료 시 차단)
 \`\`\`
 
 ### 4. 에이전트 호출 (올바른 방법)

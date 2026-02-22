@@ -84,6 +84,31 @@
       "model": "sonnet",
       "allowedTools": ["Read", "Grep", "Glob", "Bash(git diff*)", "Bash(git status*)", "Bash(git log*)", "Bash(npm test*)", "Bash(yarn test*)", "Bash(pnpm test*)", "Bash(bun test*)", "Bash(tsc *)", "Bash(eslint *)"],
       "denyTools": ["Task", "Edit", "Write"]
+    },
+    "security-guardian": {
+      "model": "sonnet",
+      "allowedTools": ["Read", "Grep", "Glob"],
+      "denyTools": ["Task", "Edit", "Write", "Bash"]
+    },
+    "quality-inspector": {
+      "model": "sonnet",
+      "allowedTools": ["Read", "Grep", "Glob"],
+      "denyTools": ["Task", "Edit", "Write", "Bash"]
+    },
+    "performance-analyst": {
+      "model": "haiku",
+      "allowedTools": ["Read", "Grep", "Glob"],
+      "denyTools": ["Task", "Edit", "Write", "Bash"]
+    },
+    "standards-keeper": {
+      "model": "haiku",
+      "allowedTools": ["Read", "Grep", "Glob"],
+      "denyTools": ["Task", "Edit", "Write", "Bash"]
+    },
+    "tdd-enforcer": {
+      "model": "sonnet",
+      "allowedTools": ["Read", "Grep", "Glob"],
+      "denyTools": ["Task", "Edit", "Write", "Bash"]
     }
   },
   "defaults": {
@@ -92,9 +117,9 @@
   },
   "agentTeams": {
     "enabled": true,
-    "maxTeammates": 4,
+    "maxTeammates": 5,
     "teammateMode": "tmux",
-    "useCase": "plan-validation",
+    "useCase": "plan-validation,code-review",
     "qualityGates": {
       "unanimousApproval": false,
       "weightedScoring": true,
@@ -103,6 +128,47 @@
         "stability": 3,
         "ux": 2,
         "devilsAdvocate": 2
+      }
+    },
+    "codeReviewTeam": {
+      "enabled": true,
+      "totalWeight": 15,
+      "autoBlockConditions": ["security_critical", "test_deleted"],
+      "members": {
+        "securityGuardian": {
+          "weight": 4,
+          "model": "sonnet",
+          "items": 7
+        },
+        "qualityInspector": {
+          "weight": 3,
+          "model": "sonnet",
+          "items": 8
+        },
+        "performanceAnalyst": {
+          "weight": 2,
+          "model": "haiku",
+          "items": 6
+        },
+        "standardsKeeper": {
+          "weight": 2,
+          "model": "haiku",
+          "items": 5
+        },
+        "tddEnforcer": {
+          "weight": 4,
+          "model": "sonnet",
+          "items": 7
+        }
+      },
+      "scoring": {
+        "approved": 1.0,
+        "warning": 0.5,
+        "block": 0.0
+      },
+      "thresholds": {
+        "approved": 0.80,
+        "warning": 0.50
       }
     }
   }

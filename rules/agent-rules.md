@@ -10,7 +10,7 @@
 │                         Maestro                                  │
 ├─────────────────────────────────────────────────────────────────┤
 │                    PLANNING LAYER                                │
-│        Interviewer  │  Plan-Validator  │  Planner                │
+│                  Interviewer  │  Planner                         │
 ├─────────────────────────────────────────────────────────────────┤
 │                    RESEARCH LAYER                                │
 │    Architecture  │  Searcher  │  Explorer  │  Image-Analyst     │
@@ -18,8 +18,9 @@
 │                    EXECUTION LAYER                               │
 │              High-Player  │  Low-Player                          │
 ├─────────────────────────────────────────────────────────────────┤
-│                    REVIEW LAYER                                  │
-│                      Code-Reviewer                               │
+│                    REVIEW LAYER: Code-Review Team (5명 병렬)      │
+│  Security Guardian │ Quality Inspector │ Performance Analyst     │
+│            Standards Keeper │ TDD Enforcer                       │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -39,11 +40,6 @@
 - **역할**: 요구사항 인터뷰, 계획 작성
 - **할 수 있음**: 사용자 질문, 계획 문서 작성
 - **할 수 없음**: 코드 작성, 코드 수정
-
-### Plan-Validator
-- **역할**: 계획 분석 및 검증 (Gap Analysis + Validation)
-- **할 수 있음**: 코드 읽기, 피드백 제공, 승인/거부 결정
-- **할 수 없음**: 계획 직접 수정, 코드 작성
 
 ### Architecture
 - **역할**: 아키텍처 조언, 디버깅
