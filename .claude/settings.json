@@ -47,13 +47,25 @@
       "allowedTools": ["AskUserQuestion", "Write(.orchestra/**/*.md)", "Read"],
       "denyTools": ["Task", "Edit"]
     },
-    "plan-checker": {
+    "plan-architect": {
       "model": "sonnet",
-      "allowedTools": ["Read", "Grep", "Glob"]
+      "allowedTools": ["Read", "Grep", "Glob"],
+      "denyTools": ["Task", "Edit", "Write", "Bash"]
     },
-    "plan-reviewer": {
+    "plan-stability": {
       "model": "sonnet",
-      "allowedTools": ["Read", "Grep", "Glob"]
+      "allowedTools": ["Read", "Grep", "Glob"],
+      "denyTools": ["Task", "Edit", "Write", "Bash"]
+    },
+    "plan-ux": {
+      "model": "sonnet",
+      "allowedTools": ["Read", "Grep", "Glob"],
+      "denyTools": ["Task", "Edit", "Write", "Bash"]
+    },
+    "plan-devils-advocate": {
+      "model": "sonnet",
+      "allowedTools": ["Read", "Grep", "Glob"],
+      "denyTools": ["Task", "Edit", "Write", "Bash"]
     },
     "architecture": {
       "model": "opus",
@@ -71,6 +83,11 @@
     "image-analyst": {
       "model": "sonnet",
       "allowedTools": ["Read"]
+    },
+    "log-analyst": {
+      "model": "sonnet",
+      "allowedTools": ["Read", "Grep", "Glob", "Bash"],
+      "denyTools": ["Task", "Edit", "Write"]
     },
     "high-player": {
       "model": "opus",

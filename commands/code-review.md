@@ -112,7 +112,7 @@
 
 ## 자동 리뷰
 
-Planner가 다음 시점에 자동으로 Code-Reviewer 호출:
+Maestro가 다음 시점에 자동으로 Code-Review Team (5명 병렬) 호출:
 
 1. **TODO 완료 후** (IMPL/REFACTOR 타입)
 2. **Verification Loop 통과 후**
@@ -131,12 +131,14 @@ Planner가 다음 시점에 자동으로 Code-Reviewer 호출:
 - 리뷰 제외
 ```
 
-## Code-Reviewer 에이전트
+## Code-Review Team (5명 병렬)
 
-리뷰는 `Code-Reviewer` 에이전트가 수행:
-- Model: Sonnet
-- 25+ 차원 평가
-- 객관적 기준 적용
+리뷰는 5명 전문팀이 병렬 수행:
+- Security Guardian (Sonnet, w=4) - 보안 취약점
+- Quality Inspector (Sonnet, w=3) - 코드 품질
+- Performance Analyst (Haiku, w=2) - 성능 이슈
+- Standards Keeper (Haiku, w=2) - 표준 준수
+- TDD Enforcer (Sonnet, w=4) - TDD 검증
 
 ## 관련 명령어
 

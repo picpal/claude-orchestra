@@ -40,23 +40,22 @@
 
 ### 검증팀 구성 (4명 병렬 실행)
 
-| 팀원 | 역할 | 검토 관점 |
-|------|------|-----------|
-| **아키텍트** | 구조 호환성 | 13개 에이전트 통합, Maestro 허브 구조 유지, Phase Gate 호환 |
-| **안정성 전문가** | 리스크 분석 | 상태 동기화, 파일 충돌, 실패 복구, 토큰 비용 |
-| **UX 전문가** | 사용성 검토 | 설정 복잡도, 학습 곡선, 에러 메시지, 문서화 |
-| **Devil's Advocate** | 반론 제기 | 필요성 의문, 오버엔지니어링 검토, 대안 제시 |
+| 팀원 | 에이전트 파일 | 역할 | 검토 관점 |
+|------|-------------|------|-----------|
+| **Plan Architect** | `agents/plan-architect.md` | 구조 호환성 | 에이전트 통합, Maestro 허브 구조 유지, Phase Gate 호환 |
+| **Plan Stability** | `agents/plan-stability.md` | 리스크 분석 | 상태 동기화, 파일 충돌, 실패 복구, 토큰 비용 |
+| **Plan UX** | `agents/plan-ux.md` | 사용성 검토 | 설정 복잡도, 학습 곡선, 에러 메시지, 문서화 |
+| **Plan Devil's Advocate** | `agents/plan-devils-advocate.md` | 반론 제기 | 필요성 의문, 오버엔지니어링 검토, 대안 제시 |
+
+> **주의**: Plan Architect는 Research Layer의 Architecture 에이전트와 다른 역할입니다.
+> - Architecture (Research, Phase 1): 대상 프로젝트의 아키텍처 분석 (범용)
+> - Plan Architect (Validation, Phase 2a): Orchestra 플러그인 계획의 구조 호환성 검증 (Orchestra 전용)
 
 ### 검증 실행 방법
 
 계획이 준비되면 다음과 같이 4개 Task를 **병렬로** 실행:
 
-```
-Task(description: "아키텍트: 구조 호환성 검토", subagent_type: "general-purpose", model: "sonnet", prompt: "...")
-Task(description: "안정성 전문가: 리스크 분석", subagent_type: "general-purpose", model: "sonnet", prompt: "...")
-Task(description: "UX 전문가: 사용성 검토", subagent_type: "general-purpose", model: "sonnet", prompt: "...")
-Task(description: "Devil's Advocate: 반론 제기", subagent_type: "general-purpose", model: "sonnet", prompt: "...")
-```
+> 상세 호출 패턴: `rules/maestro-protocol.md` 참조
 
 ### 검증 결과 판정
 
@@ -64,7 +63,22 @@ Task(description: "Devil's Advocate: 반론 제기", subagent_type: "general-pur
 |------|------|------|
 | 4명 모두 ✅ | **승인** | 구현 진행 |
 | 1명 이상 ⚠️ | **조건부 승인** | 우려 사항 해결 후 진행 |
-| 1명 이상 ❌ | **반려** | 계획 재검토 필요 |
+| 1명 이상 ❌ | **반려** | 계획 재검토 (최대 2회, 초과 시 사용자 에스컬레이션) |
+
+### 검증 실패 피드백 형식
+
+반려 또는 조건부 승인 시 Maestro가 사용자에게 전달하는 형식:
+
+```
+[Plan Validation 결과]
+- Plan Architect: ✅/⚠️/❌ - {사유}
+- Plan Stability: ✅/⚠️/❌ - {사유}
+- Plan UX: ✅/⚠️/❌ - {사유}
+- Plan Devil's Advocate: ✅/⚠️/❌ - {사유}
+
+최종 판정: ✅ 승인 / ⚠️ 조건부 승인 / ❌ 반려
+{조건부/반려 시 수정 필요 사항}
+```
 
 ### 검증 없이 진행 불가
 
@@ -130,8 +144,8 @@ Task(description: "Devil's Advocate: 반론 제기", subagent_type: "general-pur
 
 ## 시스템 개요
 
-16개 전문 에이전트가 협력하여 TDD 기반 개발을 수행합니다.
-(11개 기본 + 5개 Code-Review Team)
+20개 전문 에이전트가 협력하여 TDD 기반 개발을 수행합니다.
+(11개 기본 + 5개 Code-Review Team + 4개 Plan Validation Team)
 **Claude Code가 Main Agent(Maestro)로서** 모든 에이전트를 직접 호출합니다.
 
 ### 핵심 구조: Claude Code = Maestro (Main Agent)
@@ -156,6 +170,11 @@ Task(description: "Devil's Advocate: 반론 제기", subagent_type: "general-pur
          ├── Task(Low-Player)       → 간단한 작업 실행
          ├── Task(Explorer)         → 코드베이스 탐색
          ├── Task(Conflict-Checker) → 충돌 검사
+         ├── Task(Plan Validation Team) → 계획 검증 (4명 병렬)
+         │   ├── Plan Architect
+         │   ├── Plan Stability
+         │   ├── Plan UX
+         │   └── Plan Devil's Advocate
          ├── Task(Code-Review Team) → 코드 리뷰 (5명 병렬)
          │   ├── Security Guardian
          │   ├── Quality Inspector
@@ -234,7 +253,7 @@ Task(description: "Devil's Advocate: 반론 제기", subagent_type: "general-pur
 
 ```
 claude-orchestra/              # 플러그인 루트
-├── agents/                    # 16개 에이전트 정의 (11 기본 + Code-Review Team 5명)
+├── agents/                    # 20개 에이전트 정의 (11 기본 + Code-Review 5명 + Plan Validation 4명)
 ├── commands/                  # 슬래시 명령어
 ├── skills/                    # 컨텍스트 스킬
 │   ├── context-dev/SKILL.md
@@ -367,6 +386,20 @@ Maestro가 3개 Task를 한 메시지에서 병렬 호출:
 ```
 
 > 상세 호출 패턴: `rules/maestro-protocol.md` 참조
+
+### Validation Layer: Plan Validation Team (4명 병렬)
+
+> Phase 2a에서 계획 검증 시 병렬 실행. 모두 **읽기 전용**.
+
+| 팀원 | 모델 | 담당 영역 | 항목 수 |
+|------|------|----------|--------|
+| **Plan Architect** | Sonnet | 구조 호환성 | 5 |
+| **Plan Stability** | Sonnet | 리스크 분석 | 5 |
+| **Plan UX** | Sonnet | 사용성 검토 | 5 |
+| **Plan Devil's Advocate** | Sonnet | 반론 제기 | 5 |
+
+> 상세 내용: `agents/plan-architect.md`, `agents/plan-stability.md`,
+> `agents/plan-ux.md`, `agents/plan-devils-advocate.md`
 
 ### Execution Layer (Subagents - Main Agent가 Task로 호출)
 - **High-Player** (Opus): 복잡한 작업 실행

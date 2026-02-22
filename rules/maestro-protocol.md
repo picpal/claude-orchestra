@@ -24,8 +24,19 @@
          ├── Task(High-Player)      → 복잡한 작업 실행
          ├── Task(Low-Player)       → 간단한 작업 실행
          ├── Task(Explorer)         → 코드베이스 탐색
-         ├── Task(Code-Reviewer)    → 코드 리뷰
-         └── ...
+         ├── Task(Conflict-Checker) → 충돌 검사
+         ├── Task(Plan Validation Team) → 계획 검증 (4명 병렬)
+         │   ├── Plan Architect
+         │   ├── Plan Stability
+         │   ├── Plan UX
+         │   └── Plan Devil's Advocate
+         ├── Task(Code-Review Team) → 코드 리뷰 (5명 병렬)
+         │   ├── Security Guardian
+         │   ├── Quality Inspector
+         │   ├── Performance Analyst
+         │   ├── Standards Keeper
+         │   └── TDD Enforcer
+         └── Task(Research Agents)  → 검색, 분석
 ```
 
 ---
@@ -99,6 +110,21 @@ Phase 1: Research (선택적) — Research Team 병렬 실행
 Phase 2: Planning
     Step 1: Task(Interviewer) → 요구사항 인터뷰 + 계획 초안
     Step 2: Task(Planner) → TODO 분석 + 6-Section 프롬프트 생성
+    ↓
+Phase 2a: Plan Validation Team (4명 병렬 - 계획 검증)
+    ┌──────────────────────────────────────────────────┐
+    │  Plan Validation Team (계획 검증 병렬)            │
+    │  ┌───────────┬───────────┬────────┬────────────┐ │
+    │  │Plan       │Plan       │Plan    │Plan Devil's│ │
+    │  │Architect  │Stability  │UX      │Advocate    │ │
+    │  │(sonnet)   │(sonnet)   │(sonnet)│(sonnet)    │ │
+    │  └───────────┴───────────┴────────┴────────────┘ │
+    │       ↓           ↓         ↓          ↓        │
+    │  Maestro가 4개 결과 종합 → 판정                  │
+    │  ✅ Approved → Phase 4                           │
+    │  ⚠️ Conditional → 우려 해결 후 Phase 4           │
+    │  ❌ Rejected → 계획 재검토 (최대 2회)             │
+    └──────────────────────────────────────────────────┘
     ↓
 Phase 4: Execution (Level별 실행)
     ┌────────────────────────────────────────────────┐
@@ -268,6 +294,141 @@ Task(
   ## 6. CONTEXT
 """
 )
+```
+
+### Plan Validation Team (4명 병렬 - Phase 2a)
+
+> ⚠️ Planner 완료 후, Executor 호출 전에 실행
+> **Orchestra 플러그인 수정 시에만 적용** (일반 프로젝트 작업에는 해당 없음)
+
+```
+# 4개 Task를 한 번에 병렬 호출 (단일 메시지에 4개 tool call)
+
+Task(
+  subagent_type: "general-purpose", model: "sonnet",
+  description: "Plan Architect: 구조 호환성 검토",
+  prompt: """
+**Plan Architect** - 구조 호환성 검토 (Phase 2a)
+도구: Read, Grep, Glob
+제약: Edit, Write, Bash 금지 (읽기 전용)
+참조: agents/plan-architect.md
+---
+## 검토 대상 계획
+{계획 문서 경로 또는 내용}
+
+## 검토 항목
+1. Agent Integration (에이전트 통합)
+2. Maestro Hub (허브 구조 유지)
+3. Phase Gate (Phase 호환성)
+4. Layer Boundary (레이어 경계)
+5. Config Compatibility (설정 호환)
+
+## Expected Output
+[Plan Architect] Report
+- Issues: {N}
+- **Result: ✅/⚠️/❌**
+"""
+)
+
+Task(
+  subagent_type: "general-purpose", model: "sonnet",
+  description: "Plan Stability: 리스크 분석",
+  prompt: """
+**Plan Stability** - 안정성/리스크 분석 (Phase 2a)
+도구: Read, Grep, Glob
+제약: Edit, Write, Bash 금지 (읽기 전용)
+참조: agents/plan-stability.md
+---
+## 검토 대상 계획
+{계획 문서 경로 또는 내용}
+
+## 검토 항목
+1. State Sync (상태 동기화)
+2. File Conflict (파일 충돌)
+3. Failure Recovery (실패 복구)
+4. Token Cost (토큰 비용)
+5. Side Effects (부작용)
+
+## Expected Output
+[Plan Stability] Report
+- Risk Level: Critical/High/Medium/Low
+- **Result: ✅/⚠️/❌**
+"""
+)
+
+Task(
+  subagent_type: "general-purpose", model: "sonnet",
+  description: "Plan UX: 사용성 검토",
+  prompt: """
+**Plan UX** - UX/사용성 검토 (Phase 2a)
+도구: Read, Grep, Glob
+제약: Edit, Write, Bash 금지 (읽기 전용)
+참조: agents/plan-ux.md
+---
+## 검토 대상 계획
+{계획 문서 경로 또는 내용}
+
+## 검토 항목
+1. Config Complexity (설정 복잡도)
+2. Learning Curve (학습 곡선)
+3. Error Messages (에러 메시지)
+4. Documentation (문서화)
+5. Naming (네이밍 직관성)
+
+## Expected Output
+[Plan UX] Report
+- UX Impact: High/Medium/Low
+- **Result: ✅/⚠️/❌**
+"""
+)
+
+Task(
+  subagent_type: "general-purpose", model: "sonnet",
+  description: "Plan Devil's Advocate: 반론 제기",
+  prompt: """
+**Plan Devil's Advocate** - 반론 제기 (Phase 2a)
+도구: Read, Grep, Glob
+제약: Edit, Write, Bash 금지 (읽기 전용)
+참조: agents/plan-devils-advocate.md
+---
+## 검토 대상 계획
+{계획 문서 경로 또는 내용}
+
+## 검토 항목
+1. Necessity (필요성)
+2. Over-engineering (오버엔지니어링)
+3. Alternatives (대안)
+4. Maintenance Cost (유지보수 비용)
+5. Scope Creep (범위 확장)
+
+## Expected Output
+[Plan Devil's Advocate] Report
+- Objection Level: Strong/Moderate/Minor
+- **Result: ✅/⚠️/❌**
+"""
+)
+```
+
+#### Plan Validation 결과 통합
+
+```
+판정 기준:
+- 4명 모두 ✅ → 승인 → Phase 4 진행
+- 1명 이상 ⚠️ → 조건부 승인 → 우려 해결 후 Phase 4 진행
+- 1명 이상 ❌ → 반려 → 계획 재검토 (최대 2회)
+- 재검토 2회 초과 → 사용자 에스컬레이션
+
+에이전트 응답 실패 시:
+- 3명 이상 응답 완료 → 유효한 검증
+- 2명 이하 응답 → 재시도 또는 사용자 에스컬레이션
+
+피드백 형식:
+[Plan Validation 결과]
+- Plan Architect: ✅/⚠️/❌ - {사유}
+- Plan Stability: ✅/⚠️/❌ - {사유}
+- Plan UX: ✅/⚠️/❌ - {사유}
+- Plan Devil's Advocate: ✅/⚠️/❌ - {사유}
+최종 판정: ✅/⚠️/❌
 ```
 
 ### High-Player (opus)
@@ -569,6 +730,16 @@ Auto-Block 조건:
 - < 0.50 → ❌ Block
 ```
 
+#### 에이전트 응답 실패 시
+
+```
+응답 수 기준:
+- 3명 이상 응답 완료 → 유효한 리뷰 (응답한 에이전트의 가중치만으로 계산)
+  예: Security(4) + Quality(3) + TDD(4) 응답 → weighted_score = (4×S + 3×Q + 4×T) / 11
+- 2명 이하 응답 → 재시도 1회
+- 재시도 후에도 2명 이하 응답 → 사용자 에스컬레이션
+```
+
 #### Rework Loop (Block 시)
 
 ```
@@ -660,7 +831,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 ### 트리거
 
 - Conflict-Checker: 충돌 감지
-- Code-Reviewer: Block 판정
+- Code-Review Team: Block 판정
 
 ### 프로세스
 

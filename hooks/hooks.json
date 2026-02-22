@@ -55,7 +55,10 @@
     "SubagentStop": [
       {
         "matcher": "",
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/agent-logger.sh subagent-stop"}]
+        "hooks": [
+          {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/agent-logger.sh subagent-stop"},
+          {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/tdd-post-check.sh"}
+        ]
       }
     ],
     "Stop": [

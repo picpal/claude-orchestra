@@ -1,13 +1,13 @@
 # Claude Orchestra 🎼
 
-16개 전문 에이전트 기반 TDD 개발 오케스트레이션 시스템
+20개 전문 에이전트 기반 TDD 개발 오케스트레이션 시스템
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Claude Code](https://img.shields.io/badge/Claude-Code-blue)](https://claude.com/claude-code)
 
 ## 개요
 
-Claude Orchestra는 16개의 전문 에이전트(11개 기본 + 5개 Code-Review Team)가 계층 구조로 협력하여 TDD(Test-Driven Development) 기반의 고품질 코드를 생성하는 오케스트레이션 시스템입니다.
+Claude Orchestra는 20개의 전문 에이전트(11개 기본 + 5개 Code-Review Team + 4개 Plan Validation Team)가 계층 구조로 협력하여 TDD(Test-Driven Development) 기반의 고품질 코드를 생성하는 오케스트레이션 시스템입니다.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -95,7 +95,7 @@ cd claude-orchestra
 ### 🤝 Agent Teams 품질 게이트
 - **Phase 2a: Plan Validation Team** - 구현 전 계획 검증 (4명 병렬)
   - Architect (구조 호환) + Stability (리스크) + UX (사용성) + Devil's Advocate (반론)
-- 가중치 점수 기반 승인/조건부/반려 판정
+- 단순 집계 기반 승인/조건부/반려 판정
 
 ---
 
@@ -180,7 +180,7 @@ cp -r rules/*.md /path/to/your/project/.claude/rules/
 
 | 카테고리 | 개수 | 경로 | 설명 |
 |----------|------|------|------|
-| **Agents** | 16 | `agents/` | AI 에이전트 정의 (11 기본 + 5 Code-Review Team) |
+| **Agents** | 20 | `agents/` | AI 에이전트 정의 (11 기본 + 5 Code-Review + 4 Plan Validation) |
 | **Commands** | 12 | `commands/` | 슬래시 명령어 |
 | **Skills** | 3 | `skills/` | 컨텍스트 스킬 (dev, research, review) |
 | **Hooks** | 20 | `hooks/` | 자동화 훅 스크립트 + `hooks.json` |
@@ -290,7 +290,7 @@ Claude Code는 **프로젝트 디렉토리의 `.claude/rules/`만 규칙으로 �
 
 ```
 claude-orchestra/               # 플러그인 루트
-├── agents/                     # 16개 에이전트 (11 기본 + 5 Code-Review Team)
+├── agents/                     # 20개 에이전트 (11 기본 + 5 Code-Review + 4 Plan Validation)
 │   ├── maestro.md              # Main Agent (= Claude Code)
 │   ├── interviewer.md          # 요구사항 인터뷰
 │   ├── planner.md              # TODO 분석
@@ -306,7 +306,11 @@ claude-orchestra/               # 플러그인 루트
 │   ├── quality-inspector.md    # 품질 리뷰 (Code-Review Team)
 │   ├── performance-analyst.md  # 성능 리뷰 (Code-Review Team)
 │   ├── standards-keeper.md     # 표준 리뷰 (Code-Review Team)
-│   └── tdd-enforcer.md         # TDD 리뷰 (Code-Review Team)
+│   ├── tdd-enforcer.md         # TDD 리뷰 (Code-Review Team)
+│   ├── plan-architect.md       # 구조 호환성 (Plan Validation Team)
+│   ├── plan-stability.md       # 안정성 분석 (Plan Validation Team)
+│   ├── plan-ux.md              # 사용성 검토 (Plan Validation Team)
+│   └── plan-devils-advocate.md # 반론 제기 (Plan Validation Team)
 ├── commands/                   # 12개 슬래시 명령어
 │   ├── tuning.md
 │   ├── start-work.md
