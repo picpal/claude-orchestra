@@ -38,8 +38,8 @@ for t in teammates:
 # 모든 팀원이 idle 또는 completed인지 확인
 all_done = all(t.get('status') in ['idle', 'completed'] for t in teammates)
 
-if all_done and len(teammates) >= 4:
-    # 모든 Plan Validation Team 팀원이 완료됨
+if all_done and len(teammates) >= 2:
+    # 모든 팀원이 완료됨 (Plan Validation, Code-Review, Execution 등)
     teams['allCompleted'] = True
     teams['completedAt'] = '$TIMESTAMP'
     print('TEAM_ALL_COMPLETED')

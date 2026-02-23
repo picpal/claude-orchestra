@@ -73,7 +73,17 @@ AGENT_STACK_FILE="$ORCHESTRA_LOG_DIR/.agent-stack"
 
 get_current_agent_type() {
   if [ -f "$AGENT_STACK_FILE" ]; then
-    tail -1 "$AGENT_STACK_FILE" 2>/dev/null | cut -d'|' -f2
+    local agent_type
+    agent_type=$(tail -1 "$AGENT_STACK_FILE" 2>/dev/null | cut -d'|' -f2)
+    if [ -n "$agent_type" ]; then
+      echo "$agent_type"
+      return
+    fi
+  fi
+  # Agent Teams 팀원 fallback
+  if [ -n "${TEAMMATE_ROLE:-}" ]; then
+    echo "$TEAMMATE_ROLE"
+    return
   fi
 }
 

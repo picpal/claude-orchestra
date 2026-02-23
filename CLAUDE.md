@@ -118,7 +118,7 @@
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  ⚙️ Phase 3-5: 분석 → 구현 → 충돌 검사                       │
+│  ⚙️ Phase 3-5: 분석 → 구현 (Agent Team) → 충돌 검사            │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -405,6 +405,9 @@ Maestro가 3개 Task를 한 메시지에서 병렬 호출:
 - **High-Player** (Opus): 복잡한 작업 실행
 - **Low-Player** (Sonnet): 간단한 작업 실행
 
+> **Agent Team 모드**: Level의 TODO가 2개 이상이면 TeamCreate + tmux로
+> Player 팀을 구성하여 병렬 실행합니다. 충돌은 Phase 5 Conflict-Checker가 감지합니다.
+
 ### Verification Layer (Subagents)
 - **Conflict-Checker** (Sonnet): 병렬 실행 후 충돌 감지 → Rework Loop 트리거
 
@@ -463,6 +466,8 @@ Maestro가 3개 Task를 한 메시지에서 병렬 호출:
 
 ```
 Phase 4: Level별 Execution 완료
+    │ TODO >= 2: Agent Team (TeamCreate + tmux)
+    │ TODO = 1: 단일 Task 호출
     │
     ▼
 Phase 5: Conflict Check (조건부 - Skip 가능)

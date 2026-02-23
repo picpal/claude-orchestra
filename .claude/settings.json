@@ -136,7 +136,7 @@
     "enabled": true,
     "maxTeammates": 5,
     "teammateMode": "tmux",
-    "useCase": "plan-validation,code-review",
+    "useCase": "plan-validation,code-review,execution",
     "qualityGates": {
       "unanimousApproval": false,
       "weightedScoring": true,
@@ -187,6 +187,12 @@
         "approved": 0.80,
         "warning": 0.50
       }
+    },
+    "executionTeam": {
+      "enabled": true,
+      "minTodosForTeam": 2,
+      "maxTeammates": 5,
+      "teamNamePattern": "exec-level-{level}-{plan}"
     }
   }
 }

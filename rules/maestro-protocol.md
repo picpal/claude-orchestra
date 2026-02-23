@@ -130,9 +130,9 @@ Phase 4: Execution (Level별 실행)
     ┌────────────────────────────────────────────────┐
     │ for each Level in Planner.executionLevels:     │
     │   if level.todoCount >= 2:                     │
-    │     → 병렬 호출 (한 메시지에 다중 Task)         │
+    │     → Agent Team 실행 (TeamCreate + Spawn)     │
     │   else:                                        │
-    │     → 단일 호출                                │
+    │     → 단일 Task 호출 (기존 방식)               │
     │   (다음 Level로 진행)                          │
     └────────────────────────────────────────────────┘
     ↓ 모든 Level 완료 후
@@ -461,6 +461,54 @@ Task(
 {Planner가 생성한 6-Section 프롬프트}
 """
 )
+```
+
+### Agent Team Execution (Phase 4 - Level todoCount >= 2)
+
+> FILE_LOCK 프로토콜 미사용. 충돌은 Phase 5 Conflict-Checker가 사후 감지.
+> Planner의 File Conflict Map으로 충돌 가능성이 낮은 TODO만 같은 Level에 배치.
+
+#### Step 1: Team 생성
+
+```
+TeamCreate(team_name: "exec-level-{N}-{planName}")
+```
+
+#### Step 2: Task 생성
+
+```
+각 TODO에 대해 TaskCreate(subject, description: 6-Section 프롬프트)
+```
+
+#### Step 3: 팀원 Spawn + 할당
+
+```
+각 TODO에 적합한 Player를 team_name 지정하여 Spawn:
+- High-Player → model: "opus", subagent_type: "general-purpose"
+- Low-Player → model: "sonnet", subagent_type: "general-purpose"
+TaskUpdate(owner: "player-{n}")
+```
+
+#### Step 4: 완료 대기
+
+```
+TaskList로 모든 Task completed 확인
+팀원 idle 시 메시지 확인 후 필요시 안내
+```
+
+#### Step 5: Team 해제
+
+```
+각 팀원에게 shutdown_request → TeamDelete() → 다음 Level
+```
+
+#### 진행 상황 표시
+
+```
+[Maestro] Execution Team 실행 중 (Level {N})...
+├─ player-1 (High-Player): {TODO-ID} ⏳
+├─ player-2 (Low-Player): {TODO-ID} ⏳
+└─ player-3 (Low-Player): {TODO-ID} ⏳
 ```
 
 ### Research Team (Phase 1 병렬 실행)
