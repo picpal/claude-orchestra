@@ -21,10 +21,17 @@
         ]
       },
       {
+        "matcher": "Bash",
+        "hooks": [
+          {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/verify-before-commit.sh"}
+        ]
+      },
+      {
         "matcher": "Task",
         "hooks": [
           {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/agent-logger.sh pre"},
-          {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/phase-gate.sh"}
+          {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/phase-gate.sh"},
+          {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/execution-parallel-check.sh"}
         ]
       }
     ],

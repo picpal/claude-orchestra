@@ -148,6 +148,12 @@ mkdir -p .orchestra/plans .orchestra/journal .orchestra/logs .orchestra/mcp-conf
     "patternsExtracted": 0,
     "lastLearningRun": null
   },
+  "planningPhase": {
+    "interviewerCompleted": false,
+    "planValidationApproved": false,
+    "plannerCompleted": false
+  },
+  "codeReviewCompleted": false,
   "workflowStatus": {
     "journalWritten": false,
     "lastJournalPath": null,

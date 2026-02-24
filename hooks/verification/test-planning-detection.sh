@@ -15,10 +15,10 @@ init_state() {
 {
   "planningPhase": {
     "interviewerCompleted": false,
-    "planCheckerCompleted": false,
-    "planReviewerApproved": false,
+    "planValidationApproved": false,
     "plannerCompleted": false
-  }
+  },
+  "codeReviewCompleted": false
 }
 EOF
 }

@@ -120,7 +120,25 @@ TODO 완료 → Verification Loop → PR Ready → Git Commit
 └── verification-summary.json
 ```
 
+## Auto-Trigger: Code-Review Team
+
+Verification 통과 (PR Ready = YES) 시:
+1. `/code-review` 자동 실행 (5명 병렬)
+2. Approved → 커밋 진행
+3. Block → Rework Loop (최대 3회)
+
+```
+Verification 통과
+    ↓
+Code-Review Team (5명 병렬 호출)
+    ↓
+├─ Approved → Phase 7 (Commit + Journal)
+├─ Warning → 경고 기록 후 Phase 7
+└─ Block → Rework Loop → 재검증 → 재리뷰
+```
+
 ## 관련 명령어
 
+- `/code-review` - 코드 리뷰 실행 (별도 실행)
 - `/status` - 마지막 검증 결과 확인
 - `/tdd-cycle` - TDD 사이클 안내

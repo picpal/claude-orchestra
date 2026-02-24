@@ -92,10 +92,11 @@ cd claude-orchestra
 - 가중치 기반 점수 계산 (총 15점)
 - Block 시 Rework Loop → 재검증 → 재리뷰
 
-### 🤝 Agent Teams 품질 게이트
-- **Phase 2a: Plan Validation Team** - 구현 전 계획 검증 (4명 병렬)
+### 🤝 품질 게이트
+- **Phase 2a: Plan Validation Team** - 구현 전 계획 검증 (4명 병렬 Task 호출)
   - Architect (구조 호환) + Stability (리스크) + UX (사용성) + Devil's Advocate (반론)
 - 단순 집계 기반 승인/조건부/반려 판정
+- **Phase 4: 병렬 실행** - Level 내 TODO 2개+ 시 한 메시지에 여러 Task 병렬 호출
 
 ---
 
@@ -184,7 +185,7 @@ cp -r rules/*.md /path/to/your/project/.claude/rules/
 | **Commands** | 12 | `commands/` | 슬래시 명령어 |
 | **Skills** | 3 | `skills/` | 컨텍스트 스킬 (dev, research, review) |
 | **Hooks** | 20 | `hooks/` | 자동화 훅 스크립트 + `hooks.json` |
-| **Rules** | 7 | `rules/` | 코드 규칙 (`/tuning` 시 프로젝트에 복사) |
+| **Rules** | 7 | `rules/` | 코드 규칙 + 호출 패턴 (`/tuning` 시 프로젝트에 복사) |
 | **Settings** | 1 | `.claude/settings.json` | 에이전트/권한 설정 |
 | **Orchestra** | 2+ | `.orchestra/` | 상태 관리 파일 (`/tuning` 시 생성) |
 
@@ -192,7 +193,7 @@ cp -r rules/*.md /path/to/your/project/.claude/rules/
 
 | 변수 | 설명 | 기본값 |
 |------|------|--------|
-| `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` | Agent Teams 기능 활성화 | `1` (활성화) |
+| `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` | Agent Teams 기능 (레거시, 비활성화 예정) | `1` |
 
 ### /tuning이 파일을 복사하는 이유
 
@@ -281,6 +282,10 @@ Claude Code는 **프로젝트 디렉토리의 `.claude/rules/`만 규칙으로 �
 | **Performance Analyst** | Haiku | 성능 이슈 분석 (w=2) |
 | **Standards Keeper** | Haiku | 표준 준수 검토 (w=2) |
 | **TDD Enforcer** | Sonnet | TDD 검증 (w=4, Auto-Block) |
+| **Plan Architect** | Sonnet | 구조 호환성 검증 (Plan Validation Team) |
+| **Plan Stability** | Sonnet | 리스크 분석 (Plan Validation Team) |
+| **Plan UX** | Sonnet | 사용성 검토 (Plan Validation Team) |
+| **Plan Devil's Advocate** | Sonnet | 반론 제기 (Plan Validation Team) |
 
 ---
 
@@ -301,7 +306,7 @@ claude-orchestra/               # 플러그인 루트
 │   ├── log-analyst.md          # 로그 분석
 │   ├── high-player.md          # 복잡 작업 실행
 │   ├── low-player.md           # 간단 작업 실행
-│   ├── conflict-checker.md     # 충돌 감지
+│   ├── conflict-checker.md     # 충돌 감지  (code-reviewer.md는 폐기/삭제됨)
 │   ├── security-guardian.md    # 보안 리뷰 (Code-Review Team)
 │   ├── quality-inspector.md    # 품질 리뷰 (Code-Review Team)
 │   ├── performance-analyst.md  # 성능 리뷰 (Code-Review Team)
@@ -316,6 +321,7 @@ claude-orchestra/               # 플러그인 루트
 │   ├── start-work.md
 │   ├── verify.md
 │   ├── code-review.md
+│   ├── execute-plan.md         # 계획 실행 (Phase 4-7)
 │   └── ...
 ├── skills/                     # 3개 컨텍스트 스킬
 │   ├── context-dev/SKILL.md
@@ -346,14 +352,14 @@ claude-orchestra/               # 플러그인 루트
 │   ├── verification/           # 6단계 검증 스크립트
 │   ├── learning/               # 패턴 학습 시스템
 │   └── compact/                # 컨텍스트 압축
-├── rules/                      # 7개 코드 규칙 (/tuning 시 프로젝트에 복사)
-│   ├── maestro-protocol.md
+├── rules/                      # 코드 규칙 (/tuning 시 프로젝트에 복사)
+│   ├── maestro-protocol.md     # Compact Protocol (~250줄)
+│   ├── call-templates.md       # 에이전트 호출 패턴 (참조용)
 │   ├── security.md
 │   ├── testing.md
 │   ├── coding-style.md
 │   ├── git-workflow.md
-│   ├── performance.md
-│   └── agent-rules.md
+│   └── performance.md
 ├── contexts/                   # (호환용) 컨텍스트 파일
 ├── .claude/
 │   ├── settings.json           # 에이전트/권한 설정

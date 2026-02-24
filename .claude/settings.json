@@ -189,10 +189,8 @@
       }
     },
     "executionTeam": {
-      "enabled": true,
-      "minTodosForTeam": 2,
-      "maxTeammates": 5,
-      "teamNamePattern": "exec-level-{level}-{plan}"
+      "enabled": false,
+      "note": "Replaced by parallel Task calls. See maestro-protocol.md Phase 4."
     }
   }
 }

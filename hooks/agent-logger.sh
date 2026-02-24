@@ -115,11 +115,11 @@ try:
         d = json.load(f)
     d['planningPhase'] = {
         'interviewerCompleted': False,
-        'planCheckerCompleted': False,
-        'planReviewerCompleted': False,
+        'planValidationApproved': False,
         'plannerCompleted': False,
         'resetAt': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
     }
+    d['codeReviewCompleted'] = False
     with open(state_file, 'w') as f:
         json.dump(d, f, indent=2, ensure_ascii=False)
 except Exception:
@@ -134,16 +134,63 @@ detect_planning_agent() {
 
   case "$desc_lower" in
     interviewer:*) update_planning_flag "interviewerCompleted" ;;
-    plan-checker:*|*plan.checker*) update_planning_flag "planCheckerCompleted" ;;
-    plan-reviewer:*|*plan.reviewer*) update_planning_flag "planReviewerCompleted" ;;
     planner:*|*planner\ 에이전트*|*planner:\ todo*)
-      # Exclude plan-checker, plan-reviewer
+      # Exclude plan-related agents that are not the Planner
       case "$desc_lower" in
-        *plan-checker*|*plan-reviewer*) ;;
+        *plan\ architect*|*plan\ stability*|*plan\ ux*|*plan\ devil*) ;;
         *) update_planning_flag "plannerCompleted" ;;
       esac
       ;;
+    # Code-Review Team completion tracking
+    *security\ guardian*|*quality\ inspector*|*performance\ analyst*|*standards\ keeper*|*tdd\ enforcer*)
+      track_code_review_completion "$desc_lower"
+      ;;
   esac
+}
+
+# Track Code-Review Team member completions
+# When 3+ of 5 members complete, set codeReviewCompleted = true
+CR_TRACKER_FILE="$ORCHESTRA_LOG_DIR/.cr-tracker"
+
+track_code_review_completion() {
+  local desc_lower="$1"
+  local member=""
+
+  case "$desc_lower" in
+    *security\ guardian*) member="security-guardian" ;;
+    *quality\ inspector*) member="quality-inspector" ;;
+    *performance\ analyst*) member="performance-analyst" ;;
+    *standards\ keeper*) member="standards-keeper" ;;
+    *tdd\ enforcer*) member="tdd-enforcer" ;;
+  esac
+
+  [ -z "$member" ] && return
+
+  # Append member to tracker file (one per line)
+  echo "$member" >> "$CR_TRACKER_FILE"
+
+  # Count unique completed members
+  local count
+  count=$(sort -u "$CR_TRACKER_FILE" 2>/dev/null | wc -l | tr -d ' ')
+
+  # If 3+ members completed, set codeReviewCompleted = true
+  if [ "${count:-0}" -ge 3 ]; then
+    local state_file="$ORCHESTRA_STATE_FILE"
+    [ -f "$state_file" ] || return
+
+    python3 -c "
+import json, sys
+state_file = sys.argv[1]
+try:
+    with open(state_file, 'r') as f:
+        d = json.load(f)
+    d['codeReviewCompleted'] = True
+    with open(state_file, 'w') as f:
+        json.dump(d, f, indent=2, ensure_ascii=False)
+except Exception:
+    pass
+" "$state_file" 2>/dev/null || true
+  fi
 }
 
 extract_agent_name() {
@@ -156,10 +203,16 @@ extract_agent_name() {
     high-player:*|*high\ player*) echo "high-player" ;;
     low-player:*|*low\ player*) echo "low-player" ;;
     interviewer:*) echo "interviewer" ;;
-    plan-checker:*) echo "plan-checker" ;;
-    plan-reviewer:*) echo "plan-reviewer" ;;
     conflict-checker:*|*conflict.checker*) echo "conflict-checker" ;;
-    code-reviewer:*|*code.reviewer*) echo "code-reviewer" ;;
+    *security\ guardian*) echo "security-guardian" ;;
+    *quality\ inspector*) echo "quality-inspector" ;;
+    *performance\ analyst*) echo "performance-analyst" ;;
+    *standards\ keeper*) echo "standards-keeper" ;;
+    *tdd\ enforcer*) echo "tdd-enforcer" ;;
+    *plan\ architect*) echo "plan-architect" ;;
+    *plan\ stability*) echo "plan-stability" ;;
+    *plan\ ux*) echo "plan-ux" ;;
+    *plan\ devil*) echo "plan-devils-advocate" ;;
     *) echo "${2:-unknown}" ;;
   esac
 }
@@ -195,9 +248,10 @@ case "$MODE" in
     push_agent_stack "$AGENT_ID" "$ACTUAL_AGENT" "$DESCRIPTION"
     log_activity "AGENT_START" "$ACTUAL_AGENT" "id=$AGENT_ID $DESCRIPTION"
 
-    # Reset planning phase when new interview starts
+    # Reset planning phase and CR tracker when new interview starts
     if [ "$ACTUAL_AGENT" = "interviewer" ]; then
       reset_planning_phase
+      rm -f "$CR_TRACKER_FILE" 2>/dev/null || true
     fi
     ;;
 

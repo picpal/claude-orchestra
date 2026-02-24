@@ -4,7 +4,16 @@
 
 ## 실행 절차
 
-### 0. Orchestra 초기화 (최초 실행 시)
+### 0. Protocol Context Loading (CRITICAL)
+
+1. Read `.claude/rules/maestro-protocol.md` (또는 `rules/maestro-protocol.md`)
+2. Read `.claude/rules/call-templates.md` (또는 `rules/call-templates.md`)
+3. 이 세션의 모든 후속 요청에 Intent 분류 적용
+4. OPEN-ENDED 요청 시 반드시 Phase 1-7 흐름 실행
+
+> 프로토콜을 로드하지 않으면 에이전트 호출 패턴을 따를 수 없습니다.
+
+### 0-1. Orchestra 초기화 (최초 실행 시)
 
 `.orchestra/` 디렉토리가 없으면 자동 생성합니다.
 
@@ -50,6 +59,12 @@ mkdir -p .orchestra/plans .orchestra/logs .orchestra/journal .orchestra/mcp-conf
     "patternsExtracted": 0,
     "lastLearningRun": null
   },
+  "planningPhase": {
+    "interviewerCompleted": false,
+    "planValidationApproved": false,
+    "plannerCompleted": false
+  },
+  "codeReviewCompleted": false,
   "workflowStatus": {
     "journalWritten": false,
     "lastJournalPath": null,
