@@ -182,9 +182,9 @@ cp -r rules/*.md /path/to/your/project/.claude/rules/
 | 카테고리 | 개수 | 경로 | 설명 |
 |----------|------|------|------|
 | **Agents** | 20 | `agents/` | AI 에이전트 정의 (11 기본 + 5 Code-Review + 4 Plan Validation) |
-| **Commands** | 12 | `commands/` | 슬래시 명령어 |
+| **Commands** | 13 | `commands/` | 슬래시 명령어 |
 | **Skills** | 3 | `skills/` | 컨텍스트 스킬 (dev, research, review) |
-| **Hooks** | 20 | `hooks/` | 자동화 훅 스크립트 + `hooks.json` |
+| **Hooks** | 22 | `hooks/` | 자동화 훅 스크립트 + `hooks.json` |
 | **Rules** | 7 | `rules/` | 코드 규칙 + 호출 패턴 (`/tuning` 시 프로젝트에 복사) |
 | **Settings** | 1 | `.claude/settings.json` | 에이전트/권한 설정 |
 | **Orchestra** | 2+ | `.orchestra/` | 상태 관리 파일 (`/tuning` 시 생성) |
@@ -240,6 +240,7 @@ Claude Code는 **프로젝트 디렉토리의 `.claude/rules/`만 규칙으로 �
 | `/learn` | 세션에서 패턴 학습 |
 | `/checkpoint` | 현재 상태 체크포인트 저장 |
 | `/context` | 컨텍스트 모드 전환 |
+| `/execute-plan` | 계획 실행 (Phase 4-7) |
 | `/e2e` | E2E 테스트 실행 |
 | `/refactor-clean` | 코드 리팩토링 (안전 모드) |
 
@@ -339,6 +340,8 @@ claude-orchestra/               # 플러그인 루트
 │   ├── change-logger.sh        # 파일 변경 로깅
 │   ├── team-logger.sh          # Agent Teams 활동 로깅
 │   ├── journal-tracker.sh      # 작업 일지 추적
+│   ├── verify-before-commit.sh # Code-Review 미완료 시 커밋 차단
+│   ├── execution-parallel-check.sh # 병렬 실행 경고
 │   ├── explorer-hint.sh        # 탐색 힌트 제공
 │   ├── find-root.sh            # 프로젝트 루트 탐색
 │   ├── run-hook.sh             # 훅 실행 유틸리티
