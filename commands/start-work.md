@@ -4,7 +4,16 @@
 
 ## 실행 절차
 
-### 0. Protocol Context Loading (CRITICAL)
+### 0. 컨텍스트 정리 안내
+
+이전 작업의 컨텍스트가 남아있을 수 있으므로 다음 안내를 먼저 출력합니다:
+
+```
+💡 이전 작업 컨텍스트가 남아있다면, /compact 실행 후 다시 /start-work를 권장합니다.
+   (컨텍스트 압축으로 토큰 절약 + 이전 맥락 요약 유지)
+```
+
+### 0-1. Protocol Context Loading (CRITICAL)
 
 1. Read `.claude/rules/maestro-protocol.md` (또는 `rules/maestro-protocol.md`)
 2. Read `.claude/rules/call-templates.md` (또는 `rules/call-templates.md`)
@@ -13,7 +22,7 @@
 
 > 프로토콜을 로드하지 않으면 에이전트 호출 패턴을 따를 수 없습니다.
 
-### 0-1. Orchestra 초기화 (최초 실행 시)
+### 0-2. Orchestra 초기화 (최초 실행 시)
 
 `.orchestra/` 디렉토리가 없으면 자동 생성합니다.
 
