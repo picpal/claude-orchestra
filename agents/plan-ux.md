@@ -21,7 +21,7 @@ description: |
 
 # Plan UX Agent
 
-## Team
+## Group
 Plan Validation Group (Phase 2a)
 
 ## Model

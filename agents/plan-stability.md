@@ -20,7 +20,7 @@ description: |
 
 # Plan Stability Agent
 
-## Team
+## Group
 Plan Validation Group (Phase 2a)
 
 ## Model

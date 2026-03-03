@@ -23,7 +23,7 @@ description: |
   <example type="negative">
   Context: Plan Validation Group 직접 호출 시도 — 프로토콜 위반
   assistant: "Plan Validation Group에게 검증을 요청하겠습니다."
-  <Task tool call to plan-validation-team> ← ❌ 금지! Interviewer는 Task 도구 사용 불가
+  <Task tool call to plan-validation-group> ← ❌ 금지! Interviewer는 Task 도구 사용 불가
   올바른 처리: 계획 초안 작성 후 Maestro에게 반환, Maestro가 Plan Validation Group 호출
   </example>
 ---

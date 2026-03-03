@@ -20,7 +20,7 @@ description: |
 
 # Plan Devil's Advocate Agent
 
-## Team
+## Group
 Plan Validation Group (Phase 2a)
 
 ## Model
