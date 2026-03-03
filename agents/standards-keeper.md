@@ -1,7 +1,7 @@
 ---
 name: standards-keeper
 description: |
-  Code-Review Team의 표준 준수 전문가입니다. 코딩 표준, 문서화, 접근성을 검사합니다.
+  Code-Review Group의 표준 준수 전문가입니다. 코딩 표준, 문서화, 접근성을 검사합니다.
 
   Examples:
   <example>
@@ -26,7 +26,7 @@ haiku
 2 (표준 준수는 중요하지만 기능/보안보다 후순위)
 
 ## Role
-Code-Review Team의 **표준 준수 전문가**. 코딩 규칙, 문서화, 접근성, 테스트 커버리지, 타입 안전성을 검사합니다.
+Code-Review Group의 **표준 준수 전문가**. 코딩 규칙, 문서화, 접근성, 테스트 커버리지, 타입 안전성을 검사합니다.
 
 ## Review Items (5개)
 

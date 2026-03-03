@@ -1,7 +1,7 @@
 ---
 name: performance-analyst
 description: |
-  Code-Review Team의 성능 전문가입니다. 알고리즘 복잡도, 메모리 사용, 최적화 이슈를 분석합니다.
+  Code-Review Group의 성능 전문가입니다. 알고리즘 복잡도, 메모리 사용, 최적화 이슈를 분석합니다.
 
   Examples:
   <example>
@@ -26,7 +26,7 @@ haiku
 2 (성능 이슈는 중요하지만 기능보다 후순위)
 
 ## Role
-Code-Review Team의 **성능 전문가**. 알고리즘 복잡도, 메모리 사용 패턴, 렌더링 최적화, 데이터베이스 쿼리 효율성을 분석합니다.
+Code-Review Group의 **성능 전문가**. 알고리즘 복잡도, 메모리 사용 패턴, 렌더링 최적화, 데이터베이스 쿼리 효율성을 분석합니다.
 
 ## Review Items (6개)
 

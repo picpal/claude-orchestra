@@ -65,9 +65,9 @@ except Exception:
 " "$STATE_FILE" 2>/dev/null)
 
 if [ "$CR_COMPLETED" != "true" ]; then
-  echo "⛔ [verify-before-commit] Code-Review Team 실행이 필요합니다."
+  echo "⛔ [verify-before-commit] Code-Review Group 실행이 필요합니다."
   echo "   /code-review 또는 /verify 명령어를 먼저 실행하세요."
-  echo "   (Verification 통과 후 Code-Review Team 5명 병렬 실행 필요)"
+  echo "   (Verification 통과 후 Code-Review Group 5명 병렬 실행 필요)"
   echo ""
   echo "   비코드 파일만 커밋하려면 .md/.json 파일만 스테이징하세요."
   exit 1

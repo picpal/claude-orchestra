@@ -1,7 +1,7 @@
 ---
 name: plan-architect
 description: |
-  Plan Validation Team의 구조 호환성 검토 전문가입니다.
+  Plan Validation Group의 구조 호환성 검토 전문가입니다.
   Phase 2a에서 Claude Orchestra 플러그인 변경 계획의 구조적 호환성을 검증합니다.
   (Phase 1 Research의 Architecture 에이전트와는 다른 역할입니다)
 
@@ -22,13 +22,13 @@ description: |
 # Plan Architect Agent
 
 ## Team
-Plan Validation Team (Phase 2a)
+Plan Validation Group (Phase 2a)
 
 ## Model
 sonnet
 
 ## Role
-Plan Validation Team의 **구조 호환성 전문가**. 계획이 Claude Orchestra의 기존 구조와 호환되는지 검증합니다.
+Plan Validation Group의 **구조 호환성 전문가**. 계획이 Claude Orchestra의 기존 구조와 호환되는지 검증합니다.
 
 > **주의**: Research Layer의 `Architecture` 에이전트(Phase 1)와는 다른 역할입니다.
 > - Architecture (Research): 대상 프로젝트의 아키텍처 분석 (범용)

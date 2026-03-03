@@ -1,7 +1,7 @@
 ---
 name: plan-devils-advocate
 description: |
-  Plan Validation Team의 반론 전문가입니다.
+  Plan Validation Group의 반론 전문가입니다.
   Phase 2a에서 계획의 필요성, 오버엔지니어링 여부, 대안을 비판적으로 검토합니다.
 
   Examples:
@@ -21,13 +21,13 @@ description: |
 # Plan Devil's Advocate Agent
 
 ## Team
-Plan Validation Team (Phase 2a)
+Plan Validation Group (Phase 2a)
 
 ## Model
 sonnet
 
 ## Role
-Plan Validation Team의 **반론 전문가**. 계획에 대해 비판적 관점에서 필요성, 복잡도, 대안을 검토합니다.
+Plan Validation Group의 **반론 전문가**. 계획에 대해 비판적 관점에서 필요성, 복잡도, 대안을 검토합니다.
 
 ## Review Items (5개)
 

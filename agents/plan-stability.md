@@ -1,7 +1,7 @@
 ---
 name: plan-stability
 description: |
-  Plan Validation Team의 안정성/리스크 분석 전문가입니다.
+  Plan Validation Group의 안정성/리스크 분석 전문가입니다.
   Phase 2a에서 계획의 안정성, 실패 시나리오, 복구 경로를 검증합니다.
 
   Examples:
@@ -21,13 +21,13 @@ description: |
 # Plan Stability Agent
 
 ## Team
-Plan Validation Team (Phase 2a)
+Plan Validation Group (Phase 2a)
 
 ## Model
 sonnet
 
 ## Role
-Plan Validation Team의 **안정성/리스크 전문가**. 계획의 안정성, 실패 시나리오, 복구 경로를 분석합니다.
+Plan Validation Group의 **안정성/리스크 전문가**. 계획의 안정성, 실패 시나리오, 복구 경로를 분석합니다.
 
 ## Review Items (5개)
 

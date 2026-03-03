@@ -120,7 +120,7 @@ TODO 완료 → Verification Loop → PR Ready → Git Commit
 └── verification-summary.json
 ```
 
-## Auto-Trigger: Code-Review Team
+## Auto-Trigger: Code-Review Group
 
 Verification 통과 (PR Ready = YES) 시:
 1. `/code-review` 자동 실행 (5명 병렬)
@@ -130,7 +130,7 @@ Verification 통과 (PR Ready = YES) 시:
 ```
 Verification 통과
     ↓
-Code-Review Team (5명 병렬 호출)
+Code-Review Group (5명 병렬 호출)
     ↓
 ├─ Approved → Phase 7 (Commit + Journal)
 ├─ Warning → 경고 기록 후 Phase 7

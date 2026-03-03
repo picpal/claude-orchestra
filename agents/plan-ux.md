@@ -1,7 +1,7 @@
 ---
 name: plan-ux
 description: |
-  Plan Validation Team의 UX/사용성 검토 전문가입니다.
+  Plan Validation Group의 UX/사용성 검토 전문가입니다.
   Phase 2a에서 계획이 사용자 경험(설정 복잡도, 학습 곡선, 에러 메시지)에
   미치는 영향을 검증합니다.
 
@@ -22,13 +22,13 @@ description: |
 # Plan UX Agent
 
 ## Team
-Plan Validation Team (Phase 2a)
+Plan Validation Group (Phase 2a)
 
 ## Model
 sonnet
 
 ## Role
-Plan Validation Team의 **UX/사용성 전문가**. 계획이 사용자 경험에 미치는 영향을 평가합니다.
+Plan Validation Group의 **UX/사용성 전문가**. 계획이 사용자 경험에 미치는 영향을 평가합니다.
 
 ## Review Items (5개)
 

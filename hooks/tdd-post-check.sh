@@ -1,6 +1,6 @@
 #!/bin/bash
-# tdd-post-check.sh - Agent Teams 작업 완료 후 TDD 준수 검증 + Conflict-Checker 리마인더
-# Hook: TeammateStop
+# tdd-post-check.sh - Agent Groups 작업 완료 후 TDD 준수 검증 + Conflict-Checker 리마인더
+# Hook: SubagentStop
 #
 # TDD 3-Layer Defense의 Verification Layer 역할:
 # - 테스트 삭제/스킵 감지
@@ -124,7 +124,7 @@ import sys
 try:
     with open(sys.argv[1], 'r') as f:
         d = json.load(f)
-    ats = d.get('agentTeamsStatus', {})
+    ats = d.get('agentGroupsStatus', {})
     teammates = ats.get('teammates', [])
     if len(teammates) >= 2:  # 2명 이상 병렬 실행
         all_completed = all(t.get('status') == 'completed' for t in teammates)

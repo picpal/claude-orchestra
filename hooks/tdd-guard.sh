@@ -80,7 +80,7 @@ get_current_agent_type() {
       return
     fi
   fi
-  # Agent Teams 팀원 fallback
+  # Agent Groups 팀원 fallback
   if [ -n "${TEAMMATE_ROLE:-}" ]; then
     echo "$TEAMMATE_ROLE"
     return
