@@ -1,7 +1,5 @@
 {
-  "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
-  },
+  "env": {},
   "mcpServers": {
     "context7": {
       "command": "npx",
@@ -132,10 +130,9 @@
     "model": "sonnet",
     "context": "dev"
   },
-  "agentTeams": {
+  "agentGroups": {
     "enabled": true,
-    "maxTeammates": 5,
-    "teammateMode": "tmux",
+    "maxAgents": 5,
     "useCase": "plan-validation,code-review,execution",
     "qualityGates": {
       "unanimousApproval": false,
@@ -147,7 +144,7 @@
         "devilsAdvocate": 2
       }
     },
-    "codeReviewTeam": {
+    "codeReviewGroup": {
       "enabled": true,
       "totalWeight": 15,
       "autoBlockConditions": ["security_critical", "test_deleted"],
@@ -188,7 +185,7 @@
         "warning": 0.50
       }
     },
-    "executionTeam": {
+    "executionGroup": {
       "enabled": false,
       "note": "Replaced by parallel Task calls. See maestro-protocol.md Phase 4."
     }

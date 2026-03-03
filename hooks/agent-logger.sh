@@ -141,14 +141,14 @@ detect_planning_agent() {
         *) update_planning_flag "plannerCompleted" ;;
       esac
       ;;
-    # Code-Review Team completion tracking
+    # Code-Review Group completion tracking
     *security\ guardian*|*quality\ inspector*|*performance\ analyst*|*standards\ keeper*|*tdd\ enforcer*)
       track_code_review_completion "$desc_lower"
       ;;
   esac
 }
 
-# Track Code-Review Team member completions
+# Track Code-Review Group member completions
 # When 3+ of 5 members complete, set codeReviewCompleted = true
 CR_TRACKER_FILE="$ORCHESTRA_LOG_DIR/.cr-tracker"
 

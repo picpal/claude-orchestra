@@ -24,7 +24,7 @@
 - 플러그인 설치 후 정상 동작 여부를 사용자가 확인
 - 여기서는 플러그인 코드만 수정하고 커밋
 
-## 🚨 플러그인 수정 시 필수: 계획 검증 (Plan Validation Team)
+## 🚨 플러그인 수정 시 필수: 계획 검증 (Plan Validation Group)
 
 > **이 프로젝트(claude-orchestra 플러그인)를 수정하는 모든 계획은 구현 전에 반드시 4명 검토팀의 병렬 검증을 거쳐야 합니다.**
 
@@ -110,7 +110,7 @@
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  🔍 Phase 2a: Plan Validation Team (계획 검증, 4명 병렬)     │
+│  🔍 Phase 2a: Plan Validation Group (계획 검증, 4명 병렬)     │
 │  ┌──────────┬──────────┬──────────┬──────────┐              │
 │  │Architect │Stability │ UX Expert│ Devil's  │              │
 │  └──────────┴──────────┴──────────┴──────────┘              │
@@ -126,7 +126,7 @@
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  🔍 Phase 6a-CR: Code-Review Team (5명 병렬)                 │
+│  🔍 Phase 6a-CR: Code-Review Group (5명 병렬)                 │
 │  ┌──────────┬──────────┬──────────┬──────────┬──────────┐   │
 │  │Security  │Quality   │Perform.  │Standards │  TDD     │   │
 │  │Guardian  │Inspector │Analyst   │Keeper    │Enforcer  │   │
@@ -145,7 +145,7 @@
 ## 시스템 개요
 
 20개 전문 에이전트가 협력하여 TDD 기반 개발을 수행합니다.
-(11개 기본 + 5개 Code-Review Team + 4개 Plan Validation Team)
+(11개 기본 + 5개 Code-Review Group + 4개 Plan Validation Group)
 **Claude Code가 Main Agent(Maestro)로서** 모든 에이전트를 직접 호출합니다.
 
 ### 핵심 구조: Claude Code = Maestro (Main Agent)
@@ -170,12 +170,12 @@
          ├── Task(Low-Player)       → 간단한 작업 실행
          ├── Task(Explorer)         → 코드베이스 탐색
          ├── Task(Conflict-Checker) → 충돌 검사
-         ├── Task(Plan Validation Team) → 계획 검증 (4명 병렬)
+         ├── Task(Plan Validation Group) → 계획 검증 (4명 병렬)
          │   ├── Plan Architect
          │   ├── Plan Stability
          │   ├── Plan UX
          │   └── Plan Devil's Advocate
-         ├── Task(Code-Review Team) → 코드 리뷰 (5명 병렬)
+         ├── Task(Code-Review Group) → 코드 리뷰 (5명 병렬)
          │   ├── Security Guardian
          │   ├── Quality Inspector
          │   ├── Performance Analyst
@@ -221,7 +221,7 @@
 
 ### 2. 계획 기반 개발
 - 모든 작업은 계획 문서로 시작 (`.orchestra/plans/`)
-- Plan Validation Team (4명 병렬): 계획 검증 (구조 호환, 리스크, 사용성, 반론)
+- Plan Validation Group (4명 병렬): 계획 검증 (구조 호환, 리스크, 사용성, 반론)
 
 ### 3. 검증 후 리뷰 후 커밋
 - 6-Stage Verification Loop 통과 필수
@@ -360,13 +360,13 @@ your-project/
 - **Image-Analyst** (Sonnet): 이미지 분석
 - **Log-Analyst** (Sonnet): 로그 분석, 오류 진단, 통계 생성
 
-### 🚀 Research Team (병렬 Task 호출)
+### 🚀 Research Group (병렬 Task 호출)
 
 복잡한 요구사항 분석 시 Research Layer 에이전트 3개를 **병렬로** 호출하여 컨텍스트를 빠르게 수집합니다.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  Research Team (Phase 1 병렬 실행)                           │
+│  Research Group (Phase 1 병렬 실행)                           │
 │  ┌──────────┬──────────┬──────────┐                         │
 │  │ Explorer │ Searcher │Architecture│                       │
 │  │ (haiku)  │ (sonnet) │  (opus)   │                        │
@@ -402,7 +402,7 @@ Maestro가 3개 Task를 한 메시지에서 병렬 호출:
 
 > 상세 호출 패턴: `rules/maestro-protocol.md` 참조
 
-### Validation Layer: Plan Validation Team (4명 병렬)
+### Validation Layer: Plan Validation Group (4명 병렬)
 
 > Phase 2a에서 계획 검증 시 병렬 실행. 모두 **읽기 전용**.
 
@@ -426,7 +426,7 @@ Maestro가 3개 Task를 한 메시지에서 병렬 호출:
 ### Verification Layer (Subagents)
 - **Conflict-Checker** (Sonnet): 병렬 실행 후 충돌 감지 → Rework Loop 트리거
 
-### Review Layer: Code-Review Team (5명 병렬)
+### Review Layer: Code-Review Group (5명 병렬)
 
 > **기존 Code-Reviewer는 폐기되었습니다. 5명 전문팀으로 대체.**
 
@@ -451,7 +451,7 @@ Maestro가 3개 Task를 한 메시지에서 병렬 호출:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  Code-Review Team (Phase 6a-CR 병렬 실행)                    │
+│  Code-Review Group (Phase 6a-CR 병렬 실행)                    │
 │  ┌──────────┬──────────┬──────────┬──────────┬──────────┐   │
 │  │Security  │Quality   │Perform.  │Standards │  TDD     │   │
 │  │Guardian  │Inspector │Analyst   │Keeper    │Enforcer  │   │
@@ -477,7 +477,7 @@ Maestro가 3개 Task를 한 메시지에서 병렬 호출:
 6. Diff Review         - 의도치 않은 변경 확인
 ```
 
-## Verification → Code-Review Team → Commit 흐름
+## Verification → Code-Review Group → Commit 흐름
 
 ```
 Phase 4: Level별 Execution 완료
@@ -492,7 +492,7 @@ Phase 5: Conflict Check (조건부 - Skip 가능)
 Phase 6: Verification (6-Stage) - 모든 Level 완료 후 1회
     │
     ▼
-Phase 6a-CR: Code-Review Team (5명 병렬)
+Phase 6a-CR: Code-Review Group (5명 병렬)
     │ ┌──────────┬──────────┬──────────┬──────────┬──────────┐
     │ │Security  │Quality   │Perform.  │Standards │  TDD     │
     │ │Guardian  │Inspector │Analyst   │Keeper    │Enforcer  │
@@ -510,13 +510,13 @@ Phase 7: Commit + Journal
 ### Rework Loop (Block 시)
 
 ```
-❌ Block 발생 (Code-Review Team)
+❌ Block 발생 (Code-Review Group)
     ↓
 Maestro: Block 사유 분석
     ↓
 Player 재호출 (원래 프롬프트 + 수정 컨텍스트)
     ↓
-Verification (Phase 6) → Code-Review Team (재실행)
+Verification (Phase 6) → Code-Review Group (재실행)
     ↓
 ├─ 해결됨 → Phase 7 (Commit)
 ├─ 미해결 + 시도 < 3 → Loop 반복

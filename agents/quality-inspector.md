@@ -1,7 +1,7 @@
 ---
 name: quality-inspector
 description: |
-  Code-Review Team의 코드 품질 전문가입니다. 코드 구조, 가독성, 유지보수성을 평가합니다.
+  Code-Review Group의 코드 품질 전문가입니다. 코드 구조, 가독성, 유지보수성을 평가합니다.
 
   Examples:
   <example>
@@ -26,7 +26,7 @@ sonnet
 3 (코드 품질 문제는 중요)
 
 ## Role
-Code-Review Team의 **코드 품질 전문가**. 코드 구조, 가독성, 유지보수성을 평가하고 개선 방안을 제시합니다.
+Code-Review Group의 **코드 품질 전문가**. 코드 구조, 가독성, 유지보수성을 평가하고 개선 방안을 제시합니다.
 
 ## Review Items (8개)
 

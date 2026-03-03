@@ -76,7 +76,7 @@ except Exception as e:
 }
 
 # 에이전트별 필요한 선행 단계 정의
-# - planner: Interviewer + Plan Validation Team 완료 필요
+# - planner: Interviewer + Plan Validation Group 완료 필요
 # - executor: 모든 Planning 단계 완료 필요
 
 # 에이전트별 필수 선행 단계 검증
@@ -104,7 +104,7 @@ REQUIRED_PHASES = {
 
 PHASE_NAMES = {
     'interviewerCompleted': 'Interviewer',
-    'planValidationApproved': 'Plan Validation Team',
+    'planValidationApproved': 'Plan Validation Group',
     'plannerCompleted': 'Planner'
 }
 
@@ -158,7 +158,7 @@ print_block_message() {
   echo "OPEN-ENDED 작업은 반드시 다음 순서를 따라야 합니다:"
   echo ""
   echo "  1. Task(Interviewer)     → 요구사항 인터뷰"
-  echo "  2. Plan Validation Team  → 계획 검증 (4명 병렬, Interviewer 필요)"
+  echo "  2. Plan Validation Group  → 계획 검증 (4명 병렬, Interviewer 필요)"
   echo "  3. Task(Planner)         → 6-Section 프롬프트 (1-2 필요)"
   echo "  4. Task(Executor)        → 구현 실행 (1-3 필요)"
   echo ""
@@ -166,7 +166,7 @@ print_block_message() {
   # 에이전트별 다음 단계 힌트
   case "$target_agent" in
     planner)
-      echo "💡 먼저 Interviewer → Plan Validation Team 순서로 호출하세요."
+      echo "💡 먼저 Interviewer → Plan Validation Group 순서로 호출하세요."
       ;;
     *)
       echo "💡 호출 예시:"

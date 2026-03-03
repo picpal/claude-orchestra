@@ -100,10 +100,10 @@ Executor 호출 시 `phase-gate.sh` Hook이 자동 검증:
 | 1 | Explorer, Searcher, Architecture, Image-Analyst, Log-Analyst | 없음 |
 | 2 Step 1 | Interviewer | OPEN-ENDED Intent |
 | 2 Step 2 | Planner | Interviewer 완료 |
-| 2a | Plan Validation Team (4명 병렬) | Planner 완료 |
+| 2a | Plan Validation Group (4명 병렬) | Planner 완료 |
 | 4 | High-Player, Low-Player | Plan Validation "Approved" 필수 |
 | 5 | Conflict-Checker | 병렬 실행 완료 |
-| 6a-CR | Code-Review Team (5명 병렬) | Verification 통과 |
+| 6a-CR | Code-Review Group (5명 병렬) | Verification 통과 |
 
 ---
 

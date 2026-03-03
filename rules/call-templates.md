@@ -131,7 +131,7 @@ Task(
 
 ---
 
-## Research Team (Phase 1 병렬 - 3개 동시 호출)
+## Research Group (Phase 1 병렬 - 3개 동시 호출)
 
 ```
 Task(
@@ -188,7 +188,7 @@ Task(
 
 ---
 
-## Plan Validation Team (Phase 2a 병렬 - 4개 동시 호출)
+## Plan Validation Group (Phase 2a 병렬 - 4개 동시 호출)
 
 > Orchestra 플러그인 수정 시 필수. 일반 프로젝트 작업에는 해당 없음.
 
@@ -298,7 +298,7 @@ Task(
 
 ---
 
-## Code-Review Team (Phase 6a-CR 병렬 - 5개 동시 호출)
+## Code-Review Group (Phase 6a-CR 병렬 - 5개 동시 호출)
 
 > Verification 6-Stage 통과 후에만 호출
 
@@ -519,7 +519,7 @@ Task(
 2. {구체적 제약사항}
 
 ### 권장 해결 방법
-{Conflict-Checker/Code-Review Team 제안}
+{Conflict-Checker/Code-Review Group 제안}
 ---
 위 제약사항을 준수하며 원래 작업 목표를 달성하세요.
 """
@@ -537,7 +537,7 @@ PLANNING: Interviewer | Planner
 RESEARCH: Architecture | Searcher | Explorer | Image-Analyst | Log-Analyst
 EXECUTION: High-Player | Low-Player
 VERIFICATION: Conflict-Checker
-REVIEW: Code-Review Team (5명) | Plan Validation Team (4명)
+REVIEW: Code-Review Group (5명) | Plan Validation Group (4명)
 ```
 
 ### 위임 형식 (6-Section 프롬프트)

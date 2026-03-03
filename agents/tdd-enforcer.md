@@ -1,7 +1,7 @@
 ---
 name: tdd-enforcer
 description: |
-  Code-Review Team의 TDD 전문가입니다. TDD 순서 준수, 테스트 품질, 커버리지를 검증합니다.
+  Code-Review Group의 TDD 전문가입니다. TDD 순서 준수, 테스트 품질, 커버리지를 검증합니다.
   테스트 삭제 감지 시 자동 Block 권한을 가집니다.
 
   Examples:
@@ -27,7 +27,7 @@ sonnet
 4 (TDD 위반은 프로젝트 원칙 위반)
 
 ## Role
-Code-Review Team의 **TDD 전문가**. TDD 순서 준수, 테스트 품질, 커버리지 변화를 검증합니다.
+Code-Review Group의 **TDD 전문가**. TDD 순서 준수, 테스트 품질, 커버리지 변화를 검증합니다.
 
 ## Auto-Block Condition
 **테스트 삭제 감지 시 자동 Block** - 다른 팀원 판정과 무관하게 Block 처리

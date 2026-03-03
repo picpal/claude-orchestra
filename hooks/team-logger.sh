@@ -1,6 +1,6 @@
 #!/bin/bash
-# team-logger.sh - Agent Teams 활동 로깅
-# Hook: TeammateStart, TeammateStop
+# team-logger.sh - Agent Groups 활동 로깅
+# Hook: SubagentStart, SubagentStop
 
 set -euo pipefail
 
@@ -32,12 +32,12 @@ teammate_role = sys.argv[3]
 timestamp = sys.argv[4]
 with open(state_file, 'r') as f:
     d = json.load(f)
-if 'agentTeamsStatus' not in d:
-    d['agentTeamsStatus'] = {'active': False, 'teammates': [], 'metrics': {'totalTeammates': 0}}
-d['agentTeamsStatus']['active'] = True
+if 'agentGroupsStatus' not in d:
+    d['agentGroupsStatus'] = {'active': False, 'teammates': [], 'metrics': {'totalTeammates': 0}}
+d['agentGroupsStatus']['active'] = True
 teammate = {'id': teammate_id, 'role': teammate_role, 'startedAt': timestamp, 'status': 'running'}
-d['agentTeamsStatus']['teammates'].append(teammate)
-d['agentTeamsStatus']['metrics']['totalTeammates'] = len(d['agentTeamsStatus']['teammates'])
+d['agentGroupsStatus']['teammates'].append(teammate)
+d['agentGroupsStatus']['metrics']['totalTeammates'] = len(d['agentGroupsStatus']['teammates'])
 with open(state_file, 'w') as f:
     json.dump(d, f, indent=2, ensure_ascii=False)
 " "$ORCHESTRA_STATE_FILE" "$TEAMMATE_ID" "$TEAMMATE_ROLE" "$TIMESTAMP" 2>/dev/null || true
@@ -57,15 +57,15 @@ teammate_id = sys.argv[2]
 timestamp = sys.argv[3]
 with open(state_file, 'r') as f:
     d = json.load(f)
-if 'agentTeamsStatus' in d:
-    for t in d['agentTeamsStatus'].get('teammates', []):
+if 'agentGroupsStatus' in d:
+    for t in d['agentGroupsStatus'].get('teammates', []):
         if t.get('id') == teammate_id:
             t['status'] = 'completed'
             t['completedAt'] = timestamp
     # 모든 팀원이 완료되었으면 active = False
-    all_completed = all(t.get('status') == 'completed' for t in d['agentTeamsStatus'].get('teammates', []))
-    if all_completed and d['agentTeamsStatus'].get('teammates'):
-        d['agentTeamsStatus']['active'] = False
+    all_completed = all(t.get('status') == 'completed' for t in d['agentGroupsStatus'].get('teammates', []))
+    if all_completed and d['agentGroupsStatus'].get('teammates'):
+        d['agentGroupsStatus']['active'] = False
 with open(state_file, 'w') as f:
     json.dump(d, f, indent=2, ensure_ascii=False)
 " "$ORCHESTRA_STATE_FILE" "$TEAMMATE_ID" "$TIMESTAMP" 2>/dev/null || true

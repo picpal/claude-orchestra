@@ -57,7 +57,7 @@ my-plugin/
 | `SubagentStart` | 서브에이전트 시작 시 | 아니오 |
 | `SubagentStop` | 서브에이전트 종료 시 | 예 |
 | `Stop` | Claude 응답 완료 시 | 예 |
-| `TeammateIdle` | 팀원이 유휴 상태로 전환 시 | 예 |
+| ~~`TeammateIdle`~~ | _(제거됨 — TeamCreate 미사용)_ | — |
 | `TaskCompleted` | 태스크 완료 표시 시 | 예 |
 | `PreCompact` | 컨텍스트 압축 전 | 아니오 |
 | `SessionEnd` | 세션 종료 시 | 아니오 |

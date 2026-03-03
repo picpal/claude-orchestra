@@ -44,7 +44,7 @@ for each level in levels:
 .orchestra/hooks/verification/verification-loop.sh full
 ```
 
-### Step 5: Code-Review Team (Phase 6a-CR)
+### Step 5: Code-Review Group (Phase 6a-CR)
 
 5명 병렬 호출 → 가중치 점수 계산 → 판정
 

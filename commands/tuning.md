@@ -70,7 +70,7 @@ pwd  # 현재 디렉토리 확인
 
 ```
 1. Task(Interviewer)        → interviewerCompleted=true
-2. Plan Validation Team     → planValidationApproved=true
+2. Plan Validation Group     → planValidationApproved=true
 3. Task(Planner)            → plannerCompleted=true
 4. Task(Executor)           ← 1-3 미완료 시 차단됨
 ```

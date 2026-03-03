@@ -1,8 +1,8 @@
 #!/bin/bash
 # team-idle-handler.sh - 유휴 팀원 처리
-# Hook: TeammateIdle
+# Hook: SubagentStop (idle detection)
 #
-# Plan Validation Team의 경우:
+# Plan Validation Group의 경우:
 # - 모든 팀원 완료 대기
 # - 결과 통합 트리거
 
@@ -27,7 +27,7 @@ import sys
 with open('.orchestra/state.json', 'r') as f:
     d = json.load(f)
 
-teams = d.get('agentTeamsStatus', {})
+teams = d.get('agentGroupsStatus', {})
 teammates = teams.get('teammates', [])
 
 # 현재 팀원 상태 업데이트

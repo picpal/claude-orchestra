@@ -1,6 +1,6 @@
 # /code-review - 코드 리뷰 실행
 
-변경된 코드에 대한 Code-Review Team (5명 병렬) 리뷰를 수행합니다.
+변경된 코드에 대한 Code-Review Group (5명 병렬) 리뷰를 수행합니다.
 
 ## 사용법
 
@@ -30,7 +30,7 @@ git diff --name-only
 
 ### Step 2: 5명 병렬 호출 (한 메시지에 5개 Task)
 
-호출 패턴은 `rules/call-templates.md`의 "Code-Review Team" 섹션 참조.
+호출 패턴은 `rules/call-templates.md`의 "Code-Review Group" 섹션 참조.
 
 ```
 Task(Security Guardian) + Task(Quality Inspector)
@@ -56,7 +56,7 @@ score_map: Approved=1.0, Warning=0.5, Block=0.0
 
 ---
 
-## Code-Review Team 구성
+## Code-Review Group 구성
 
 | 팀원 | 모델 | 가중치 | 담당 영역 | 항목 수 |
 |------|------|--------|----------|--------|

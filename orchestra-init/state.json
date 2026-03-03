@@ -112,7 +112,7 @@
   },
   "codeReviewHistory": [],
   "checkpoints": [],
-  "agentTeamsStatus": {
+  "agentGroupsStatus": {
     "active": false,
     "teammates": [],
     "allCompleted": false,

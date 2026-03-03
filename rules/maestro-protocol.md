@@ -94,7 +94,7 @@ for each level in levels:
 
 6-Stage: Build → Type Check → Lint → Tests → Security Scan → Diff Review
 
-### Phase 6a-CR: Code-Review Team (5명 병렬)
+### Phase 6a-CR: Code-Review Group (5명 병렬)
 
 Verification 통과 후, 5명 **병렬** 호출 (한 메시지에 5개 Task):
 
