@@ -15,7 +15,7 @@
     "attemptCount": 0
   },
   "workflowStatus": {
-    "journalRequired": false,
+    "journalRequired": true,
     "journalWritten": false,
     "codeReviewRequired": false,
     "codeReviewPassed": false,

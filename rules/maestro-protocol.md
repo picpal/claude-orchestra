@@ -123,6 +123,59 @@ weighted_score = (4*Security + 3*Quality + 2*Performance + 2*Standards + 4*TDD) 
 2. Journal 작성: `Write(.orchestra/journal/{plan-name}-{YYYYMMDD}-{HHmm}.md)`
 3. `journal-tracker.sh`가 자동으로 `state.json` 업데이트
 
+#### OPEN-ENDED Journal Template (필수 양식)
+
+```markdown
+# Journal: {plan-name} — {YYYY-MM-DD HH:mm}
+
+## Summary
+{1-2문장으로 작업 목적과 결과 요약}
+
+## Completed TODOs
+- [ ] {todo-id}: {설명} — {결과}
+
+## Key Decisions
+- {결정 사항과 이유}
+
+## Files Changed
+- `{파일 경로}` — {변경 내용 요약}
+
+## Verification Results
+- Mode: {full|standard|quick}
+- PR Ready: {true|false}
+- Blockers: {있으면 나열}
+
+## Issues & Notes
+- {발견된 이슈, 주의 사항, 기술 부채}
+
+## Next Steps
+- {후속 작업이 필요한 경우}
+```
+
+#### Session Journal Template (EXPLORATORY/TRIVIAL용)
+
+Phase 7 없이 작업이 완료되는 경우(탐색, 조사, 간단한 질의응답 등) 세션 종료 시점에 작성합니다.
+파일명: `.orchestra/journal/session-{YYYYMMDD}-{HHmm}.md`
+
+```markdown
+# Session Journal — {YYYY-MM-DD HH:mm}
+
+## Summary
+{세션에서 수행한 작업 1-2문장 요약}
+
+## Work Performed
+- {수행한 작업 목록}
+
+## Findings
+- {발견한 사항, 분석 결과}
+
+## Files Referenced
+- `{참조/수정한 파일}`
+
+## Notes
+- {후속 작업, 메모}
+```
+
 ---
 
 ## 금지 행위

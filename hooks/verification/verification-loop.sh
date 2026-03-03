@@ -261,9 +261,9 @@ if [ -f "$STATE_FILE" ] && command -v jq &> /dev/null; then
       .verificationMetrics.lastRun = $lastRun |
       .verificationMetrics.prReady = ($prReady == "true") |
       .verificationMetrics.blockers = $blockers |
+      .workflowStatus.journalRequired = true |
+      .workflowStatus.journalWritten = false |
       if ($prReady == "true") then
-        .workflowStatus.journalRequired = true |
-        .workflowStatus.journalWritten = false |
         .workflowStatus.completedAt = $lastRun
       else . end' \
      "$STATE_FILE" > "${STATE_FILE}.tmp" && mv "${STATE_FILE}.tmp" "$STATE_FILE"

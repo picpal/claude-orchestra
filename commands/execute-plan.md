@@ -61,7 +61,9 @@ for each level in levels:
 ### Step 7: Commit + Journal (Phase 7)
 
 1. `git commit` (TODO 단위, 형식 준수)
-2. `Write(.orchestra/journal/{plan-name}-{YYYYMMDD}-{HHmm}.md)`
+2. `Write(.orchestra/journal/{plan-name}-{YYYYMMDD}-{HHmm}.md)` — **Journal Template 양식 필수**
+   - 포함 항목: Summary, Completed TODOs, Key Decisions, Files Changed, Verification Results, Issues & Notes, Next Steps
+   - 양식 참조: `rules/maestro-protocol.md` Phase 7 OPEN-ENDED Journal Template
 
 ## 관련 명령어
 

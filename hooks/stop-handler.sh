@@ -206,14 +206,25 @@ else:
 JOURNAL_FILE="$JOURNAL_DIR/${WORK_TITLE}-${CURRENT_DATE}-${CURRENT_TIME}.md"
 log_debug "Journal file: $JOURNAL_FILE"
 
+# state.json에서 mode/plan 정보 추출
+CURRENT_MODE="IDLE"
+CURRENT_PLAN_NAME=""
+if [ -f "$STATE_FILE" ] && command -v jq &> /dev/null; then
+  CURRENT_MODE=$(jq -r '.mode // "IDLE"' "$STATE_FILE" 2>/dev/null)
+  CURRENT_PLAN_NAME=$(jq -r '.currentPlan // ""' "$STATE_FILE" 2>/dev/null)
+  [ "$CURRENT_PLAN_NAME" = "null" ] && CURRENT_PLAN_NAME=""
+fi
+
 # Journal 마크다운 생성
-DRAFT_FILE_PATH="$DRAFT_FILE" python3 << 'PYEOF' > "$JOURNAL_FILE"
+DRAFT_FILE_PATH="$DRAFT_FILE" JOURNAL_MODE="$CURRENT_MODE" JOURNAL_PLAN="$CURRENT_PLAN_NAME" python3 << 'PYEOF' > "$JOURNAL_FILE"
 import json
 import os
 from datetime import datetime
 
-# 환경 변수에서 draft 파일 경로 읽기
+# 환경 변수에서 draft 파일 경로 및 메타 정보 읽기
 draft_file = os.environ.get('DRAFT_FILE_PATH', '')
+journal_mode = os.environ.get('JOURNAL_MODE', 'IDLE')
+journal_plan = os.environ.get('JOURNAL_PLAN', '')
 
 try:
     with open(draft_file, 'r') as f:
@@ -242,7 +253,9 @@ for act in agent_activities:
     agent_summary[agent] = status
 
 # 마크다운 생성
+plan_info = f" | Plan: {journal_plan}" if journal_plan else ""
 print(f"# Session Journal - {session_date[:4]}-{session_date[4:6]}-{session_date[6:]} {session_time[:2]}:{session_time[2:]}")
+print(f"\n> Auto-generated | Mode: {journal_mode}{plan_info}")
 print()
 
 # 작업 요약
@@ -289,6 +302,17 @@ if agent_summary:
         status_emoji = "✅" if status == "completed" else "🔄" if status == "started" else "❌"
         print(f"- {agent}: {status_emoji} {status}")
     print()
+
+# 구조화된 빈 섹션 (자동 생성 한계 명시)
+print("## Key Decisions")
+print("- *(자동 생성 — 수동 작성 필요)*")
+print()
+print("## Issues & Notes")
+print("- *(자동 생성 — 수동 작성 필요)*")
+print()
+print("## Next Steps")
+print("- *(자동 생성 — 수동 작성 필요)*")
+print()
 
 # 자동 생성 표시
 print("---")
