@@ -118,21 +118,32 @@ Claude Code 터미널에서:
 /start-work
 ```
 
+> **참고**: 위 명령어를 실행하면 `~/.claude/settings.json`에 아래 설정이 자동으로 추가됩니다. 직접 수정할 필요는 없습니다.
+>
+> ```json
+> {
+>   "extraKnownMarketplaces": {
+>     "claude-orchestra": {
+>       "source": {
+>         "source": "github",
+>         "repo": "picpal/claude-orchestra"
+>       }
+>     }
+>   },
+>   "enabledPlugins": {
+>     "claude-orchestra@claude-orchestra": true
+>   }
+> }
+> ```
 
-```json
-{
-  "extraKnownMarketplaces": {
-    "claude-orchestra": {
-      "source": {
-        "source": "github",
-        "repo": "picpal/claude-orchestra"
-      }
-    }
-  },
-  "enabledPlugins": {
-    "claude-orchestra@claude-orchestra": true
-  }
-}
+### 이미 플러그인이 설치된 경우 (다른 프로젝트에서 사용)
+
+플러그인은 **글로벌로 한 번만 설치**됩니다. 이미 설치되어 있다면 새 프로젝트에서는 초기화만 하면 됩니다:
+
+```bash
+# 새 프로젝트 디렉토리에서 Claude Code 실행 후
+/tuning        # Orchestra 규칙 복사 + 상태 디렉토리 생성
+/start-work    # 작업 시작
 ```
 
 ### 방법 2: Clone + Install Script
