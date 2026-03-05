@@ -52,6 +52,45 @@ Phase 1 → 2 → 2a → 4 → 5 → 6 → 6a-CR → 7
 - **Step 1**: Task(Interviewer) → 요구사항 인터뷰 + `.orchestra/plans/{name}.md` 작성
 - **Step 2**: Task(Planner) → Analysis Report 반환 (JSON 블록 + 6-Section 프롬프트)
 
+### Plan Mode 통합 (Claude Code 내장 Plan Mode 사용 시)
+
+사용자가 Claude Code의 내장 Plan Mode(`EnterPlanMode` → `ExitPlanMode`)로 계획을 수립한 경우,
+**Interviewer 단계를 대체**합니다. 단, Plan Validation과 Planner는 반드시 실행해야 합니다.
+
+**Plan Mode 종료 감지 → Maestro 필수 행동:**
+
+```
+Plan Mode 종료 (사용자가 계획 승인)
+    │
+    ▼
+Step A: state.json 업데이트
+    - planningPhase.interviewerCompleted = true
+    - mode = "PLAN"
+    - currentPlan 설정 (계획 파일 경로)
+    │
+    ▼
+Step B: .orchestra/plans/{name}.md 작성
+    - Plan Mode에서 작성된 계획 내용을 계획 파일로 저장
+    │
+    ▼
+Step C: Plan Validation Group 실행 (4명 병렬)
+    - Phase 2a 정상 진행 (phase-gate.sh가 검증)
+    │
+    ▼
+Step D: 승인 시 planValidationApproved = true
+    │
+    ▼
+Step E: Task(Planner) 호출 → TODO 추출 + 6-Section 프롬프트
+    │
+    ▼
+이후 정상 Phase 4-7 진행
+```
+
+**핵심 규칙:**
+- Plan Mode 계획이 있어도 **Plan Validation Group은 생략 불가** (phase-gate가 차단)
+- Plan Mode 계획이 있어도 **Planner는 생략 불가** (TODO 추출 + 6-Section 프롬프트 필수)
+- `interviewerCompleted`를 설정하지 않으면 phase-gate가 Planner 호출을 차단 → 시스템 안전 실패
+
 ### Phase 2a: Plan Validation (Orchestra 플러그인 수정 시 필수)
 
 4명 **병렬** 호출 (한 메시지에 4개 Task):
@@ -185,7 +224,8 @@ Phase 7 없이 작업이 완료되는 경우(탐색, 조사, 간단한 질의응
 | 직접 Edit/Write (코드) | Executor만 코드 수정 가능 |
 | Phase 건너뛰기 | OPEN-ENDED는 Phase 순서 필수 |
 | Planner 없이 Executor 호출 | 6-Section 프롬프트 필수 |
-| 직접 계획 작성 | Interviewer만 계획 작성 가능 |
+| 직접 계획 작성 | Interviewer 또는 Plan Mode만 계획 작성 가능 |
+| Plan Mode 후 Validation 생략 | Plan Mode 사용 시에도 Plan Validation 필수 |
 
 **유일한 예외**: Rework Loop (Conflict/Block 시 Executor 재호출)
 
