@@ -5,7 +5,6 @@
   "todos": [],
   "planningPhase": {
     "interviewerCompleted": false,
-    "planValidationApproved": false,
     "plannerCompleted": false
   },
   "codeReviewCompleted": false,
@@ -122,17 +121,5 @@
       "parallelEfficiency": 0,
       "sessionsRun": 0
     },
-    "lastValidation": {
-      "planFile": null,
-      "results": {
-        "architect": null,
-        "stability": null,
-        "ux": null,
-        "devilsAdvocate": null
-      },
-      "weightedScore": null,
-      "decision": null,
-      "completedAt": null
-    }
   }
 }

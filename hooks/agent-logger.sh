@@ -115,7 +115,6 @@ try:
         d = json.load(f)
     d['planningPhase'] = {
         'interviewerCompleted': False,
-        'planValidationApproved': False,
         'plannerCompleted': False,
         'resetAt': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
     }
@@ -135,11 +134,7 @@ detect_planning_agent() {
   case "$desc_lower" in
     interviewer:*) update_planning_flag "interviewerCompleted" ;;
     planner:*|*planner\ 에이전트*|*planner:\ todo*)
-      # Exclude plan-related agents that are not the Planner
-      case "$desc_lower" in
-        *plan\ architect*|*plan\ stability*|*plan\ ux*|*plan\ devil*) ;;
-        *) update_planning_flag "plannerCompleted" ;;
-      esac
+      update_planning_flag "plannerCompleted"
       ;;
     # Code-Review Group completion tracking
     *security\ guardian*|*quality\ inspector*|*performance\ analyst*|*standards\ keeper*|*tdd\ enforcer*)
@@ -209,10 +204,6 @@ extract_agent_name() {
     *performance\ analyst*) echo "performance-analyst" ;;
     *standards\ keeper*) echo "standards-keeper" ;;
     *tdd\ enforcer*) echo "tdd-enforcer" ;;
-    *plan\ architect*) echo "plan-architect" ;;
-    *plan\ stability*) echo "plan-stability" ;;
-    *plan\ ux*) echo "plan-ux" ;;
-    *plan\ devil*) echo "plan-devils-advocate" ;;
     *) echo "${2:-unknown}" ;;
   esac
 }

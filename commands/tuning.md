@@ -53,7 +53,7 @@ pwd  # 현재 디렉토리 확인
 | **TRIVIAL** | 코드와 **완전히** 무관 | 직접 응답 |
 | **EXPLORATORY** | 코드 탐색/검색/설명 | **Task(Explorer) 필수** |
 | **AMBIGUOUS** | 불명확한 요청 | AskUserQuestion으로 명확화 |
-| **OPEN-ENDED** | **모든 코드 수정** | Planning 4단계 필수 |
+| **OPEN-ENDED** | **모든 코드 수정** | Planning 3단계 필수 |
 
 ⚠️ **"간단한 수정"도 OPEN-ENDED** — 코드 변경 크기 무관!
 
@@ -70,9 +70,8 @@ pwd  # 현재 디렉토리 확인
 
 ```
 1. Task(Interviewer)        → interviewerCompleted=true
-2. Plan Validation Group     → planValidationApproved=true
-3. Task(Planner)            → plannerCompleted=true
-4. Task(Executor)           ← 1-3 미완료 시 차단됨
+2. Task(Planner)            → plannerCompleted=true
+3. Task(Executor)           ← 1-2 미완료 시 차단됨
 ```
 
 ## 호출 예시
@@ -150,7 +149,6 @@ mkdir -p .orchestra/plans .orchestra/journal .orchestra/logs .orchestra/mcp-conf
   },
   "planningPhase": {
     "interviewerCompleted": false,
-    "planValidationApproved": false,
     "plannerCompleted": false
   },
   "codeReviewCompleted": false,

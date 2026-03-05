@@ -70,7 +70,6 @@ mkdir -p .orchestra/plans .orchestra/logs .orchestra/journal .orchestra/mcp-conf
   },
   "planningPhase": {
     "interviewerCompleted": false,
-    "planValidationApproved": false,
     "plannerCompleted": false
   },
   "codeReviewCompleted": false,

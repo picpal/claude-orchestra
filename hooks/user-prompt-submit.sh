@@ -93,15 +93,12 @@ try:
         d = json.load(f)
     pp = d.get('planningPhase', {})
     interviewer_done = pp.get('interviewerCompleted', False)
-    validation_done = pp.get('planValidationApproved', False)
     planner_done = pp.get('plannerCompleted', False)
     mode = d.get('mode', 'IDLE')
     # interviewerCompleted가 false인 상태에서 실행이 시작되려는 경우 감지
     if not interviewer_done and mode in ('IDLE', 'PLAN'):
         print('NEED_INTERVIEW')
-    elif interviewer_done and not validation_done:
-        print('NEED_VALIDATION')
-    elif interviewer_done and validation_done and not planner_done:
+    elif interviewer_done and not planner_done:
         print('NEED_PLANNER')
     else:
         print('')
@@ -208,17 +205,15 @@ else
 \`\`\`
 1. Task(Interviewer)        → 완료 후 다음 단계
    ※ Plan Mode 사용 시: interviewerCompleted=true 설정으로 대체
-2. Plan Validation Group     → Interviewer 완료 필수 (4명 병렬)
-3. Task(Planner)            → 1-2 완료 필수
-4. Task(Executor)           → 1-3 완료 필수 (미완료 시 차단)
+2. Task(Planner)            → 1 완료 필수
+3. Task(Executor)           → 1-2 완료 필수 (미완료 시 차단)
 \`\`\`
 
 ### 3a. Plan Mode 통합 (내장 Plan Mode 사용 시)
 Plan Mode로 계획을 수립했다면 반드시:
 1. state.json의 \`planningPhase.interviewerCompleted = true\` 설정
 2. \`.orchestra/plans/{name}.md\`에 계획 저장
-3. Plan Validation Group 실행 (4명 병렬)
-4. Task(Planner) 호출하여 TODO 추출
+3. Task(Planner) 호출하여 TODO 추출
 ※ maestro-protocol.md "Plan Mode 통합" 섹션 참조
 
 ### 4. 에이전트 호출 (올바른 방법)
@@ -236,17 +231,20 @@ Task(subagent_type="general-purpose",
 상세 규칙: \`.claude/rules/maestro-protocol.md\`
 ${PLAN_INFO:+$PLAN_INFO
 }${TODO_INFO:+$TODO_INFO
-}$(if [ "$PLAN_MODE_HINT" = "NEED_VALIDATION" ]; then
+}$(if [ "$PLAN_MODE_HINT" = "NEED_INTERVIEW" ]; then
 cat <<'HINT'
 
-### ⚠️ Plan Mode 통합: Plan Validation 필요
-interviewerCompleted=true 설정됨. 다음 단계: **Plan Validation Group** (4명 병렬) 실행 필수.
+### 📋 다음 단계 안내
+코드 수정 작업을 시작하려면:
+- **방법 1**: Task(Interviewer) 호출하여 요구사항 인터뷰 진행
+- **방법 2**: Plan Mode로 계획을 수립했다면 interviewerCompleted=true 설정
+현재 Interviewer 또는 Plan Mode 완료가 필요합니다.
 HINT
 elif [ "$PLAN_MODE_HINT" = "NEED_PLANNER" ]; then
 cat <<'HINT'
 
 ### ⚠️ Plan Mode 통합: Planner 호출 필요
-Plan Validation 완료됨. 다음 단계: **Task(Planner)** 호출하여 TODO 추출 필수.
+Interviewer 완료됨. 다음 단계: **Task(Planner)** 호출하여 TODO 추출 필수.
 HINT
 fi)
 </user-prompt-submit-hook>

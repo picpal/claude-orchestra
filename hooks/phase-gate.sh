@@ -76,8 +76,8 @@ except Exception as e:
 }
 
 # 에이전트별 필요한 선행 단계 정의
-# - planner: Interviewer + Plan Validation Group 완료 필요
-# - executor: 모든 Planning 단계 완료 필요
+# - planner: Interviewer 완료 필요
+# - executor: Interviewer + Planner 완료 필요
 
 # 에이전트별 필수 선행 단계 검증
 # $1: 대상 에이전트
@@ -97,14 +97,13 @@ target = sys.argv[1]
 
 # 에이전트별 필수 선행 단계 매트릭스
 REQUIRED_PHASES = {
-    'planner': ['interviewerCompleted', 'planValidationApproved'],
-    'high-player': ['interviewerCompleted', 'planValidationApproved', 'plannerCompleted'],
-    'low-player': ['interviewerCompleted', 'planValidationApproved', 'plannerCompleted']
+    'planner': ['interviewerCompleted'],
+    'high-player': ['interviewerCompleted', 'plannerCompleted'],
+    'low-player': ['interviewerCompleted', 'plannerCompleted']
 }
 
 PHASE_NAMES = {
     'interviewerCompleted': 'Interviewer',
-    'planValidationApproved': 'Plan Validation Group',
     'plannerCompleted': 'Planner'
 }
 
@@ -158,15 +157,21 @@ print_block_message() {
   echo "OPEN-ENDED 작업은 반드시 다음 순서를 따라야 합니다:"
   echo ""
   echo "  1. Task(Interviewer)     → 요구사항 인터뷰"
-  echo "  2. Plan Validation Group  → 계획 검증 (4명 병렬, Interviewer 필요)"
-  echo "  3. Task(Planner)         → 6-Section 프롬프트 (1-2 필요)"
-  echo "  4. Task(Executor)        → 구현 실행 (1-3 필요)"
+  echo "  2. Task(Planner)         → 6-Section 프롬프트 (1 필요)"
+  echo "  3. Task(Executor)        → 구현 실행 (1-2 필요)"
   echo ""
+
+  # Interviewer 누락 시 Plan Mode 복구 힌트
+  if echo "$missing" | grep -q "Interviewer"; then
+    echo "💡 Plan Mode로 계획을 수립했다면:"
+    echo "   → state.json의 planningPhase.interviewerCompleted = true 설정 후 재시도"
+    echo ""
+  fi
 
   # 에이전트별 다음 단계 힌트
   case "$target_agent" in
     planner)
-      echo "💡 먼저 Interviewer → Plan Validation Group 순서로 호출하세요."
+      echo "💡 먼저 Interviewer를 호출하세요."
       ;;
     *)
       echo "💡 호출 예시:"
@@ -176,6 +181,11 @@ print_block_message() {
       echo "        prompt=\"...\")"
       ;;
   esac
+  echo ""
+
+  # 사용자에게 전달할 메시지 템플릿
+  echo "📢 사용자에게 전달:"
+  echo "   '[Orchestra] ⏸️ $target_agent 실행 대기 중 — $missing 완료가 필요합니다.'"
   echo ""
 }
 

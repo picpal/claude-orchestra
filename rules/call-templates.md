@@ -188,116 +188,6 @@ Task(
 
 ---
 
-## Plan Validation Group (Phase 2a 병렬 - 4개 동시 호출)
-
-> Orchestra 플러그인 수정 시 필수. 일반 프로젝트 작업에는 해당 없음.
-
-```
-Task(
-  subagent_type: "general-purpose", model: "sonnet",
-  description: "Plan Architect: 구조 호환성 검토",
-  prompt: """
-**Plan Architect** - 구조 호환성 검토 (Phase 2a)
-도구: Read, Grep, Glob
-제약: Edit, Write, Bash 금지 (읽기 전용)
-참조: agents/plan-architect.md
----
-## 검토 대상 계획
-{계획 문서 경로 또는 내용}
-## 검토 항목
-1. Agent Integration  2. Maestro Hub  3. Phase Gate  4. Layer Boundary  5. Config Compatibility
-## Expected Output
-[Plan Architect] Report
-- Issues: {N}
-- **Result: ✅/⚠️/❌**
-"""
-)
-
-Task(
-  subagent_type: "general-purpose", model: "sonnet",
-  description: "Plan Stability: 리스크 분석",
-  prompt: """
-**Plan Stability** - 안정성/리스크 분석 (Phase 2a)
-도구: Read, Grep, Glob
-제약: Edit, Write, Bash 금지 (읽기 전용)
-참조: agents/plan-stability.md
----
-## 검토 대상 계획
-{계획 문서 경로 또는 내용}
-## 검토 항목
-1. State Sync  2. File Conflict  3. Failure Recovery  4. Token Cost  5. Side Effects
-## Expected Output
-[Plan Stability] Report
-- Risk Level: Critical/High/Medium/Low
-- **Result: ✅/⚠️/❌**
-"""
-)
-
-Task(
-  subagent_type: "general-purpose", model: "sonnet",
-  description: "Plan UX: 사용성 검토",
-  prompt: """
-**Plan UX** - UX/사용성 검토 (Phase 2a)
-도구: Read, Grep, Glob
-제약: Edit, Write, Bash 금지 (읽기 전용)
-참조: agents/plan-ux.md
----
-## 검토 대상 계획
-{계획 문서 경로 또는 내용}
-## 검토 항목
-1. Config Complexity  2. Learning Curve  3. Error Messages  4. Documentation  5. Naming
-## Expected Output
-[Plan UX] Report
-- UX Impact: High/Medium/Low
-- **Result: ✅/⚠️/❌**
-"""
-)
-
-Task(
-  subagent_type: "general-purpose", model: "sonnet",
-  description: "Plan Devil's Advocate: 반론 제기",
-  prompt: """
-**Plan Devil's Advocate** - 반론 제기 (Phase 2a)
-도구: Read, Grep, Glob
-제약: Edit, Write, Bash 금지 (읽기 전용)
-참조: agents/plan-devils-advocate.md
----
-## 검토 대상 계획
-{계획 문서 경로 또는 내용}
-## 검토 항목
-1. Necessity  2. Over-engineering  3. Alternatives  4. Maintenance Cost  5. Scope Creep
-## Expected Output
-[Plan Devil's Advocate] Report
-- Objection Level: Strong/Moderate/Minor
-- **Result: ✅/⚠️/❌**
-"""
-)
-```
-
-### Plan Validation 결과 통합
-
-```
-판정 기준:
-- 4명 모두 ✅ → 승인 → Phase 4
-- 1명 이상 ⚠️ → 조건부 승인 → 우려 해결 후 Phase 4
-- 1명 이상 ❌ → 반려 → 계획 재검토 (최대 2회)
-- 재검토 2회 초과 → 사용자 에스컬레이션
-
-에이전트 응답 실패 시:
-- 3명 이상 응답 → 유효한 검증
-- 2명 이하 → 재시도 또는 사용자 에스컬레이션
-
-피드백 형식:
-[Plan Validation 결과]
-- Plan Architect: ✅/⚠️/❌ - {사유}
-- Plan Stability: ✅/⚠️/❌ - {사유}
-- Plan UX: ✅/⚠️/❌ - {사유}
-- Plan Devil's Advocate: ✅/⚠️/❌ - {사유}
-최종 판정: ✅/⚠️/❌
-```
-
----
-
 ## Code-Review Group (Phase 6a-CR 병렬 - 5개 동시 호출)
 
 > Verification 6-Stage 통과 후에만 호출
@@ -537,7 +427,7 @@ PLANNING: Interviewer | Planner
 RESEARCH: Architecture | Searcher | Explorer | Image-Analyst | Log-Analyst
 EXECUTION: High-Player | Low-Player
 VERIFICATION: Conflict-Checker
-REVIEW: Code-Review Group (5명) | Plan Validation Group (4명)
+REVIEW: Code-Review Group (5명)
 ```
 
 ### 위임 형식 (6-Section 프롬프트)

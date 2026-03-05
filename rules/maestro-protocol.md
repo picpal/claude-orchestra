@@ -38,7 +38,7 @@
 ## OPEN-ENDED Phase Flow
 
 ```
-Phase 1 → 2 → 2a → 4 → 5 → 6 → 6a-CR → 7
+Phase 1 → 2 → 4 → 5 → 6 → 6a-CR → 7
 ```
 
 ### Phase 1: Research (선택적)
@@ -55,7 +55,7 @@ Phase 1 → 2 → 2a → 4 → 5 → 6 → 6a-CR → 7
 ### Plan Mode 통합 (Claude Code 내장 Plan Mode 사용 시)
 
 사용자가 Claude Code의 내장 Plan Mode(`EnterPlanMode` → `ExitPlanMode`)로 계획을 수립한 경우,
-**Interviewer 단계를 대체**합니다. 단, Plan Validation과 Planner는 반드시 실행해야 합니다.
+**Interviewer 단계를 대체**합니다. 단, Planner는 반드시 실행해야 합니다.
 
 **Plan Mode 종료 감지 → Maestro 필수 행동:**
 
@@ -73,33 +73,15 @@ Step B: .orchestra/plans/{name}.md 작성
     - Plan Mode에서 작성된 계획 내용을 계획 파일로 저장
     │
     ▼
-Step C: Plan Validation Group 실행 (4명 병렬)
-    - Phase 2a 정상 진행 (phase-gate.sh가 검증)
-    │
-    ▼
-Step D: 승인 시 planValidationApproved = true
-    │
-    ▼
-Step E: Task(Planner) 호출 → TODO 추출 + 6-Section 프롬프트
+Step C: Task(Planner) 호출 → TODO 추출 + 6-Section 프롬프트
     │
     ▼
 이후 정상 Phase 4-7 진행
 ```
 
 **핵심 규칙:**
-- Plan Mode 계획이 있어도 **Plan Validation Group은 생략 불가** (phase-gate가 차단)
 - Plan Mode 계획이 있어도 **Planner는 생략 불가** (TODO 추출 + 6-Section 프롬프트 필수)
 - `interviewerCompleted`를 설정하지 않으면 phase-gate가 Planner 호출을 차단 → 시스템 안전 실패
-
-### Phase 2a: Plan Validation (Orchestra 플러그인 수정 시 필수)
-
-4명 **병렬** 호출 (한 메시지에 4개 Task):
-- Task(Plan Architect) + Task(Plan Stability) + Task(Plan UX) + Task(Plan Devil's Advocate)
-
-판정:
-- 4명 모두 ✅ → 승인 → Phase 4
-- 1명 이상 ⚠️ → 조건부 → 우려 해결 후 진행
-- 1명 이상 ❌ → 반려 → 계획 재검토 (최대 2회, 초과 시 사용자 에스컬레이션)
 
 ### Phase 4: Execution (Level별)
 
@@ -116,7 +98,6 @@ for each level in levels:
 
 **Executor 호출 전 필수 체크:**
 - [ ] Interviewer 결과 있음?
-- [ ] Plan Validation "Approved" 있음? (Orchestra 수정 시)
 - [ ] Planner의 6-Section 프롬프트 있음?
 
 ### Phase 5: Conflict Check (조건부)
@@ -225,7 +206,6 @@ Phase 7 없이 작업이 완료되는 경우(탐색, 조사, 간단한 질의응
 | Phase 건너뛰기 | OPEN-ENDED는 Phase 순서 필수 |
 | Planner 없이 Executor 호출 | 6-Section 프롬프트 필수 |
 | 직접 계획 작성 | Interviewer 또는 Plan Mode만 계획 작성 가능 |
-| Plan Mode 후 Validation 생략 | Plan Mode 사용 시에도 Plan Validation 필수 |
 
 **유일한 예외**: Rework Loop (Conflict/Block 시 Executor 재호출)
 
@@ -282,7 +262,6 @@ Executor 재호출 (원래 프롬프트 + 수정 컨텍스트)
   "progress": {"completed": 0, "total": 5, "currentLevel": 0},
   "planningPhase": {
     "interviewerCompleted": false,
-    "planValidationApproved": false,
     "plannerCompleted": false
   },
   "codeReviewCompleted": false,

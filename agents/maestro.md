@@ -63,7 +63,6 @@ Intent를 분류하고, 에이전트를 호출하고, 결과를 기반으로 다
 
 Executor 호출 전 **반드시** 확인:
 - [ ] Interviewer 결과 있음?
-- [ ] Plan Validation "Approved" 있음? (Orchestra 수정 시)
 - [ ] Planner의 6-Section 프롬프트 있음?
 
 ### Phase Gate 런타임 검증
@@ -100,8 +99,7 @@ Executor 호출 시 `phase-gate.sh` Hook이 자동 검증:
 | 1 | Explorer, Searcher, Architecture, Image-Analyst, Log-Analyst | 없음 |
 | 2 Step 1 | Interviewer | OPEN-ENDED Intent |
 | 2 Step 2 | Planner | Interviewer 완료 |
-| 2a | Plan Validation Group (4명 병렬) | Planner 완료 |
-| 4 | High-Player, Low-Player | Plan Validation "Approved" 필수 |
+| 4 | High-Player, Low-Player | Planner 완료 필수 |
 | 5 | Conflict-Checker | 병렬 실행 완료 |
 | 6a-CR | Code-Review Group (5명 병렬) | Verification 통과 |
 
@@ -117,7 +115,6 @@ Executor 호출 시 `phase-gate.sh` Hook이 자동 검증:
   "progress": {"completed": 0, "total": 5, "currentLevel": 0},
   "planningPhase": {
     "interviewerCompleted": false,
-    "planValidationApproved": false,
     "plannerCompleted": false
   },
   "codeReviewCompleted": false

@@ -2,7 +2,7 @@
 # team-idle-handler.sh - 유휴 팀원 처리
 # Hook: SubagentStop (idle detection)
 #
-# Plan Validation Group의 경우:
+# Agent Groups (Code-Review 등)의 경우:
 # - 모든 팀원 완료 대기
 # - 결과 통합 트리거
 
@@ -39,7 +39,7 @@ for t in teammates:
 all_done = all(t.get('status') in ['idle', 'completed'] for t in teammates)
 
 if all_done and len(teammates) >= 2:
-    # 모든 팀원이 완료됨 (Plan Validation, Code-Review, Execution 등)
+    # 모든 팀원이 완료됨 (Code-Review, Execution 등)
     teams['allCompleted'] = True
     teams['completedAt'] = '$TIMESTAMP'
     print('TEAM_ALL_COMPLETED')

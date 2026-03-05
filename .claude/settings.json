@@ -45,26 +45,6 @@
       "allowedTools": ["AskUserQuestion", "Write(.orchestra/**/*.md)", "Read"],
       "denyTools": ["Task", "Edit"]
     },
-    "plan-architect": {
-      "model": "sonnet",
-      "allowedTools": ["Read", "Grep", "Glob"],
-      "denyTools": ["Task", "Edit", "Write", "Bash"]
-    },
-    "plan-stability": {
-      "model": "sonnet",
-      "allowedTools": ["Read", "Grep", "Glob"],
-      "denyTools": ["Task", "Edit", "Write", "Bash"]
-    },
-    "plan-ux": {
-      "model": "sonnet",
-      "allowedTools": ["Read", "Grep", "Glob"],
-      "denyTools": ["Task", "Edit", "Write", "Bash"]
-    },
-    "plan-devils-advocate": {
-      "model": "sonnet",
-      "allowedTools": ["Read", "Grep", "Glob"],
-      "denyTools": ["Task", "Edit", "Write", "Bash"]
-    },
     "architecture": {
       "model": "opus",
       "allowedTools": ["Read", "Grep", "Glob"],
@@ -133,17 +113,7 @@
   "agentGroups": {
     "enabled": true,
     "maxAgents": 5,
-    "useCase": "plan-validation,code-review,execution",
-    "qualityGates": {
-      "unanimousApproval": false,
-      "weightedScoring": true,
-      "weights": {
-        "architect": 3,
-        "stability": 3,
-        "ux": 2,
-        "devilsAdvocate": 2
-      }
-    },
+    "useCase": "code-review,execution",
     "codeReviewGroup": {
       "enabled": true,
       "totalWeight": 15,

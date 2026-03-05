@@ -6,7 +6,6 @@ Planner의 Analysis Report를 기반으로 Phase 4-7을 실행합니다.
 
 - [ ] Plan file: `.orchestra/plans/{name}.md` 존재
 - [ ] Planner Analysis Report 완료 (JSON 블록 포함)
-- [ ] Plan Validation 승인 (Orchestra 수정 시)
 
 ## Flow
 

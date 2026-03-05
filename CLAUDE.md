@@ -24,97 +24,12 @@
 - 플러그인 설치 후 정상 동작 여부를 사용자가 확인
 - 여기서는 플러그인 코드만 수정하고 커밋
 
-## 🚨 플러그인 수정 시 필수: 계획 검증 (Plan Validation Group)
-
-> **이 프로젝트(claude-orchestra 플러그인)를 수정하는 모든 계획은 구현 전에 반드시 4명 검토팀의 병렬 검증을 거쳐야 합니다.**
-
-### 검증 트리거 조건
-
-다음 중 하나라도 해당되면 **반드시** 계획 검증 실행:
-- 에이전트 정의 수정/추가 (`agents/*.md`)
-- Hook 스크립트 수정/추가 (`hooks/*.sh`, `hooks.json`)
-- 설정 파일 수정 (`.claude/settings.json`, `orchestra-init/`)
-- 명령어/스킬 수정 (`commands/`, `skills/`)
-- 워크플로우 변경 (Phase, State 관련)
-- 새로운 기능 추가
-
-### 검증팀 구성 (4명 병렬 실행)
-
-| 팀원 | 에이전트 파일 | 역할 | 검토 관점 |
-|------|-------------|------|-----------|
-| **Plan Architect** | `agents/plan-architect.md` | 구조 호환성 | 에이전트 통합, Maestro 허브 구조 유지, Phase Gate 호환 |
-| **Plan Stability** | `agents/plan-stability.md` | 리스크 분석 | 상태 동기화, 파일 충돌, 실패 복구, 토큰 비용 |
-| **Plan UX** | `agents/plan-ux.md` | 사용성 검토 | 설정 복잡도, 학습 곡선, 에러 메시지, 문서화 |
-| **Plan Devil's Advocate** | `agents/plan-devils-advocate.md` | 반론 제기 | 필요성 의문, 오버엔지니어링 검토, 대안 제시 |
-
-> **주의**: Plan Architect는 Research Layer의 Architecture 에이전트와 다른 역할입니다.
-> - Architecture (Research, Phase 1): 대상 프로젝트의 아키텍처 분석 (범용)
-> - Plan Architect (Validation, Phase 2a): Orchestra 플러그인 계획의 구조 호환성 검증 (Orchestra 전용)
-
-### 검증 실행 방법
-
-계획이 준비되면 다음과 같이 4개 Task를 **병렬로** 실행:
-
-> 상세 호출 패턴: `rules/maestro-protocol.md` 참조
-
-### 검증 결과 판정
-
-| 조건 | 판정 | 조치 |
-|------|------|------|
-| 4명 모두 ✅ | **승인** | 구현 진행 |
-| 1명 이상 ⚠️ | **조건부 승인** | 우려 사항 해결 후 진행 |
-| 1명 이상 ❌ | **반려** | 계획 재검토 (최대 2회, 초과 시 사용자 에스컬레이션) |
-
-### 검증 실패 피드백 형식
-
-반려 또는 조건부 승인 시 Maestro가 사용자에게 전달하는 형식:
-
-```
-[Plan Validation 결과]
-- Plan Architect: ✅/⚠️/❌ - {사유}
-- Plan Stability: ✅/⚠️/❌ - {사유}
-- Plan UX: ✅/⚠️/❌ - {사유}
-- Plan Devil's Advocate: ✅/⚠️/❌ - {사유}
-
-최종 판정: ✅ 승인 / ⚠️ 조건부 승인 / ❌ 반려
-{조건부/반려 시 수정 필요 사항}
-```
-
-### 검증 없이 진행 불가
-
-```
-❌ 잘못된 패턴:
-사용자: "새 기능 추가해줘"
-→ 바로 구현 시작 (검증 생략)
-
-✅ 올바른 패턴:
-사용자: "새 기능 추가해줘"
-→ 계획 수립
-→ 4명 검토팀 병렬 검증 (계획 검증)
-→ 검증 결과 종합
-→ 사용자에게 결과 보고
-→ 승인 시 구현 진행
-→ 구현 완료
-→ 4명 검토팀 병렬 검증 (구현 검증)
-→ 승인 시 커밋
-```
-
----
-
 ### 전체 워크플로우 (시작 ~ 끝)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  🚀 시작                                                     │
 │  사용자 요청 → 계획 수립                                      │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│  🔍 Phase 2a: Plan Validation Group (계획 검증, 4명 병렬)     │
-│  ┌──────────┬──────────┬──────────┬──────────┐              │
-│  │Architect │Stability │ UX Expert│ Devil's  │              │
-│  └──────────┴──────────┴──────────┴──────────┘              │
-│  → 승인 시 구현 진행, 반려 시 계획 재검토                     │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -144,8 +59,8 @@
 
 ## 시스템 개요
 
-20개 전문 에이전트가 협력하여 TDD 기반 개발을 수행합니다.
-(11개 기본 + 5개 Code-Review Group + 4개 Plan Validation Group)
+16개 전문 에이전트가 협력하여 TDD 기반 개발을 수행합니다.
+(11개 기본 + 5개 Code-Review Group)
 **Claude Code가 Main Agent(Maestro)로서** 모든 에이전트를 직접 호출합니다.
 
 ### 핵심 구조: Claude Code = Maestro (Main Agent)
@@ -170,11 +85,6 @@
          ├── Task(Low-Player)       → 간단한 작업 실행
          ├── Task(Explorer)         → 코드베이스 탐색
          ├── Task(Conflict-Checker) → 충돌 검사
-         ├── Task(Plan Validation Group) → 계획 검증 (4명 병렬)
-         │   ├── Plan Architect
-         │   ├── Plan Stability
-         │   ├── Plan UX
-         │   └── Plan Devil's Advocate
          ├── Task(Code-Review Group) → 코드 리뷰 (5명 병렬)
          │   ├── Security Guardian
          │   ├── Quality Inspector
@@ -221,7 +131,6 @@
 
 ### 2. 계획 기반 개발
 - 모든 작업은 계획 문서로 시작 (`.orchestra/plans/`)
-- Plan Validation Group (4명 병렬): 계획 검증 (구조 호환, 리스크, 사용성, 반론)
 
 ### 3. 검증 후 리뷰 후 커밋
 - 6-Stage Verification Loop 통과 필수
@@ -258,7 +167,7 @@
 
 ```
 claude-orchestra/              # 플러그인 루트
-├── agents/                    # 20개 에이전트 정의 (11 기본 + Code-Review 5명 + Plan Validation 4명)
+├── agents/                    # 16개 에이전트 정의 (11 기본 + Code-Review 5명)
 ├── commands/                  # 슬래시 명령어
 ├── skills/                    # 컨텍스트 스킬
 │   ├── context-dev/SKILL.md
@@ -401,20 +310,6 @@ Maestro가 3개 Task를 한 메시지에서 병렬 호출:
 ```
 
 > 상세 호출 패턴: `rules/maestro-protocol.md` 참조
-
-### Validation Layer: Plan Validation Group (4명 병렬)
-
-> Phase 2a에서 계획 검증 시 병렬 실행. 모두 **읽기 전용**.
-
-| 팀원 | 모델 | 담당 영역 | 항목 수 |
-|------|------|----------|--------|
-| **Plan Architect** | Sonnet | 구조 호환성 | 5 |
-| **Plan Stability** | Sonnet | 리스크 분석 | 5 |
-| **Plan UX** | Sonnet | 사용성 검토 | 5 |
-| **Plan Devil's Advocate** | Sonnet | 반론 제기 | 5 |
-
-> 상세 내용: `agents/plan-architect.md`, `agents/plan-stability.md`,
-> `agents/plan-ux.md`, `agents/plan-devils-advocate.md`
 
 ### Execution Layer (Subagents - Main Agent가 Task로 호출)
 - **High-Player** (Opus): 복잡한 작업 실행
