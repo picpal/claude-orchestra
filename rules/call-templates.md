@@ -59,9 +59,9 @@ Task(
       "level": 0,
       "todoCount": 3,
       "todos": [
-        {"id": "auth-001", "type": "TEST", "executor": "low-player"},
-        {"id": "auth-002", "type": "IMPL", "executor": "high-player"},
-        {"id": "signup-001", "type": "TEST", "executor": "low-player"}
+        {"id": "auth-001", "type": "FEATURE", "executor": "high-player"},
+        {"id": "signup-001", "type": "FEATURE", "executor": "low-player"},
+        {"id": "config-001", "type": "CHORE", "executor": "low-player"}
       ],
       "parallelSafe": true
     },
@@ -69,8 +69,8 @@ Task(
       "level": 1,
       "todoCount": 2,
       "todos": [
-        {"id": "dashboard-001", "type": "IMPL", "executor": "high-player"},
-        {"id": "dashboard-002", "type": "TEST", "executor": "low-player"}
+        {"id": "dashboard-001", "type": "FEATURE", "executor": "high-player"},
+        {"id": "dashboard-002", "type": "CHORE", "executor": "low-player"}
       ],
       "parallelSafe": true
     }
@@ -105,6 +105,8 @@ Task(
 **High-Player** - 복잡한 작업 실행 (아키텍처, 다중 파일, 보안/인증)
 도구: Read, Edit, Write, Bash, Glob, Grep
 제약: 테스트 삭제/스킵 금지, 재위임 금지, 범위 외 수정 금지
+TDD: [FEATURE] → RED->GREEN->REFACTOR 필수 (tdd-cycle-gate.sh Hook 강제)
+     [CHORE] → TDD 면제
 ---
 {Planner가 생성한 6-Section 프롬프트}
 """
@@ -123,6 +125,8 @@ Task(
 **Low-Player** - 간단한 작업 실행 (단일 파일, 버그 수정, 테스트)
 도구: Read, Edit, Write, Bash, Grep
 제약: 테스트 삭제/스킵 금지, 재위임 금지, 범위 외 수정 금지
+TDD: [FEATURE] → RED->GREEN->REFACTOR 필수 (tdd-cycle-gate.sh Hook 강제)
+     [CHORE] → TDD 면제
 ---
 {Planner가 생성한 6-Section 프롬프트}
 """

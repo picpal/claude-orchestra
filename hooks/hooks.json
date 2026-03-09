@@ -11,7 +11,8 @@
         "matcher": "Edit|Write",
         "hooks": [
           {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/maestro-guard.sh"},
-          {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/tdd-guard.sh"}
+          {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/tdd-guard.sh"},
+          {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/tdd-cycle-gate.sh"}
         ]
       },
       {

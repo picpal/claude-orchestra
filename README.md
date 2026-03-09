@@ -9,6 +9,8 @@
 
 Claude Orchestra는 16개의 전문 에이전트(11개 기본 + 5개 Code-Review Group)가 계층 구조로 협력하여 TDD(Test-Driven Development) 기반의 고품질 코드를 생성하는 오케스트레이션 시스템입니다.
 
+### 에이전트 계층 구조
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    USER INTERACTION LAYER                        │
@@ -30,6 +32,35 @@ Claude Orchestra는 16개의 전문 에이전트(11개 기본 + 5개 Code-Review
 │  Security Guardian │ Quality Inspector │ Performance Analyst    │
 │            Standards Keeper │ TDD Enforcer                      │
 └─────────────────────────────────────────────────────────────────┘
+```
+
+### 워크플로우 (OPEN-ENDED 요청)
+
+코드 수정이 필요한 모든 요청은 다음 순서로 처리됩니다:
+
+```
+사용자 요청
+    │
+    ▼
+Phase 1: Research (선택적) ─── Explorer + Searcher + Architecture 병렬
+    │
+    ▼
+Phase 2: Planning ─────────── Interviewer(4개 agent 병렬 검토) → Planner (3단계 필수)
+    │
+    ▼
+Phase 4: Execution ────────── High-Player / Low-Player (Level별 병렬)
+    │
+    ▼
+Phase 5: Conflict Check ───── 병렬 실행 시에만
+    │
+    ▼
+Phase 6: Verification ─────── 6-Stage (Build → Types → Lint → Tests → Security → Diff)
+    │
+    ▼
+Phase 6a-CR: Code-Review ──── 5명 병렬 → 가중치 점수 → 승인/Block
+    │
+    ▼
+Phase 7: Commit + Journal
 ```
 
 ## Quick Start

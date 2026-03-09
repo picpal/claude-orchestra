@@ -77,15 +77,22 @@ detect_tdd_cycle() {
     previous_state=$(cat "$ORCHESTRA_LOG_DIR/last-test-state")
   fi
 
-  # 현재 상태 결정
-  if echo "$output" | grep -qE "FAIL|failed"; then
-    current_state="RED"
+  # 현재 상태 결정 (테스트 프레임워크 출력인지 확인)
+  if echo "$output" | grep -qE "FAIL|failed|ERROR"; then
+    # 테스트 프레임워크 결과인지 확인 (환경 에러 구분)
+    if echo "$output" | grep -qE "Tests?:|test suites?|passed|failed|Ran [0-9]+ test"; then
+      current_state="RED"
+    fi
   elif echo "$output" | grep -qE "PASS|passed"; then
-    current_state="GREEN"
+    if echo "$output" | grep -qE "Tests?:|test suites?|passed|Ran [0-9]+ test"; then
+      current_state="GREEN"
+    fi
   fi
 
   # 상태 저장
-  echo "$current_state" > "$ORCHESTRA_LOG_DIR/last-test-state"
+  if [ -n "$current_state" ]; then
+    echo "$current_state" > "$ORCHESTRA_LOG_DIR/last-test-state"
+  fi
 
   # RED -> GREEN 사이클 감지
   if [ "$previous_state" = "RED" ] && [ "$current_state" = "GREEN" ]; then
@@ -93,8 +100,120 @@ detect_tdd_cycle() {
     return 0
   fi
 
+  # TDD cycle state 업데이트 (에이전트별)
+  if [ -n "$current_state" ]; then
+    update_tdd_cycle_state "$current_state"
+  fi
+
   echo "NO_CYCLE"
   return 1
+}
+
+# === TDD Cycle State 업데이트 (에이전트별 상태 파일) ===
+# tdd-cycle-gate.sh와 연동하여 상태 전이를 수행합니다.
+
+get_current_agent_id_for_tdd() {
+  local agent_stack="$ORCHESTRA_LOG_DIR/.agent-stack"
+  if [ -f "$agent_stack" ]; then
+    tail -1 "$agent_stack" 2>/dev/null | cut -d'|' -f1
+  fi
+}
+
+update_tdd_cycle_state() {
+  local current_state="$1"  # RED or GREEN
+  local agent_id
+  agent_id=$(get_current_agent_id_for_tdd)
+
+  if [ -z "$agent_id" ]; then return; fi
+
+  local tdd_state_file="$ORCHESTRA_LOG_DIR/.tdd-cycle-state-${agent_id}.json"
+
+  # 상태 파일이 없으면 무시 (Player가 아닌 경우)
+  if [ ! -f "$tdd_state_file" ]; then return; fi
+
+  # 현재 TDD phase 읽기
+  local current_phase
+  current_phase=$(python3 -c "
+import json, sys
+try:
+    with open(sys.argv[1]) as f:
+        d = json.load(f)
+    print(d.get('phase', 'IDLE'))
+except Exception:
+    print('IDLE')
+" "$tdd_state_file" 2>/dev/null)
+
+  # 상태 전이 수행
+  case "$current_phase" in
+    RED_PENDING)
+      if [ "$current_state" = "RED" ]; then
+        # 테스트 실패 확인 → RED_CONFIRMED
+        _set_tdd_phase "$tdd_state_file" "RED_CONFIRMED"
+        echo ""
+        echo "[TDD] RED confirmed! Now write the implementation."
+      elif [ "$current_state" = "GREEN" ]; then
+        echo ""
+        echo "[TDD] Tests passed in RED phase. Verify your test actually tests the new behavior."
+      fi
+      ;;
+    GREEN_PENDING)
+      if [ "$current_state" = "GREEN" ]; then
+        # 테스트 통과 확인 → GREEN_CONFIRMED
+        _set_tdd_phase "$tdd_state_file" "GREEN_CONFIRMED"
+        echo ""
+        echo "[TDD] GREEN confirmed! Refactor or start next cycle."
+      else
+        echo ""
+        echo "[TDD] Tests failed. Continue implementing."
+      fi
+      ;;
+    RED_CONFIRMED)
+      # impl 작성 중 테스트 실행 → 아직 GREEN이 아닐 수 있음
+      if [ "$current_state" = "GREEN" ]; then
+        _set_tdd_phase "$tdd_state_file" "GREEN_CONFIRMED"
+        echo ""
+        echo "[TDD] GREEN confirmed! Refactor or start next cycle."
+      fi
+      ;;
+    REFACTOR|GREEN_CONFIRMED)
+      if [ "$current_state" = "RED" ]; then
+        echo ""
+        echo "[TDD] Tests failed after refactoring! Fix immediately."
+      fi
+      ;;
+  esac
+}
+
+_set_tdd_phase() {
+  local state_file="$1"
+  local new_phase="$2"
+
+  python3 -c "
+import json, sys
+from datetime import datetime
+
+state_file, new_phase = sys.argv[1], sys.argv[2]
+
+try:
+    with open(state_file) as f:
+        d = json.load(f)
+except Exception:
+    d = {'phase': 'IDLE', 'testFiles': [], 'implFiles': [], 'cycleHistory': []}
+
+old_phase = d.get('phase', 'IDLE')
+d['phase'] = new_phase
+d['updatedAt'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+
+d.setdefault('cycleHistory', []).append({
+    'from': old_phase,
+    'to': new_phase,
+    'trigger': 'test-logger',
+    'at': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+})
+
+with open(state_file, 'w') as f:
+    json.dump(d, f, indent=2, ensure_ascii=False)
+" "$state_file" "$new_phase" 2>/dev/null
 }
 
 # state.json 업데이트

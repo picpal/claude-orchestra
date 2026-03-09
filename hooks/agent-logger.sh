@@ -244,6 +244,13 @@ case "$MODE" in
       reset_planning_phase
       rm -f "$CR_TRACKER_FILE" 2>/dev/null || true
     fi
+
+    # Initialize TDD cycle state for Player agents
+    if [ "$ACTUAL_AGENT" = "high-player" ] || [ "$ACTUAL_AGENT" = "low-player" ]; then
+      local tdd_state="$ORCHESTRA_LOG_DIR/.tdd-cycle-state-${AGENT_ID}.json"
+      echo '{"phase":"IDLE","testFiles":[],"implFiles":[],"cycleHistory":[]}' > "$tdd_state"
+      log_activity "TDD_RESET" "$ACTUAL_AGENT" "TDD cycle state reset for $AGENT_ID"
+    fi
     ;;
 
   subagent-stop)

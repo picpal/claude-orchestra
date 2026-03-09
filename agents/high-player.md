@@ -60,6 +60,19 @@ opus
 
 ## Execution Protocol
 
+### 0. TDD CYCLE (MANDATORY - Hook Enforced)
+
+`[FEATURE]` TODO는 반드시 아래 순서를 따릅니다:
+
+1. **RED**: 실패하는 테스트 작성 → `npm test` 실행 → FAIL 확인
+2. **GREEN**: 최소 구현 작성 → `npm test` 실행 → PASS 확인
+3. **REFACTOR**: 코드 개선 → `npm test` 실행 → PASS 유지
+
+> `tdd-cycle-gate.sh` Hook이 이 순서를 강제합니다.
+> 테스트 실행 없이 구현 파일을 작성하면 BLOCK됩니다.
+
+`[CHORE]` TODO는 이 사이클이 면제됩니다.
+
 ### 1. Task Understanding
 ```markdown
 ## 작업 이해

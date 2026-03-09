@@ -82,9 +82,9 @@ Analysis Report는 반드시 **두 파트**로 구성됩니다:
       "level": 0,
       "todoCount": 3,
       "todos": [
-        {"id": "auth-001", "type": "TEST", "executor": "low-player"},
-        {"id": "auth-002", "type": "IMPL", "executor": "high-player"},
-        {"id": "signup-001", "type": "TEST", "executor": "low-player"}
+        {"id": "auth-001", "type": "FEATURE", "executor": "high-player"},
+        {"id": "signup-001", "type": "FEATURE", "executor": "low-player"},
+        {"id": "config-001", "type": "CHORE", "executor": "low-player"}
       ],
       "parallelSafe": true
     },
@@ -105,7 +105,20 @@ Analysis Report는 반드시 **두 파트**로 구성됩니다:
 - `todoCount`: Level 내 TODO 수
 - `executor`: `"high-player"` 또는 `"low-player"`
 - `parallelSafe`: `true` = 파일 충돌 없음, 병렬 실행 가능
-- `type`: `"TEST"`, `"IMPL"`, `"REFACTOR"` 중 하나
+- `type`: TODO 타입 (아래 표 참조)
+
+**TODO 타입:**
+
+| 타입 | TDD 강제 | 용도 | Player 동작 |
+|------|----------|------|------------|
+| `FEATURE` | Hook 강제 | 새 기능 구현 | 내부 RED->GREEN->REFACTOR |
+| `TEST` | - | 테스트만 추가 | 테스트 작성 |
+| `IMPL` | Hook 강제 | 구현만 (기존 테스트) | RED 확인 후 구현 |
+| `REFACTOR` | GREEN 유지 | 리팩토링 | 기존 테스트 통과 유지 |
+| `CHORE` | 면제 | 문서, 설정, 타입 정의 | TDD 없이 자유 |
+
+> **권장**: 새 기능은 `FEATURE`로 통합 (하나의 Player가 테스트+구현+리팩토링 전체 수행).
+> `CHORE`는 TDD 불필요한 작업에 사용. `tdd-cycle-gate.sh` Hook이 타입을 인식하여 강제/면제.
 
 ### Part 2: 6-Section Prompts (Markdown)
 
@@ -146,7 +159,18 @@ Analysis Report는 반드시 **두 파트**로 구성됩니다:
 
 ## TDD Enforcement
 
-분석 시 TDD 순서 검증:
+분석 시 TDD 타입별 검증:
+
+### FEATURE 타입 (권장)
+- Player가 내부에서 RED->GREEN->REFACTOR 사이클 수행
+- `tdd-cycle-gate.sh` Hook이 순서 강제
+- 하나의 Player가 테스트+구현+리팩토링 전체 수행
+
+### CHORE 타입
+- TDD 면제 (문서, 설정, 타입 정의 등)
+- Hook이 CHORE 타입을 인식하여 자동 SKIP
+
+### 기존 TEST->IMPL 분리 방식 (호환 유지)
 1. 각 그룹 내 `[TEST]` → `[IMPL]` → `[REFACTOR]` 순서 확인
 2. `[IMPL]`은 반드시 관련 `[TEST]` 뒤에 배치
 3. 순서 위반 시 경고 포함

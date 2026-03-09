@@ -11,6 +11,7 @@
 | `maestro-guard.sh` | Main Agent의 코드 수정 금지 | PreToolUse/Edit\|Write |
 | `phase-gate.sh` | Planner 없이 Executor 호출 금지 | PreToolUse/Task |
 | `tdd-guard.sh` | 테스트 삭제/스킵 금지 | PreToolUse/Edit\|Write |
+| `tdd-cycle-gate.sh` | Player의 TDD RED->GREEN 순서 강제 | PreToolUse/Edit\|Write |
 | `verify-before-commit.sh` | Code-Review 미완료 시 커밋 금지 | PreToolUse/Bash (git commit) |
 
 ---
@@ -258,7 +259,7 @@ Executor 재호출 (원래 프롬프트 + 수정 컨텍스트)
 {
   "mode": "IDLE | PLAN | EXECUTE | REVIEW",
   "currentPlan": ".orchestra/plans/{name}.md",
-  "todos": [{"id": "auth-001", "status": "pending", "executor": "high-player", "level": 0}],
+  "todos": [{"id": "auth-001", "type": "FEATURE", "status": "pending", "executor": "high-player", "level": 0}],
   "progress": {"completed": 0, "total": 5, "currentLevel": 0},
   "planningPhase": {
     "interviewerCompleted": false,
@@ -273,6 +274,30 @@ Executor 재호출 (원래 프롬프트 + 수정 컨텍스트)
 
 ## Git Commit 형식
 
+### FEATURE 타입
+```bash
+git commit -m "[FEATURE] {요약}
+
+- TDD Cycle: RED->GREEN->REFACTOR (Hook verified)
+- 변경 파일: {file list}
+
+Plan: {plan-name}
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+```
+
+### CHORE 타입
+```bash
+git commit -m "[CHORE] {요약}
+
+- 변경 파일: {file list}
+
+Plan: {plan-name}
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+```
+
+### 기존 타입 (TEST/IMPL/REFACTOR)
 ```bash
 git commit -m "[{TODO-TYPE}] {요약}
 

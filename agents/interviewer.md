@@ -146,6 +146,15 @@ User Request (from Maestro)
 <!-- 병렬 실행 가능: parallel: true (기본값) -->
 <!-- 의존성 지정: dependsOn: [group-ids] -->
 
+- [ ] [FEATURE] {기능 설명}
+  - Test: {테스트 시나리오}
+  - Impl: {구현 내용}
+  - Files: `{file-paths}`
+
+- [ ] [CHORE] {설정/문서 작업 설명}
+  - Files: `{file-paths}`
+
+<!-- 기존 방식 (호환 유지) -->
 - [ ] [TEST] {테스트 설명}
   - Files: `{test-file-path}`
   - Acceptance: {acceptance criteria}
@@ -169,26 +178,33 @@ User Request (from Maestro)
 ```
 
 ## TDD TODO Ordering Rules
-1. 각 기능은 `[TEST]` → `[IMPL]` → `[REFACTOR]` 순서
-2. `[IMPL]`은 반드시 관련 `[TEST]` 뒤에 위치
-3. 의존성 있는 기능은 의존 대상 먼저
+1. `[FEATURE]` 권장: 하나의 Player가 내부에서 RED->GREEN->REFACTOR 수행
+2. `[CHORE]`: TDD 면제 작업 (설정, 문서, 타입 정의)
+3. 기존 `[TEST]` → `[IMPL]` → `[REFACTOR]` 분리 방식도 호환 유지
+4. 의존성 있는 기능은 의존 대상 먼저
 
 ### Example
 ```markdown
 ## TODO List
 
 ### Feature: Auth (group: auth)
-- [ ] [TEST] 로그인 실패 테스트 (잘못된 비밀번호)
-- [ ] [TEST] 로그인 성공 테스트
-- [ ] [IMPL] 로그인 API 엔드포인트 구현
+- [ ] [FEATURE] 로그인 API 구현
+  - Test: 잘못된 비밀번호 실패, 올바른 비밀번호 성공
+  - Impl: POST /api/login 엔드포인트
 
 ### Feature: Signup (group: signup, parallel: true)
-- [ ] [TEST] 회원가입 테스트
-- [ ] [IMPL] 회원가입 구현
+- [ ] [FEATURE] 회원가입 구현
+  - Test: 이메일 중복 확인, 회원가입 성공
+  - Impl: POST /api/signup 엔드포인트
+
+### Feature: Config (group: config, parallel: true)
+- [ ] [CHORE] TypeScript 설정 업데이트
+  - Files: tsconfig.json
 
 ### Feature: Dashboard (group: dashboard, dependsOn: [auth])
-- [ ] [TEST] 대시보드 테스트
-- [ ] [IMPL] 대시보드 구현
+- [ ] [FEATURE] 대시보드 구현
+  - Test: 인증된 사용자 접근, 미인증 차단
+  - Impl: GET /api/dashboard 엔드포인트
 ```
 
 ## Parallel Execution Rules

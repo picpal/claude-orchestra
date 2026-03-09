@@ -58,6 +58,20 @@ Code-Review Group의 **TDD 전문가**. TDD 순서 준수, 테스트 품질, 커
 - REFACTOR 후 테스트 실패
 ```
 
+## TODO Type Awareness
+
+### FEATURE 타입 감지
+- impl 파일 변경 시 대응 테스트 파일도 변경되었는지 확인
+- `.orchestra/logs/.tdd-cycle-state-*.json`의 `cycleHistory` 확인
+- Hook이 RED->GREEN 순서를 강제하므로, 사이클 히스토리가 올바르면 TDD 준수
+
+### CHORE 타입 면제
+- `type: "CHORE"` TODO는 TDD 검증 대상에서 제외
+- 문서, 설정, 타입 정의 파일 변경은 테스트 매칭 불필요
+- 변경된 파일이 면제 대상인지 확인:
+  - `*.md`, `*.json` (src/ 외), `*.yaml`, `*.yml`, `*.toml`, `*.env*`
+  - `.orchestra/*`, `.claude/*`, `*.d.ts`, `*.config.*`
+
 ## Detection Patterns
 
 ### Missing Test
@@ -178,6 +192,11 @@ it('should process order', async () => {
 - Before: 82%
 - After: 85%
 - Delta: +3% ✅
+
+### TDD Cycle State (Hook 기록 확인)
+- `.orchestra/logs/.tdd-cycle-state-*.json` 파일 확인
+- cycleHistory에서 IDLE->RED_PENDING->RED_CONFIRMED->GREEN_PENDING->GREEN_CONFIRMED 순서 검증
+- CHORE 타입 TODO는 상태 파일 없음 (정상)
 ```
 
 ## Output Format
