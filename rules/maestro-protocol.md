@@ -12,6 +12,7 @@
 | `phase-gate.sh` | Planner 없이 Executor 호출 금지 | PreToolUse/Task |
 | `tdd-guard.sh` | 테스트 삭제/스킵 금지 | PreToolUse/Edit\|Write |
 | `tdd-cycle-gate.sh` | Player의 TDD RED->GREEN 순서 강제 | PreToolUse/Edit\|Write |
+| `role-boundary-guard.sh` | 에이전트 역할 경계 하드 차단 (Interviewer: Read/Bash 제한) | PreToolUse/Read\|Grep\|Glob\|Bash |
 | `verify-before-commit.sh` | Code-Review 미완료 시 커밋 금지 | PreToolUse/Bash (git commit) |
 
 ---

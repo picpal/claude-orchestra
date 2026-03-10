@@ -16,14 +16,16 @@
         ]
       },
       {
-        "matcher": "Read|Grep",
+        "matcher": "Read|Grep|Glob",
         "hooks": [
+          {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/role-boundary-guard.sh"},
           {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/explorer-hint.sh"}
         ]
       },
       {
         "matcher": "Bash",
         "hooks": [
+          {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/role-boundary-guard.sh"},
           {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/verify-before-commit.sh"}
         ]
       },

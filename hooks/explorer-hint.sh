@@ -54,6 +54,8 @@ is_code_file() {
 }
 
 # 메인 로직
+# Note: role-boundary-guard.sh가 먼저 실행되어 Interviewer 등의 역할 경계를 차단합니다.
+#       이 Hook은 Main Agent에 대한 소프트 힌트만 제공합니다.
 main() {
   local tool_name
   tool_name=$(hook_get_field "tool_name")
@@ -89,7 +91,7 @@ main() {
 
   # 힌트 출력 (차단 아님)
   log "HINT: Main Agent direct code access ($tool_name: $file_path)"
-  echo "[Orchestra] 💡 코드 탐색에는 Task(Explorer)를 사용하면 더 효율적입니다."
+  echo "[Orchestra] 코드 탐색에는 Task(Explorer)를 사용하면 더 효율적입니다."
   echo "             예: Task(subagent_type=\"Explore\", description=\"...\", prompt=\"...\")"
 
   # 통과 (차단하지 않음)
