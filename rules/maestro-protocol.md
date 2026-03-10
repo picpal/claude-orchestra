@@ -42,10 +42,30 @@
 Phase 1 → 2 → 4 → 5 → 6 → 6a-CR → 7
 ```
 
-### Phase 1: Research (선택적)
+### Phase 1: Research (조건부 필수)
 
-복잡한 요구사항 시 3개 에이전트 **병렬** 호출:
-- Task(Explorer) + Task(Searcher) + Task(Architecture)
+아래 조건 중 **하나 이상** 해당 시 Research Group 호출:
+
+| 조건 | 호출 에이전트 |
+|------|-------------|
+| 이미지/스크린샷 포함 요청 | **Image-Analyst** (필수) |
+| 5개+ 파일 동시 수정 예상 | Explorer |
+| 외부 라이브러리 통합 필요 | Searcher |
+| 아키텍처 변경/새 모듈 생성 | Architecture |
+| 기존 코드 이해 필요한 대규모 수정 | Explorer + Architecture |
+
+**호출 구성** (해당 에이전트만 선택적 병렬):
+```
+Maestro: 조건 판단 → 해당 에이전트만 한 메시지에 병렬 호출
+  ├─ Task(Image-Analyst) — 이미지 분석 시
+  ├─ Task(Explorer)      — 코드베이스 탐색 시
+  ├─ Task(Searcher)      — 외부 문서 검색 시
+  └─ Task(Architecture)  — 아키텍처 분석 시
+```
+
+> **핵심**: Interviewer는 Research 역할을 수행하지 않습니다.
+> 이미지 분석, 코드 탐색, 외부 검색은 반드시 Phase 1에서 해당 에이전트가 수행합니다.
+
 - 결과 종합 후 Phase 2 진행
 
 ### Phase 2: Planning

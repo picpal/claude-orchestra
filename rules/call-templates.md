@@ -135,7 +135,9 @@ TDD: [FEATURE] → RED->GREEN->REFACTOR 필수 (tdd-cycle-gate.sh Hook 강제)
 
 ---
 
-## Research Group (Phase 1 병렬 - 3개 동시 호출)
+## Research Group (Phase 1 — 조건부 병렬 호출)
+
+> 해당 에이전트만 선택적으로 병렬 호출합니다. 모두 호출할 필요 없음.
 
 ```
 Task(
@@ -186,6 +188,27 @@ Task(
 [Architecture] 아키텍처 분석 결과
 - 설계 권장: [내용]
 - 패턴 제안: [목록]
+"""
+)
+
+Task(
+  subagent_type: "general-purpose", model: "sonnet",
+  description: "Image-Analyst: 이미지 분석",
+  prompt: """
+**Image-Analyst** - UI 스크린샷, 에러 화면, 디자인 목업, 아키텍처 다이어그램 분석
+도구: Read (이미지 파일 읽기)
+제약: Edit, Write, Bash 금지 (읽기 전용, 분석 결과만 반환)
+---
+## 분석 대상
+{이미지 파일 경로 목록}
+## 분석 유형
+{UI 분석 | 에러 분석 | 디자인 분석 | 다이어그램 해석}
+## Expected Output
+[Image-Analyst] 이미지 분석 결과
+- 분석 유형: {type}
+- 발견 사항: [목록]
+- 구조 설명: [요약]
+- 관련 컴포넌트: [추정 목록]
 """
 )
 ```
