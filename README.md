@@ -437,19 +437,12 @@ your-project/
 
 ---
 
-## 기여
-
-이슈와 PR을 환영합니다!
+## 이슈와 PR을 환영합니다 :)
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. feature branch 생성 (`git checkout -b feature/good-feature`)
+3. 변경사항 Commit (`git commit -m 'OO 버그 개선. OO 기능 추가...'`)
+4. Push (`git push origin feature/good-feature`)
+5. Pull Request 요청
 
 ---
-
-## 문의
-
-- **Issues**: https://github.com/picpal/claude-orchestra/issues
-- **Discussions**: https://github.com/picpal/claude-orchestra/discussions
