@@ -48,7 +48,7 @@ Phase 1: Research (선택적) ─── Explorer + Searcher + Architecture 병�
 Phase 2: Planning ─────────── Interviewer(4개 agent 병렬 검토) → Planner (3단계 필수)
     │
     ▼
-Phase 4: Execution ────────── High-Player / Low-Player (Level별 병렬)
+Phase 4: Execution ────────── High-Player / Low-Player (Level별 병렬, TDD Red,Green 필수)
     │
     ▼
 Phase 5: Conflict Check ───── 병렬 실행 시에만
