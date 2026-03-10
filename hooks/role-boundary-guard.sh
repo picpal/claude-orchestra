@@ -4,6 +4,7 @@
 #
 # 현재 차단 대상:
 #   - Interviewer: Bash 사용 전면 금지, Read/Grep은 설정/문서만 허용
+#   - Research-Team: Bash 읽기전용만 허용
 #
 # 트리거: PreToolUse/Bash, PreToolUse/Read|Grep (hooks.json에서 등록)
 
@@ -33,6 +34,12 @@ is_interviewer() {
   local agent_lower
   agent_lower=$(echo "$agent" | tr '[:upper:]' '[:lower:]')
   [ "$agent_lower" = "interviewer" ]
+}
+
+is_research_team() {
+  local agent_lower
+  agent_lower=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+  [ "$agent_lower" = "research-team" ]
 }
 
 # Interviewer가 Read 가능한 파일
@@ -127,6 +134,20 @@ main() {
         echo ""
         exit 1
       fi
+    fi
+  fi
+
+  # --- Research-Team: Bash 읽기전용만 허용 ---
+  if is_research_team "$current_agent"; then
+    if [ "$tool_name" = "Bash" ]; then
+      local cmd
+      cmd=$(hook_get_field "tool_input.command")
+      if echo "$cmd" | grep -qE '^\s*(cat|ls|find|grep|head|tail|wc|echo|pwd|which|file|stat|git (log|status|diff|show|ls-files))'; then
+        exit 0
+      fi
+      log "BLOCKED: Research-Team non-readonly Bash: $cmd"
+      echo "[Role Boundary] Research-Team은 읽기 전용 Bash만 사용할 수 있습니다."
+      exit 1
     fi
   fi
 

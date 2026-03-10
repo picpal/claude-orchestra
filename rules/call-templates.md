@@ -5,7 +5,42 @@
 
 ---
 
+## Research-Team (opus) — Phase 1+2 통합 (단순 케이스)
+
+> **사용 조건**: 기존 코드 존재 + 이미지 없음 + 외부 라이브러리 불필요
+> 조건 미충족 시 기존 Phase 1 병렬 → Phase 2 Interviewer 사용
+
+```
+Task(
+  subagent_type: "general-purpose", model: "opus",
+  description: "Research-Team: 코드 분석 + 요구사항 인터뷰",
+  prompt: """
+  **Research-Team** — 코드베이스 탐색 + 사용자 인터뷰 + 계획 초안
+  도구: Glob, Grep, Read, Bash(읽기전용), AskUserQuestion, Write(.orchestra/plans/)
+  제약: Task 금지, Edit 금지, 코드 작성 금지
+
+  1단계: 아래 요청 관련 코드베이스를 Glob/Grep/Read로 탐색
+  2단계: 탐색 결과를 바탕으로 AskUserQuestion으로 사용자 확인
+  3단계: .orchestra/plans/{name}.md에 계획 초안 작성
+
+  ## 사용자 요청
+  {요청 내용}
+
+  ## Expected Output
+  [Research-Team] 계획 초안 완료: .orchestra/plans/{name}.md
+  - Explorer 분석: {관련 파일 요약}
+  - TODOs: {N}개
+  - Groups: {group-list}
+  """
+)
+```
+
+---
+
 ## Interviewer (opus)
+
+> **사용 조건**: 복합 케이스(이미지/외부 라이브러리 포함) 또는 완전 신규 프로젝트
+> 단순 케이스(기존 코드만)는 Research-Team 사용
 
 > **필수**: Phase 1(Research) 결과를 Context에 포함하여 전달합니다.
 > Interviewer는 소스 코드를 직접 읽지 않습니다 (Hook 차단됨).
@@ -461,7 +496,7 @@ Task(
 ### 에이전트 계층
 ```
 USER INTERACTION: Maestro (= Claude Code)
-PLANNING: Interviewer | Planner
+PLANNING: Research-Team | Interviewer | Planner
 RESEARCH: Architecture | Searcher | Explorer | Image-Analyst | Log-Analyst
 EXECUTION: High-Player | Low-Player
 VERIFICATION: Conflict-Checker

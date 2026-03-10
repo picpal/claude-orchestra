@@ -104,6 +104,11 @@
       "model": "sonnet",
       "allowedTools": ["Read", "Grep", "Glob"],
       "denyTools": ["Task", "Edit", "Write", "Bash"]
+    },
+    "research-team": {
+      "model": "opus",
+      "allowedTools": ["Glob", "Grep", "Read", "Bash", "AskUserQuestion", "Write"],
+      "denyTools": ["Task", "Edit"]
     }
   },
   "defaults": {
@@ -158,6 +163,13 @@
     "executionGroup": {
       "enabled": false,
       "note": "Replaced by parallel Task calls. See maestro-protocol.md Phase 4."
+    },
+    "researchTeam": {
+      "enabled": true,
+      "members": ["explorer", "interviewer"],
+      "mode": "sequential-in-single-spawn",
+      "useCondition": "OPEN-ENDED + existing code only (no image, no external lib)",
+      "fallback": "Phase 1 parallel + Phase 2 Interviewer"
     }
   }
 }

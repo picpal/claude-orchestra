@@ -29,7 +29,14 @@
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  🚀 시작                                                     │
-│  사용자 요청 → 계획 수립                                      │
+│  사용자 요청 → Intent 분류                                    │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│  🔀 Phase 1+2: Research + Interview (조건부 라우팅)            │
+│  ├─ 경로 A: Task(Research-Team) — 단순 케이스               │
+│  ├─ 경로 B: Research 병렬 → Interviewer — 복합 케이스       │
+│  └─ 경로 C: Task(Interviewer) — 신규 프로젝트               │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -59,8 +66,8 @@
 
 ## 시스템 개요
 
-16개 전문 에이전트가 협력하여 TDD 기반 개발을 수행합니다.
-(11개 기본 + 5개 Code-Review Group)
+17개 전문 에이전트가 협력하여 TDD 기반 개발을 수행합니다.
+(12개 기본 + 5개 Code-Review Group)
 **Claude Code가 Main Agent(Maestro)로서** 모든 에이전트를 직접 호출합니다.
 
 ### 핵심 구조: Claude Code = Maestro (Main Agent)
@@ -79,11 +86,12 @@
 │     (/tuning 시 .claude/rules/에 복사됨)                         │
 └─────────────────────────────────────────────────────────────────┘
          │
-         ├── Task(Interviewer)      → 요구사항 인터뷰
+         ├── Task(Research-Team)    → 코드 탐색 + 인터뷰 통합 (단순 케이스)
+         ├── Task(Interviewer)      → 요구사항 인터뷰 (복합/신규 케이스)
          ├── Task(Planner)          → TODO 분석 (실행은 Main Agent)
          ├── Task(High-Player)      → 복잡한 작업 실행
          ├── Task(Low-Player)       → 간단한 작업 실행
-         ├── Task(Explorer)         → 코드베이스 탐색
+         ├── Task(Explorer)         → 코드베이스 탐색 (독립/복합 케이스)
          ├── Task(Conflict-Checker) → 충돌 검사
          ├── Task(Code-Review Group) → 코드 리뷰 (5명 병렬)
          │   ├── Security Guardian
@@ -167,7 +175,7 @@
 
 ```
 claude-orchestra/              # 플러그인 루트
-├── agents/                    # 16개 에이전트 정의 (11 기본 + Code-Review 5명)
+├── agents/                    # 17개 에이전트 정의 (12 기본 + Code-Review 5명)
 ├── commands/                  # 슬래시 명령어
 ├── skills/                    # 컨텍스트 스킬
 │   ├── context-dev/SKILL.md
@@ -238,7 +246,7 @@ your-project/
 | TRIVIAL | "안녕", "Orchestra가 뭐야?" | Maestro 직접 응답 (비코드만) |
 | EXPLORATORY | "이 함수 설명해줘", "인증 로직 어디있어?" | Explorer 위임 (코드 관련) |
 | AMBIGUOUS | "로그인 고쳐줘" | 명확화 질문 |
-| OPEN-ENDED | "OAuth 추가해줘" | 전체 플로우 |
+| OPEN-ENDED | "OAuth 추가해줘" | 조건부 라우팅 (Research-Team / Research Group + Interviewer) |
 
 ## 상태 (Mode)
 
@@ -259,7 +267,8 @@ your-project/
   - 규칙: `rules/maestro-protocol.md`
 
 ### Planning Layer (Subagents)
-- **Interviewer** (Opus): 요구사항 인터뷰, 계획 초안 작성 → Main Agent에게 반환
+- **Research-Team** (Opus): 코드 탐색 + 인터뷰 통합 (단순 케이스: 기존 코드만, 이미지X, 외부libX)
+- **Interviewer** (Opus): 요구사항 인터뷰, 계획 초안 작성 (복합/신규 케이스) → Main Agent에게 반환
 - **Planner** (Opus): TODO 분석 전용 — 실행 순서 결정, 6-Section 프롬프트 생성 → Main Agent에게 반환
 
 ### Research Layer (Subagents)
@@ -269,13 +278,33 @@ your-project/
 - **Image-Analyst** (Sonnet): 이미지 분석
 - **Log-Analyst** (Sonnet): 로그 분석, 오류 진단, 통계 생성
 
-### 🚀 Research Group (병렬 Task 호출)
+### 🔀 Research-Team (조건부 하이브리드 라우팅)
 
-복잡한 요구사항 분석 시 Research Layer 에이전트 3개를 **병렬로** 호출하여 컨텍스트를 빠르게 수집합니다.
+OPEN-ENDED 요청 시 조건에 따라 최적 경로를 선택합니다:
+
+```
+OPEN-ENDED 요청
+    │
+    ├─ 경로 A: 기존 코드만 (이미지X, 외부lib X) — 가장 빈번
+    │   → Task(Research-Team) 단일 호출
+    │   → 내부: Explorer 탐색 → 인터뷰 → 계획 초안
+    │   → Maestro: 구조화된 결과만 수신 (컨텍스트 절약)
+    │
+    ├─ 경로 B: 이미지/외부 라이브러리 필요 — 복합 케이스
+    │   → Phase 1: Task(Explorer) + Task(Searcher/Image-Analyst) 병렬
+    │   → Phase 2: Task(Interviewer, context=집계 결과)
+    │
+    └─ 경로 C: 완전 신규 프로젝트
+        → Task(Interviewer) 단독
+```
+
+### 🚀 Research Group (병렬 Task 호출 — 경로 B)
+
+복합 케이스에서 Research Layer 에이전트를 **병렬로** 호출하여 컨텍스트를 빠르게 수집합니다.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  Research Group (Phase 1 병렬 실행)                           │
+│  Research Group (Phase 1 병렬 실행 — 경로 B)                  │
 │  ┌──────────┬──────────┬──────────┐                         │
 │  │ Explorer │ Searcher │Architecture│                       │
 │  │ (haiku)  │ (sonnet) │  (opus)   │                        │
@@ -287,27 +316,14 @@ your-project/
 │       │          │          │                               │
 │       └──────────┴──────────┘                               │
 │              ↓                                              │
-│       Maestro가 결과 종합                                    │
+│       Maestro가 결과 종합 → Interviewer에게 전달             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**사용 조건:**
-- 복잡한 기능 개발 (새로운 모듈, 아키텍처 변경)
+**경로 B 사용 조건:**
+- 이미지/스크린샷 포함 요청
 - 외부 라이브러리 통합 필요
-- 기존 코드 이해가 필요한 대규모 수정
-
-**장점:**
-- 3개 에이전트가 **동시에** 실행되어 시간 단축
-- 모두 **읽기 전용**이라 충돌 위험 없음
-- 각 영역(내부/외부/설계)의 전문성 활용
-
-**호출 방법:**
-```
-Maestro가 3개 Task를 한 메시지에서 병렬 호출:
-├─ Task(Explorer): 코드베이스 탐색
-├─ Task(Searcher): 외부 문서 검색
-└─ Task(Architecture): 아키텍처 분석
-```
+- 복잡한 아키텍처 변경
 
 > 상세 호출 패턴: `rules/maestro-protocol.md` 참조
 

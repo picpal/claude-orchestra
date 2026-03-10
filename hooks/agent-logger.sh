@@ -132,7 +132,7 @@ detect_planning_agent() {
   desc_lower=$(echo "$desc" | tr '[:upper:]' '[:lower:]')
 
   case "$desc_lower" in
-    interviewer:*) update_planning_flag "interviewerCompleted" ;;
+    interviewer:*|research-team:*) update_planning_flag "interviewerCompleted" ;;
     planner:*|*planner\ 에이전트*|*planner:\ todo*)
       update_planning_flag "plannerCompleted"
       ;;
@@ -198,6 +198,7 @@ extract_agent_name() {
     high-player:*|*high\ player*) echo "high-player" ;;
     low-player:*|*low\ player*) echo "low-player" ;;
     interviewer:*) echo "interviewer" ;;
+    research-team:*|*research.team*|*research-team*) echo "research-team" ;;
     conflict-checker:*|*conflict.checker*) echo "conflict-checker" ;;
     *security\ guardian*) echo "security-guardian" ;;
     *quality\ inspector*) echo "quality-inspector" ;;
@@ -240,7 +241,7 @@ case "$MODE" in
     log_activity "AGENT_START" "$ACTUAL_AGENT" "id=$AGENT_ID $DESCRIPTION"
 
     # Reset planning phase and CR tracker when new interview starts
-    if [ "$ACTUAL_AGENT" = "interviewer" ]; then
+    if [ "$ACTUAL_AGENT" = "interviewer" ] || [ "$ACTUAL_AGENT" = "research-team" ]; then
       reset_planning_phase
       rm -f "$CR_TRACKER_FILE" 2>/dev/null || true
     fi

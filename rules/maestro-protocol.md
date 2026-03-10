@@ -32,9 +32,14 @@
     │
     └─ 코드 생성/수정 필요? ── YES → OPEN-ENDED
          │
-         ├─ 기존 코드 존재? ─── YES → Phase 1 (Research) 필수 → Phase 2
-         ├─ 이미지 포함? ────── YES → Phase 1 (Research) 필수 → Phase 2
-         └─ 완전 신규 프로젝트? ── Phase 1 스킵 가능 → Phase 2
+         ├─ 기존 코드만? (이미지X, 외부lib X)
+         │   → Task(Research-Team) 단일 호출 [Phase 1+2 통합]
+         │
+         ├─ 기존 코드 + 이미지/외부lib 필요?
+         │   → Phase 1 (Research 병렬) → Phase 2 (Interviewer)
+         │
+         └─ 완전 신규 프로젝트?
+             → Phase 2 (Interviewer 단독)
 ```
 
 **규칙**: 코드 수정이 필요한 모든 요청은 규모와 관계없이 **OPEN-ENDED**.
@@ -47,61 +52,70 @@
 Phase 1 → 2 → 4 → 5 → 6 → 6a-CR → 7
 ```
 
-### Phase 1: Research (기존 코드가 있으면 필수)
+### Phase 1+2: Research + Interview
 
-> **절대 규칙**: Interviewer보다 먼저 실행합니다.
-> "코드 상태 파악", "현재 구조 이해"는 Phase 1의 역할이지, Interviewer의 역할이 아닙니다.
+#### 경로 A: Research-Team 통합 (단순 케이스 — 가장 빈번)
 
-**Phase 1 필수 조건** (하나 이상 해당 시):
+조건: 기존 코드 존재 + 이미지 없음 + 외부 라이브러리 불필요
 
-| 조건 | 호출 에이전트 |
-|------|-------------|
-| 기존 프로젝트에 기능 추가/수정 | **Explorer** (필수) |
-| 이미지/스크린샷 포함 요청 | **Image-Analyst** (필수) |
-| 외부 라이브러리 통합 필요 | Searcher |
-| 아키텍처 변경/새 모듈 생성 | Architecture |
-
-**Phase 1 스킵 가능 조건** (모두 해당 시에만):
-- 완전 신규 프로젝트 (기존 코드 없음)
-- 이미지 없음
-- 외부 라이브러리 불필요
-
-**호출 구성** (해당 에이전트만 선택적 병렬):
 ```
-Maestro: 조건 판단 → 해당 에이전트만 한 메시지에 병렬 호출
-  ├─ Task(Explorer)      — 기존 코드 탐색 (기존 프로젝트면 거의 항상)
-  ├─ Task(Image-Analyst) — 이미지 분석 시
-  ├─ Task(Searcher)      — 외부 문서 검색 시
-  └─ Task(Architecture)  — 아키텍처 분석 시
+Maestro → Task(Research-Team) → 구조화된 계획만 반환
 ```
 
-- Research 결과를 종합한 후 Phase 2 진행
-- **Research 결과는 Interviewer에게 컨텍스트로 전달**
+- Research-Team이 내부에서 Explorer 탐색 → 사용자 인터뷰 → 계획 초안 작성
+- Maestro는 원시 탐색 데이터 대신 **구조화된 요약만 수신**
+- 컨텍스트 효율 극대화 (Explorer 결과가 Maestro를 거치지 않음)
+
+#### 경로 B: Phase 1 병렬 + Phase 2 (복합 케이스)
+
+조건: 이미지 포함 또는 외부 라이브러리 필요
+
+```
+Maestro → [병렬] Task(Explorer) + Task(Image-Analyst) + Task(Searcher)
+       → Maestro 결과 집계
+       → Task(Interviewer, context=집계 결과)
+```
+
+- Searcher/Image-Analyst 결과를 Research-Team 내부에서 받을 수 없으므로 기존 경로 유지
+- Maestro가 여러 Phase 1 결과를 집계하여 Interviewer에게 전달
+
+#### 경로 C: Interviewer 단독 (신규 프로젝트)
+
+조건: 기존 코드 없음
+
+```
+Maestro → Task(Interviewer) → 계획 초안
+```
+
+- 탐색할 코드가 없으므로 바로 인터뷰 진행
+
+### Phase 3: Planner
+
+- Task(Planner) → Analysis Report 반환 (JSON 블록 + 6-Section 프롬프트)
+- **경로 A/B/C 모두 Planner는 필수** (TODO 추출 + 6-Section 프롬프트 생성)
 
 ### ❌ 잘못된 패턴 (금지)
 
 ```
+# 잘못됨: 복합 케이스에서 Research-Team 사용 (Searcher 결과 누락)
+Maestro → Task(Research-Team) ← ❌ 이미지/외부lib 필요 시 경로 B 사용!
+
+# 잘못됨: 단순 케이스에서 Explorer → Maestro → Interviewer (불필요한 컨텍스트 중계)
+Maestro → Task(Explorer) → Task(Interviewer) ← ❌ 경로 A(Research-Team) 사용!
+
 # 잘못됨: Interviewer가 코드를 직접 탐색
 Maestro → Task(Interviewer) → Read(src/auth/login.ts) ← ❌ Hook이 차단!
 
-# 잘못됨: Phase 1 없이 Interviewer 호출 (기존 코드 존재 시)
-Maestro → Task(Interviewer) ← ❌ 기존 코드 상태를 모르고 계획 작성
-
-# 올바름: Phase 1 → Phase 2 순서
-Maestro → Task(Explorer) → 코드 구조 파악
-       → Task(Interviewer, context=Explorer 결과) → 요구사항 인터뷰 + 계획
+# 올바름: 조건에 따라 적절한 경로 선택
+경로 A: Maestro → Task(Research-Team) → 계획
+경로 B: Maestro → [병렬]Task(Explorer)+Task(Searcher) → Task(Interviewer) → 계획
+경로 C: Maestro → Task(Interviewer) → 계획
 ```
-
-### Phase 2: Planning
-
-- **Step 1**: Task(Interviewer) → 요구사항 인터뷰 + `.orchestra/plans/{name}.md` 작성
-  - **Phase 1 결과를 프롬프트에 포함하여 전달** (Interviewer가 코드를 직접 읽지 않아도 됨)
-- **Step 2**: Task(Planner) → Analysis Report 반환 (JSON 블록 + 6-Section 프롬프트)
 
 ### Plan Mode 통합 (Claude Code 내장 Plan Mode 사용 시)
 
 사용자가 Claude Code의 내장 Plan Mode(`EnterPlanMode` → `ExitPlanMode`)로 계획을 수립한 경우,
-**Interviewer 단계를 대체**합니다. 단, Planner는 반드시 실행해야 합니다.
+**Research-Team/Interviewer 단계를 대체**합니다. 단, Planner는 반드시 실행해야 합니다.
 
 **Plan Mode 종료 감지 → Maestro 필수 행동:**
 
@@ -143,7 +157,7 @@ for each level in levels:
 ```
 
 **Executor 호출 전 필수 체크:**
-- [ ] Interviewer 결과 있음?
+- [ ] Research-Team 또는 Interviewer 결과 있음?
 - [ ] Planner의 6-Section 프롬프트 있음?
 
 ### Phase 5: Conflict Check (조건부)
@@ -251,7 +265,7 @@ Phase 7 없이 작업이 완료되는 경우(탐색, 조사, 간단한 질의응
 | 직접 Edit/Write (코드) | Executor만 코드 수정 가능 |
 | Phase 건너뛰기 | OPEN-ENDED는 Phase 순서 필수 |
 | Planner 없이 Executor 호출 | 6-Section 프롬프트 필수 |
-| 직접 계획 작성 | Interviewer 또는 Plan Mode만 계획 작성 가능 |
+| 직접 계획 작성 | Research-Team, Interviewer 또는 Plan Mode만 계획 작성 가능 |
 
 **유일한 예외**: Rework Loop (Conflict/Block 시 Executor 재호출)
 

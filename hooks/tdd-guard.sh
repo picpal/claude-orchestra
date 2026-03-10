@@ -133,6 +133,15 @@ is_interviewer_agent() {
   [ "$agent_lower" = "interviewer" ]
 }
 
+# Research-Team 에이전트인지 확인 (Interviewer와 동일 Write 범위)
+is_research_team_agent() {
+  local agent="$1"
+  local agent_lower
+  agent_lower=$(echo "$agent" | tr '[:upper:]' '[:lower:]')
+
+  [ "$agent_lower" = "research-team" ]
+}
+
 # 허용된 경로인지 확인 (Interviewer용)
 is_allowed_path_for_interviewer() {
   local file_path="$1"
@@ -179,6 +188,17 @@ main() {
       echo ""
       echo "차단된 경로: $file_path"
       echo ""
+      exit 1
+    fi
+  fi
+
+  # Research-Team 에이전트: .orchestra/plans/, .orchestra/journal/ 경로만 허용
+  if [ -n "$current_agent" ] && is_research_team_agent "$current_agent"; then
+    if [ -n "$file_path" ] && is_allowed_path_for_interviewer "$file_path"; then
+      log "ALLOWED: Research-Team writing to plan/journal: $file_path"
+    else
+      log "BLOCKED: Research-Team write to: $file_path"
+      echo "[Research-Team] 계획 문서만 작성 가능합니다. (.orchestra/plans/, .orchestra/journal/)"
       exit 1
     fi
   fi
