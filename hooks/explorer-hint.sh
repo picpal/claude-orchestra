@@ -68,6 +68,9 @@ main() {
   # Grep 도구: path 필드
   elif [ "$tool_name" = "Grep" ]; then
     file_path=$(hook_get_field "tool_input.path")
+  # Glob 도구: path 필드
+  elif [ "$tool_name" = "Glob" ]; then
+    file_path=$(hook_get_field "tool_input.path")
   fi
 
   # 파일 경로가 없으면 통과
@@ -89,10 +92,39 @@ main() {
     exit 0
   fi
 
-  # 힌트 출력 (차단 아님)
-  log "HINT: Main Agent direct code access ($tool_name: $file_path)"
-  echo "[Orchestra] 코드 탐색에는 Task(Explorer)를 사용하면 더 효율적입니다."
-  echo "             예: Task(subagent_type=\"Explore\", description=\"...\", prompt=\"...\")"
+  # Subagent 활성 상태 체크 (agent stack이 비어있지 않으면 Main Agent가 아님)
+  local agent_stack=""
+  if [ -f "$ORCHESTRA_STATE_FILE" ]; then
+    agent_stack=$(python3 -c "
+import json, sys
+try:
+    with open(sys.argv[1]) as f:
+        d = json.load(f)
+    stack = d.get('agentStack', [])
+    print(','.join(stack) if stack else '')
+except:
+    print('')
+" "$ORCHESTRA_STATE_FILE" 2>/dev/null)
+  fi
+  if [ -n "$agent_stack" ]; then
+    log "SKIP: Subagent active ($agent_stack)"
+    exit 0
+  fi
+
+  # 강한 리다이렉트 메시지 출력 (차단 아님)
+  log "REDIRECT: Main Agent direct code access ($tool_name: $file_path)"
+  cat <<'REDIRECT'
+
+⚠️ [Maestro Protocol] 소스 코드 직접 Read 감지
+
+Maestro는 소스 코드를 직접 읽지 않습니다. 아래 에이전트를 사용하세요:
+
+  EXPLORATORY → Task(subagent_type="Explore", description="코드 탐색: {대상}", prompt="...")
+  OPEN-ENDED  → Task(Research-Team) 또는 Task(Explorer) + Task(Interviewer)
+
+직접 Read 대신 에이전트를 호출하세요. 이것은 프로토콜 규칙입니다.
+
+REDIRECT
 
   # 통과 (차단하지 않음)
   exit 0

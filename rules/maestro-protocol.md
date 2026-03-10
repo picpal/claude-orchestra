@@ -14,6 +14,7 @@
 | `tdd-cycle-gate.sh` | Player의 TDD RED->GREEN 순서 강제 | PreToolUse/Edit\|Write |
 | `role-boundary-guard.sh` | 에이전트 역할 경계 하드 차단 (Interviewer: Read/Bash 제한) | PreToolUse/Read\|Grep\|Glob\|Bash |
 | `verify-before-commit.sh` | Code-Review 미완료 시 커밋 금지 | PreToolUse/Bash (git commit) |
+| `explorer-hint.sh` | Main Agent의 소스 코드 직접 Read 시 리다이렉트 경고 | PreToolUse/Read\|Grep\|Glob |
 
 ---
 
@@ -263,6 +264,7 @@ Phase 7 없이 작업이 완료되는 경우(탐색, 조사, 간단한 질의응
 | 금지 | 이유 |
 |------|------|
 | 직접 Edit/Write (코드) | Executor만 코드 수정 가능 |
+| 직접 Read/Grep/Glob (소스 코드) | Explorer, Research-Team이 코드 탐색 담당 (Hook 경고) |
 | Phase 건너뛰기 | OPEN-ENDED는 Phase 순서 필수 |
 | Planner 없이 Executor 호출 | 6-Section 프롬프트 필수 |
 | 직접 계획 작성 | Research-Team, Interviewer 또는 Plan Mode만 계획 작성 가능 |
