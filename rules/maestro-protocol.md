@@ -30,7 +30,11 @@
     │
     ├─ 불명확한 요청? ──────── YES → AMBIGUOUS → AskUserQuestion
     │
-    └─ 코드 생성/수정 필요? ── YES → OPEN-ENDED → Phase 흐름 실행
+    └─ 코드 생성/수정 필요? ── YES → OPEN-ENDED
+         │
+         ├─ 기존 코드 존재? ─── YES → Phase 1 (Research) 필수 → Phase 2
+         ├─ 이미지 포함? ────── YES → Phase 1 (Research) 필수 → Phase 2
+         └─ 완전 신규 프로젝트? ── Phase 1 스킵 가능 → Phase 2
 ```
 
 **규칙**: 코드 수정이 필요한 모든 요청은 규모와 관계없이 **OPEN-ENDED**.
@@ -43,35 +47,55 @@
 Phase 1 → 2 → 4 → 5 → 6 → 6a-CR → 7
 ```
 
-### Phase 1: Research (조건부 필수)
+### Phase 1: Research (기존 코드가 있으면 필수)
 
-아래 조건 중 **하나 이상** 해당 시 Research Group 호출:
+> **절대 규칙**: Interviewer보다 먼저 실행합니다.
+> "코드 상태 파악", "현재 구조 이해"는 Phase 1의 역할이지, Interviewer의 역할이 아닙니다.
+
+**Phase 1 필수 조건** (하나 이상 해당 시):
 
 | 조건 | 호출 에이전트 |
 |------|-------------|
+| 기존 프로젝트에 기능 추가/수정 | **Explorer** (필수) |
 | 이미지/스크린샷 포함 요청 | **Image-Analyst** (필수) |
-| 5개+ 파일 동시 수정 예상 | Explorer |
 | 외부 라이브러리 통합 필요 | Searcher |
 | 아키텍처 변경/새 모듈 생성 | Architecture |
-| 기존 코드 이해 필요한 대규모 수정 | Explorer + Architecture |
+
+**Phase 1 스킵 가능 조건** (모두 해당 시에만):
+- 완전 신규 프로젝트 (기존 코드 없음)
+- 이미지 없음
+- 외부 라이브러리 불필요
 
 **호출 구성** (해당 에이전트만 선택적 병렬):
 ```
 Maestro: 조건 판단 → 해당 에이전트만 한 메시지에 병렬 호출
+  ├─ Task(Explorer)      — 기존 코드 탐색 (기존 프로젝트면 거의 항상)
   ├─ Task(Image-Analyst) — 이미지 분석 시
-  ├─ Task(Explorer)      — 코드베이스 탐색 시
   ├─ Task(Searcher)      — 외부 문서 검색 시
   └─ Task(Architecture)  — 아키텍처 분석 시
 ```
 
-> **핵심**: Interviewer는 Research 역할을 수행하지 않습니다.
-> 이미지 분석, 코드 탐색, 외부 검색은 반드시 Phase 1에서 해당 에이전트가 수행합니다.
+- Research 결과를 종합한 후 Phase 2 진행
+- **Research 결과는 Interviewer에게 컨텍스트로 전달**
 
-- 결과 종합 후 Phase 2 진행
+### ❌ 잘못된 패턴 (금지)
+
+```
+# 잘못됨: Interviewer가 코드를 직접 탐색
+Maestro → Task(Interviewer) → Read(src/auth/login.ts) ← ❌ Hook이 차단!
+
+# 잘못됨: Phase 1 없이 Interviewer 호출 (기존 코드 존재 시)
+Maestro → Task(Interviewer) ← ❌ 기존 코드 상태를 모르고 계획 작성
+
+# 올바름: Phase 1 → Phase 2 순서
+Maestro → Task(Explorer) → 코드 구조 파악
+       → Task(Interviewer, context=Explorer 결과) → 요구사항 인터뷰 + 계획
+```
 
 ### Phase 2: Planning
 
 - **Step 1**: Task(Interviewer) → 요구사항 인터뷰 + `.orchestra/plans/{name}.md` 작성
+  - **Phase 1 결과를 프롬프트에 포함하여 전달** (Interviewer가 코드를 직접 읽지 않아도 됨)
 - **Step 2**: Task(Planner) → Analysis Report 반환 (JSON 블록 + 6-Section 프롬프트)
 
 ### Plan Mode 통합 (Claude Code 내장 Plan Mode 사용 시)

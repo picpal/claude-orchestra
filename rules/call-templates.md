@@ -7,19 +7,30 @@
 
 ## Interviewer (opus)
 
+> **필수**: Phase 1(Research) 결과를 Context에 포함하여 전달합니다.
+> Interviewer는 소스 코드를 직접 읽지 않습니다 (Hook 차단됨).
+
 ```
 Task(
   subagent_type: "general-purpose", model: "opus",
   description: "Interviewer: 요구사항 인터뷰",
   prompt: """
 **Interviewer** - 요구사항 인터뷰 + 계획 초안 작성
-도구: AskUserQuestion, Write(.orchestra/plans/), Read
-제약: 코드 작성 금지, Task 사용 금지
+도구: AskUserQuestion, Write(.orchestra/plans/), Read(문서/설정만)
+제약: 코드 작성 금지, Task 사용 금지, 소스 코드 Read 금지 (Hook 차단)
 ---
-## Context
-{현재 상황}
+## Phase 1 Research 결과 (Interviewer가 직접 탐색하지 않음)
+{Explorer 결과: 코드 구조, 관련 파일, 기존 패턴}
+{Image-Analyst 결과: 이미지 분석 (있는 경우)}
+{Searcher 결과: 외부 문서 (있는 경우)}
+
+## 사용자 요청
+{요청 내용}
+
 ## Request
-{요구사항 인터뷰 + 계획 초안 작성}
+위 Research 결과를 바탕으로 사용자와 인터뷰하고 계획 초안을 작성하세요.
+코드 탐색은 이미 완료되었으므로 직접 코드를 읽지 마세요.
+
 ## Expected Output
 [Interviewer] 계획 초안 완료: .orchestra/plans/{name}.md
 - TODOs: {N}개
