@@ -87,7 +87,7 @@ fi
 PLAN_MODE_HINT=""
 if [ -f "$STATE_FILE" ]; then
   PLAN_MODE_HINT=$(python3 -c "
-import json, sys
+import json, sys, glob, os
 try:
     with open(sys.argv[1]) as f:
         d = json.load(f)
@@ -95,11 +95,16 @@ try:
     interviewer_done = pp.get('interviewerCompleted', False)
     planner_done = pp.get('plannerCompleted', False)
     mode = d.get('mode', 'IDLE')
-    # interviewerCompleted가 false인 상태에서 실행이 시작되려는 경우 감지
-    if not interviewer_done and mode in ('IDLE', 'PLAN'):
-        print('NEED_INTERVIEW')
+    # 계획 파일 존재 여부 확인
+    plans_dir = os.path.join(os.path.dirname(sys.argv[1]), 'plans')
+    has_plan_file = bool(glob.glob(os.path.join(plans_dir, '*.md'))) if os.path.isdir(plans_dir) else False
+    # PLAN_MODE_READY: interviewerCompleted=true + plannerCompleted=false + 계획 파일 존재
+    if interviewer_done and not planner_done and has_plan_file:
+        print('PLAN_MODE_READY')
     elif interviewer_done and not planner_done:
         print('NEED_PLANNER')
+    elif not interviewer_done and mode in ('IDLE', 'PLAN'):
+        print('NEED_INTERVIEW')
     else:
         print('')
 except:
@@ -210,11 +215,12 @@ else
 \`\`\`
 
 ### 3a. Plan Mode 통합 (내장 Plan Mode 사용 시)
-Plan Mode로 계획을 수립했다면 반드시:
-1. state.json의 \`planningPhase.interviewerCompleted = true\` 설정
+⚡ Plan Mode 승인 직후 **사용자 지시 없이 자동 실행**:
+1. state.json → \`interviewerCompleted = true\`, \`mode = "PLAN"\`
 2. \`.orchestra/plans/{name}.md\`에 계획 저장
-3. Task(Planner) 호출하여 TODO 추출
-※ maestro-protocol.md "Plan Mode 통합" 섹션 참조
+3. Task(Planner) 호출 → TODO 추출
+4. /execute-plan 흐름 시작 (Phase 4-7)
+※ 상세: maestro-protocol.md "Plan Mode 통합" 또는 /after-plan-mode 참조
 
 ### 4. 에이전트 호출 (올바른 방법)
 \`\`\`
@@ -231,7 +237,23 @@ Task(subagent_type="general-purpose",
 상세 규칙: \`.claude/rules/maestro-protocol.md\`
 ${PLAN_INFO:+$PLAN_INFO
 }${TODO_INFO:+$TODO_INFO
-}$(if [ "$PLAN_MODE_HINT" = "NEED_INTERVIEW" ]; then
+}$(if [ "$PLAN_MODE_HINT" = "PLAN_MODE_READY" ]; then
+cat <<'HINT'
+
+### ⚡ Plan Mode 완료 — Planner 호출 필수
+계획 파일이 준비되었습니다. **아래를 순서대로 실행하세요:**
+1. **Task(Planner)** 호출 → TODO 추출 + 6-Section 프롬프트 생성
+2. Planner 완료 후 → `/execute-plan` 흐름 시작 (Phase 4-7)
+사용자 추가 지시를 기다리지 말고 자동으로 진행하세요.
+HINT
+elif [ "$PLAN_MODE_HINT" = "NEED_PLANNER" ]; then
+cat <<'HINT'
+
+### ⚡ Planner 호출 필수
+Interviewer 완료됨. **Task(Planner) 호출하여 TODO 추출하세요.**
+Planner 완료 후 Phase 4(Execution)로 진행하세요. 사용자 지시를 기다리지 마세요.
+HINT
+elif [ "$PLAN_MODE_HINT" = "NEED_INTERVIEW" ]; then
 cat <<'HINT'
 
 ### 📋 다음 단계 안내
@@ -239,12 +261,6 @@ cat <<'HINT'
 - **방법 1**: Task(Interviewer) 호출하여 요구사항 인터뷰 진행
 - **방법 2**: Plan Mode로 계획을 수립했다면 interviewerCompleted=true 설정
 현재 Interviewer 또는 Plan Mode 완료가 필요합니다.
-HINT
-elif [ "$PLAN_MODE_HINT" = "NEED_PLANNER" ]; then
-cat <<'HINT'
-
-### ⚠️ Plan Mode 통합: Planner 호출 필요
-Interviewer 완료됨. 다음 단계: **Task(Planner)** 호출하여 TODO 추출 필수.
 HINT
 fi)
 </user-prompt-submit-hook>

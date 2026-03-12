@@ -115,34 +115,48 @@ Maestro → Task(Interviewer) → Read(src/auth/login.ts) ← ❌ Hook이 차단
 
 ### Plan Mode 통합 (Claude Code 내장 Plan Mode 사용 시)
 
-사용자가 Claude Code의 내장 Plan Mode(`EnterPlanMode` → `ExitPlanMode`)로 계획을 수립한 경우,
-**Research-Team/Interviewer 단계를 대체**합니다. 단, Planner는 반드시 실행해야 합니다.
+> ⚡ **Plan Mode 종료 = 즉시 실행 개시.** 사용자 추가 지시를 기다리지 않습니다.
 
-**Plan Mode 종료 감지 → Maestro 필수 행동:**
+사용자가 Plan Mode(`EnterPlanMode` → `ExitPlanMode`)로 계획을 승인하면,
+**아래 4단계를 사용자 지시 없이 자동으로 즉시 실행합니다.**
 
-```
-Plan Mode 종료 (사용자가 계획 승인)
-    │
-    ▼
-Step A: state.json 업데이트
-    - planningPhase.interviewerCompleted = true
-    - mode = "PLAN"
-    - currentPlan 설정 (계획 파일 경로)
-    │
-    ▼
-Step B: .orchestra/plans/{name}.md 작성
-    - Plan Mode에서 작성된 계획 내용을 계획 파일로 저장
-    │
-    ▼
-Step C: Task(Planner) 호출 → TODO 추출 + 6-Section 프롬프트
-    │
-    ▼
-이후 정상 Phase 4-7 진행
+---
+
+**1단계: state.json 업데이트**
+
+```python
+# Write로 .orchestra/state.json 업데이트
+planningPhase.interviewerCompleted = true   # ⚠️ 미설정 시 phase-gate가 Planner 차단!
+mode = "PLAN"
+currentPlan = ".orchestra/plans/{plan-name}.md"
 ```
 
-**핵심 규칙:**
-- Plan Mode 계획이 있어도 **Planner는 생략 불가** (TODO 추출 + 6-Section 프롬프트 필수)
-- `interviewerCompleted`를 설정하지 않으면 phase-gate가 Planner 호출을 차단 → 시스템 안전 실패
+**2단계: 계획 파일 저장**
+
+```
+Write → .orchestra/plans/{plan-name}.md
+내용: Plan Mode에서 작성/승인된 계획 전체
+```
+
+**3단계: Task(Planner) 호출**
+
+```
+Task(Planner) → TODO 추출 + 6-Section 프롬프트 생성
+⚠️ Plan Mode 계획이 있어도 Planner는 생략 불가!
+```
+
+**4단계: /execute-plan 흐름 시작**
+
+```
+Phase 4(Execution) → 5(Conflict) → 6(Verification) → 6a-CR(Code-Review) → 7(Commit+Journal)
+```
+
+---
+
+**⚠️ 절대 규칙:**
+- 4단계 전체를 **연속으로** 실행할 것 — 중간에 사용자 입력을 기다리지 말 것
+- `interviewerCompleted = true` 설정이 **반드시 Planner 호출 전에** 완료되어야 함
+- 계획 파일이 없으면 Planner가 분석할 대상이 없음 → 2단계 필수
 
 ### Phase 4: Execution (Level별)
 
@@ -201,8 +215,15 @@ weighted_score = (4*Security + 3*Quality + 2*Performance + 2*Standards + 4*TDD) 
 ### Phase 7: Commit + Journal
 
 1. Git Commit (TODO 단위, 형식 준수)
-2. Journal 작성: `Write(.orchestra/journal/{plan-name}-{YYYYMMDD}-{HHmm}.md)`
-3. `journal-tracker.sh`가 자동으로 `state.json` 업데이트
+2. Task(Journal-Reporter) 호출 — 아래 컨텍스트 전달:
+   - `journalType`: `open-ended` 또는 `session`
+   - `planName`: 계획 이름
+   - `todos`: 완료된 TODO 목록 및 결과
+   - `verificationResult`: Verification 결과
+   - `codeReviewResult`: Code-Review 점수/판정
+   - `changedFiles`: 변경 파일 목록
+   - `summary`, `decisions`, `issues`, `nextSteps`
+3. `journal-tracker.sh`가 Journal-Reporter의 Write를 감지하여 `state.json` 자동 업데이트
 
 #### OPEN-ENDED Journal Template (필수 양식)
 
