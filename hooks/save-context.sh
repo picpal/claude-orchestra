@@ -1,6 +1,10 @@
 #!/bin/bash
-# Save Context Hook
-# 세션 종료 시 컨텍스트를 저장합니다.
+# [DEPRECATED] Save Context Hook
+# stop-handler.sh가 세션 종료 시 Journal 생성 + 상태 업데이트를 처리하므로
+# 이 스크립트의 기능은 stop-handler.sh로 대체되었습니다.
+# 향후 버전에서 제거될 수 있습니다.
+#
+# 원래 용도: 세션 종료 시 컨텍스트를 저장
 # Stop Hook (세션 종료 시 실행)
 
 set -e

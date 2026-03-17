@@ -1,6 +1,10 @@
 #!/bin/bash
-# Load Context Hook
-# 세션 시작 시 이전 컨텍스트를 로드합니다.
+# [DEPRECATED] Load Context Hook
+# user-prompt-submit.sh가 매 요청마다 상태 모니터링을 수행하므로
+# 별도의 세션 시작 컨텍스트 로드가 불필요합니다.
+# 향후 버전에서 제거될 수 있습니다.
+#
+# 원래 용도: 세션 시작 시 이전 컨텍스트를 로드
 # Notification Hook (세션 시작 시 실행)
 
 set -e

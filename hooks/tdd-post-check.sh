@@ -80,8 +80,8 @@ if git rev-parse --git-dir > /dev/null 2>&1; then
     check_test_deletion || true
     check_test_skip || true
     check_impl_without_test || true
-    # 테스트 실행은 선택적 (시간이 오래 걸릴 수 있음)
-    # check_tests_pass || true
+    # 테스트 실행: 실패해도 로깅만 (|| true로 hook 자체는 통과)
+    check_tests_pass || true
   fi
 fi
 

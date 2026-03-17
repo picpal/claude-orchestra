@@ -26,7 +26,8 @@
         "matcher": "Bash",
         "hooks": [
           {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/role-boundary-guard.sh"},
-          {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/verify-before-commit.sh"}
+          {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/verify-before-commit.sh"},
+          {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/git-push-review.sh"}
         ]
       },
       {
@@ -45,7 +46,10 @@
       },
       {
         "matcher": "Write",
-        "hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/journal-tracker.sh"}]
+        "hooks": [
+          {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/journal-tracker.sh"},
+          {"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/auto-format.sh"}
+        ]
       },
       {
         "matcher": "Bash",

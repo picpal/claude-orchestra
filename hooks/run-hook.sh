@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# Orchestra Hook Wrapper
+# [DEPRECATED] Orchestra Hook Wrapper
+# hooks.json에서 ${CLAUDE_PLUGIN_ROOT} 직접 경로를 사용하므로 이 래퍼는 더 이상 필요하지 않습니다.
+# 향후 버전에서 제거될 수 있습니다.
+#
 # 플러그인 경로를 동적으로 찾아서 훅 스크립트 실행
 # Usage: run-hook.sh <hook-script> [args...]
 

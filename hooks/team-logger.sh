@@ -1,6 +1,11 @@
 #!/bin/bash
 # team-logger.sh - Agent Groups 활동 로깅
 # Hook: SubagentStart, SubagentStop
+#
+# ⚠️ hooks.json 미등록 — agent-logger.sh가 SubagentStart/Stop을 이미 처리하며
+#    state.json의 planningPhase, codeReviewCompleted 등을 관리합니다.
+#    이 스크립트는 TeamCreate 기반 팀원 추적이 필요할 때 별도 등록하여 사용합니다.
+#    agent-logger와 state.json 동시 수정 시 race condition에 주의하세요.
 
 set -euo pipefail
 
