@@ -109,6 +109,11 @@
       "model": "opus",
       "allowedTools": ["Glob", "Grep", "Read", "Bash", "AskUserQuestion", "Write"],
       "denyTools": ["Task", "Edit"]
+    },
+    "journal-reporter": {
+      "model": "haiku",
+      "allowedTools": ["Read", "Glob", "Grep", "Write"],
+      "denyTools": ["Task", "Edit", "Bash"]
     }
   },
   "defaults": {

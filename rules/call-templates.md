@@ -424,6 +424,44 @@ Task(
 
 ---
 
+## Journal-Reporter (haiku) — Phase 7
+
+> Commit 이후 Journal 리포트 작성
+
+```
+Task(
+  subagent_type: "general-purpose", model: "haiku",
+  description: "Journal-Reporter: Journal 리포트 작성",
+  prompt: """
+**Journal-Reporter** - 구조화된 Journal 리포트 작성
+도구: Read, Write(.orchestra/journal/), Glob, Grep
+제약: Edit, Bash, Task 금지 (리포트 작성만)
+---
+## Journal Type
+{open-ended | session}
+
+## Context
+- Plan: {planName}
+- Summary: {작업 요약}
+- TODOs: {완료된 TODO 목록과 결과}
+- Changed Files: {변경 파일 목록}
+- Verification: {mode, PR Ready, blockers}
+- Code-Review: {점수, 판정}
+- Decisions: {주요 결정 사항}
+- Issues: {발견된 이슈}
+- Next Steps: {후속 작업}
+
+## Expected Output
+[Journal-Reporter] Journal 작성 완료
+- Type: {open-ended|session}
+- Path: .orchestra/journal/{filename}.md
+- Sections: {N}/{total}
+"""
+)
+```
+
+---
+
 ## Explorer (EXPLORATORY Intent)
 
 ```
@@ -501,6 +539,7 @@ RESEARCH: Architecture | Searcher | Explorer | Image-Analyst | Log-Analyst
 EXECUTION: High-Player | Low-Player
 VERIFICATION: Conflict-Checker
 REVIEW: Code-Review Group (5명)
+JOURNAL: Journal-Reporter (Phase 7)
 ```
 
 ### 위임 형식 (6-Section 프롬프트)

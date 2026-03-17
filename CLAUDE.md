@@ -58,6 +58,7 @@
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
 │  📝 Phase 7: Commit + Journal                                │
+│  └─ Task(Journal-Reporter) → 구조화된 리포트 작성             │
 │  🏁 완료                                                     │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -66,8 +67,8 @@
 
 ## 시스템 개요
 
-17개 전문 에이전트가 협력하여 TDD 기반 개발을 수행합니다.
-(12개 기본 + 5개 Code-Review Group)
+18개 전문 에이전트가 협력하여 TDD 기반 개발을 수행합니다.
+(12개 기본 + 5개 Code-Review Group + 1개 Journal Layer)
 **Claude Code가 Main Agent(Maestro)로서** 모든 에이전트를 직접 호출합니다.
 
 ### 핵심 구조: Claude Code = Maestro (Main Agent)
@@ -99,6 +100,7 @@
          │   ├── Performance Analyst
          │   ├── Standards Keeper
          │   └── TDD Enforcer
+         ├── Task(Journal-Reporter)  → 작업 Journal 리포트 작성
          └── Task(Research Agents)  → 검색, 분석
 ```
 
@@ -175,7 +177,7 @@
 
 ```
 claude-orchestra/              # 플러그인 루트
-├── agents/                    # 17개 에이전트 정의 (12 기본 + Code-Review 5명)
+├── agents/                    # 18개 에이전트 정의 (12 기본 + Code-Review 5명 + Journal 1명)
 ├── commands/                  # 슬래시 명령어
 ├── skills/                    # 컨텍스트 스킬
 │   ├── context-dev/SKILL.md
@@ -337,6 +339,9 @@ OPEN-ENDED 요청
 ### Verification Layer (Subagents)
 - **Conflict-Checker** (Sonnet): 병렬 실행 후 충돌 감지 → Rework Loop 트리거
 
+### Journal Layer (Subagents)
+- **Journal-Reporter** (Haiku): Phase 7에서 구조화된 Journal 리포트 작성 (OPEN-ENDED/Session 양식)
+
 ### Review Layer: Code-Review Group (5명 병렬)
 
 > **기존 Code-Reviewer는 폐기되었습니다. 5명 전문팀으로 대체.**
@@ -416,6 +421,9 @@ Phase 6a-CR: Code-Review Group (5명 병렬)
     │
     ▼
 Phase 7: Commit + Journal
+    │ 1. Git Commit
+    │ 2. Task(Journal-Reporter) → 구조화된 리포트 작성
+    │ 3. journal-tracker.sh 자동 업데이트
 ```
 
 ### Rework Loop (Block 시)

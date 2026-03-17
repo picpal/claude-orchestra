@@ -1,13 +1,13 @@
 # Claude Orchestra 🎼
 
-16개 전문 에이전트 기반 TDD 개발 오케스트레이션 시스템
+18개 전문 에이전트 기반 TDD 개발 오케스트레이션 시스템
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Claude Code](https://img.shields.io/badge/Claude-Code-blue)](https://claude.com/claude-code)
 
 ## 개요
 
-Claude Orchestra는 16개의 전문 에이전트(11개 기본 + 5개 Code-Review Group)가 계층 구조로 협력하여 TDD(Test-Driven Development) 기반의 고품질 코드를 생성하는 오케스트레이션 시스템입니다.
+Claude Orchestra는 18개의 전문 에이전트(12개 기본 + 5개 Code-Review Group + 1개 Journal Layer)가 계층 구조로 협력하여 TDD(Test-Driven Development) 기반의 고품질 코드를 생성하는 오케스트레이션 시스템입니다.
 
 ### 에이전트 계층 구조
 
@@ -31,6 +31,9 @@ Claude Orchestra는 16개의 전문 에이전트(11개 기본 + 5개 Code-Review
 │                    REVIEW LAYER: Code-Review Group (5명 병렬)     │
 │  Security Guardian │ Quality Inspector │ Performance Analyst    │
 │            Standards Keeper │ TDD Enforcer                      │
+├─────────────────────────────────────────────────────────────────┤
+│                    JOURNAL LAYER                                 │
+│                     Journal-Reporter                             │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -60,7 +63,7 @@ Phase 6: Verification ─────── 6-Stage (Build → Types → Lint �
 Phase 6a-CR: Code-Review ──── 5명 병렬 → 가중치 점수 → 승인/Block
     │
     ▼
-Phase 7: Commit + Journal
+Phase 7: Commit + Journal ── Task(Journal-Reporter) → 구조화된 리포트 작성
 ```
 
 ## Quick Start
@@ -217,7 +220,7 @@ cp -r rules/*.md /path/to/your/project/.claude/rules/
 
 | 카테고리 | 개수 | 경로 | 설명 |
 |----------|------|------|------|
-| **Agents** | 16 | `agents/` | AI 에이전트 정의 (11 기본 + 5 Code-Review) |
+| **Agents** | 18 | `agents/` | AI 에이전트 정의 (12 기본 + 5 Code-Review + 1 Journal) |
 | **Commands** | 13 | `commands/` | 슬래시 명령어 |
 | **Skills** | 3 | `skills/` | 컨텍스트 스킬 (dev, research, review) |
 | **Hooks** | 22 | `hooks/` | 자동화 훅 스크립트 + `hooks.json` |
@@ -308,6 +311,7 @@ Claude Code는 **프로젝트 디렉토리의 `.claude/rules/`만 규칙으로 �
 | **High-Player** | Opus | 복잡한 작업 실행 (3+ 파일) |
 | **Low-Player** | Sonnet | 간단한 작업 실행 (1-2 파일) |
 | **Conflict-Checker** | Sonnet | 병렬 실행 후 충돌 감지 |
+| **Journal-Reporter** | Haiku | Phase 7 Journal 리포트 작성 |
 | **Security Guardian** | Sonnet | 보안 취약점 검토 (w=4, Auto-Block) |
 | **Quality Inspector** | Sonnet | 코드 품질 검사 (w=3) |
 | **Performance Analyst** | Haiku | 성능 이슈 분석 (w=2) |
@@ -322,7 +326,7 @@ Claude Code는 **프로젝트 디렉토리의 `.claude/rules/`만 규칙으로 �
 
 ```
 claude-orchestra/               # 플러그인 루트
-├── agents/                     # 16개 에이전트 (11 기본 + 5 Code-Review)
+├── agents/                     # 18개 에이전트 (12 기본 + 5 Code-Review + 1 Journal)
 │   ├── maestro.md              # Main Agent (= Claude Code)
 │   ├── interviewer.md          # 요구사항 인터뷰
 │   ├── planner.md              # TODO 분석
@@ -334,6 +338,7 @@ claude-orchestra/               # 플러그인 루트
 │   ├── high-player.md          # 복잡 작업 실행
 │   ├── low-player.md           # 간단 작업 실행
 │   ├── conflict-checker.md     # 충돌 감지  (code-reviewer.md는 폐기/삭제됨)
+│   ├── journal-reporter.md    # Journal 리포트 작성 (Journal Layer)
 │   ├── security-guardian.md    # 보안 리뷰 (Code-Review Group)
 │   ├── quality-inspector.md    # 품질 리뷰 (Code-Review Group)
 │   ├── performance-analyst.md  # 성능 리뷰 (Code-Review Group)
